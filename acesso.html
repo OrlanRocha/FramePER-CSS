@@ -15,45 +15,59 @@
 </head>
 <body>
 	<header class="pernso-2">
-		<div class="esp-cima-8 pernso-1">
-			<div class="cx-hb">
+		<div class="pernso-1">
+			<label class="cx-hb" for="hb-menu">
 				<span class="hb"></span>
 				<span class="hb"></span>
 				<span class="hb"></span>
-			</div>
-			<div class="coluna-base esp-cima-8">
-				
+			</label>
+			<input type="checkbox" id="hb-menu"  class="menu-0"/>
+			<nav class="menu">
+				<ul class="centro">				
+					<li class="li-vt txt-tam-5 esp-1"><a class="txt-pri" href="index.html" title="Ínicio">Ínicio</a></li>
+					<li class="li-vt txt-tam-5 esp-1"><a class="txt-pri" href="#Sobre" title="Sobre">Sobre</a></li>
+					<li class="li-vt txt-tam-5 esp-1"><a class="txt-pri" href="#Servicos" title="Serviços">Serviços</a></li>
+					<li class="li-vt txt-tam-5 esp-1"><a class="txt-pri" href="#Contato" title="Contato">Contato</a></li>
+					<li class="li-vt txt-tam-5 esp-1"><a class="txt-ate" href="acesso.html" title="Acesso">Acesso</a></li>		
+				</ul>
+			</nav>
+			<div class="coluna-base esp-cima-12">	
 				<div class="coluna-auto">
 					<a href="\" title="FramePER | CSS">
-						<img class="img-flex esp-8" src="img/05.png" alt="Logo não disponível" style="opacity: .6;">
+						<img class="img-flex" src="img/05.png" alt="Logo não disponível" style="opacity: .6;">
 					</a>
 				</div>
 			</div>
 		</div>
 		<div class="caixa nav">
-			<ul class="centro">
-				<hr>
-				<li class="li-hz txt-tam-5 esp-1"><a class="ativo" href="index.html" title="Ínicio">Ínicio</a></li>
+			<ul class="centro borda-cima borda-baixo">				
+				<li class="li-hz txt-tam-5 esp-1"><a class="ativo" href="#Inicio" title="Ínicio">Ínicio</a></li>
 				<li class="li-hz txt-tam-5 esp-1"><a href="#Sobre" title="Sobre">Sobre</a></li>
 				<li class="li-hz txt-tam-5 esp-1"><a href="#Servicos" title="Serviços">Serviços</a></li>
 				<li class="li-hz txt-tam-5 esp-1"><a href="#Contato" title="Contato">Contato</a></li>
-				<li class="li-hz txt-tam-5 esp-1" style="float: right;"><a class="txt-ate" href="#Acesso" title="Acesso">Acesso</a></li>
-				<hr>
+				<li class="li-hz txt-tam-5 esp-1" style="float: right;"><a class="txt-ate" href="acesso.html" title="Acesso">Acesso</a></li>		
 			</ul>
 		</div>
-		
 	</header>
-	<main class="caixa esp-baixo-8" >
-		<div class="esp-8 borda">
-			<div>
-				<h3>Acesso ao Sistema</h3>
+	<main class="caixa " >
+		<div class="margem-caixa esp-8">
+			<div class="esp-baixo-6">
+				<h3 class="txt-pri">Acesso ao Sistema</h3>
 				<div>
 					
 				</div>
 			</div>
 			<div>
 				<form action="index.html" method="POST" accept-charset="utf-8">
-
+					<div class="esp-1">
+						<input type="email" name="email" placeholder="Entre com seu E-mail">
+					</div>
+					<div class="esp-1">
+						<input type="password" name="senha" placeholder="Entre com sua Senha">
+					</div>
+					<div class="esp-1">
+						<input class="botao-pri" type="submit" name="entrar" value="Entrar" placeholder="Entre com seu E-mail">
+					</div>
 				</form>
 			</div>
 			<div>

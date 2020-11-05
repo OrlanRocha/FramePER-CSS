@@ -7,13 +7,30 @@ div .coluna-auto img{ max-width: 320px; }
 .nav ul li a:hover{border-bottom: 2px solid var(--amarelo-1);}
 
 .hb{display: inline-block;height: 4px; background-color: white;margin: 1px 0;opacity: .7;}
-.cx-hb{float: left;width: 32px;margin-left: 15px;display: none;cursor: pointer; }
+.cx-hb{float: left;width: 32px;margin-left: 1.4em;margin-top: 1.4em;display: none;cursor: pointer;position: fixed;z-index: 3; }
 
-.nav-hb-chkbx, .menu-exibe {
+input[type=checkbox]{
 	display: none;
 }
-.nav-hb-chkb:checked ~ .img1 { display: none;}
+ .menu {
+  	width: 0;
+  	position: fixed;
+  	z-index: 1;
+  	top: 0;
+  	left: 0;
+  	background-color: rgba(63,131,191, 1);
+  	overflow-x: hidden;
+  	transition: 0.5s;
+  	height: 100%;
+  	margin: 0 auto;
+ }
+ .menu ul { border-radius: .4em;background-color: rgba(255,255,255, 1);padding: 3em; }
+ .menu ul li { width: 100%;max-width: 100%;border-bottom: 2px solid transparent; }
+ .menu ul li:hover{border-bottom: 2px solid var(--amarelo-1);}
+ .menu-0:checked ~ .menu { width: 80%;padding: 3em;padding-top: 6em;}
 
 @media screen and (max-width:640px){
-	.cx-hb{ display: block; }
+	.cx-hb { display: block; }
+	.margem-caixa { margin-top: 20px; }
+	div .coluna-auto img { margin-top: 9em; }
 }

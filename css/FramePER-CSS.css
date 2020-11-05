@@ -44,6 +44,10 @@
 
 		hr{border: none;border-top:1px solid var(--preto-0);padding: 0; margin:0;}
 
+		input[type=text], input[type=email], input[type=search], input[type=password]{
+			padding-top: .8rem;padding-bottom: .8rem;padding: 1rem;border: 1px solid var(--preto-0);border-radius: .1em;font-size: 1rem;
+		}
+		input[type=submit]{ padding-top: .8rem;padding-bottom: .8rem;padding: 1rem;border: 1px solid var(--preto-0);border-radius: .1em;font-size: 1rem;background-color: transparent;color: var(--preto-0);transition: all .8s; }
 		/*CORES DEFINIDAS PARA O TEXTO*/
 		.txt-pri { color: var(--azul-1); }
 		.txt-seg { color: var(--preto-1); }
@@ -54,14 +58,32 @@
 		.txt-pre { color: var(--preto-1); }
 		.txt-bra { color: var(--branco); }
 
-		.fund-pri { background-color: var(--azul-0); }
-		.fund-seg { background-color: var(--preto-0); }
-		.fund-per{ background-color: var(--vermelho-0); }
-		.fund-ate { background-color: var(--amarelo-0);color: var(--amarelo-1); }
-		.fund-suc{ background-color: var(--verde-0); }
-		.fund-inf { background-color: var(--verde-0); }
-		.fund-pre{ background-color: var(--preto-1);color: var(--branco) !important; }
-		.fund-bra{ background-color: var(--branco); }
+		.fund-pri { background-color: var(--azul-1) !important;color: var(--branco) !important; }
+		.fund-seg { background-color: var(--lilas-1) !important;color: var(--branco) !important; }
+		.fund-per { background-color: var(--vermelho-1) !important;color: var(--branco) !important; }
+		.fund-ate { background-color: var(--amarelo-1) !important;color: var(--preto-1) !important; }
+		.fund-suc { background-color: var(--verde-1) !important;color: var(--preto-1) !important;}
+		.fund-inf { background-color: var(--verde-1) !important;color: var(--branco) !important; }
+		.fund-pre { background-color: var(--preto-1) !important;color: var(--branco) !important; }
+		.fund-bra { background-color: var(--branco) !important;color: var(--branco) !important;}
+
+		.botao-pri { background-color: var(--azul-1) !important;color: var(--branco) !important;transition: all .5s;cursor: pointer;}
+		.botao-seg { background-color: var(--lilas-1) !important;color: var(--branco) !important;transition: all .5s;cursor: pointer;}
+		.botao-per { background-color: var(--vermelho-1) !important;color: var(--branco) !important;transition: all .5s;cursor: pointer;}
+		.botao-ate { background-color: var(--amarelo-1) !important;color: var(--preto-1) !important;transition: all .5s;cursor: pointer;}
+		.botao-suc { background-color: var(--verde-1) !important;color: var(--preto-1) !important;transition: all .5s;cursor: pointer;}
+		.botao-inf { background-color: var(--verde-1) !important;color: var(--branco) !important;transition: all .5s;cursor: pointer;}
+		.botao-pre { background-color: var(--preto-1) !important;color: var(--branco) !important;transition: all .5s;cursor: pointer;}
+		.botao-bra { background-color: var(--branco) !important;color: var(--branco) !important;transition: all .5s;cursor: pointer;}
+
+		.botao-pri:hover {opacity: .7;}
+		.botao-seg:hover {}
+		.botao-per:hover {}
+		.botao-ate:hover {}
+		.botao-suc:hover {}
+		.botao-inf:hover {}
+		.botao-pre:hover {}
+		.botao-bra:hover {}
 
 		/*TAMANHO DA FONTE*/
 		.ft-tam-0 { font-size: .6rem; }
@@ -89,6 +111,10 @@
 		.esp-6 {padding: 1.8em; }
 		.esp-7 {padding: 2em; }
 		.esp-8 {padding: 2.5em; }
+		.esp-9 {padding: 3em; }
+		.esp-10 {padding: 4em; }
+		.esp-11 {padding: 5em; }
+		.esp-12 {padding: 6em; }
 
 		.esp-cima-0 {padding-top: .8em; }
 		.esp-cima-1 {padding-top: .9em; }
@@ -208,7 +234,9 @@
 		.borda-preto { border-color: var(--preto-0); }
 
 		.reta{ border-radius: 0 !important; }
+		
 		.redonda{ border-radius: .4em; }
+
 		.circulo{ border-radius: 100%; overflow: auto;max-height: 260px;max-width: 260px;}
 
 		/*SEMELHANTE AO CONTAINER, DEFINE UMA LARGURA CENTRAL*/
@@ -248,6 +276,9 @@
 
 		.li-hz{ width: auto;display: inline-block;transition: all .8s; }
 		.li-hz:hover a{ color: rgba(63,131,191, .9);}
+
+		.li-vt{ width: 100%;display: inline-block;transition: all .8s; }
+		.li-vt:hover a{ color: rgba(63,131,191, .9);}
 
 		.txt-tam-1{font-size: .8em;}
 		.txt-tam-2{font-size: 1em;}
