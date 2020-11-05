@@ -207,6 +207,7 @@
 		.borda-informacao { border-color: var(--verde); }
 		.borda-preto { border-color: var(--preto-0); }
 
+		.reta{ border-radius: 0 !important; }
 		.redonda{ border-radius: .4em; }
 		.circulo{ border-radius: 100%; overflow: auto;max-height: 260px;max-width: 260px;}
 
