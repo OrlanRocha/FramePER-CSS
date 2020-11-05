@@ -261,7 +261,7 @@
 
 		.ativo{ color: var(--azul-1);}
 		.nav { display:block; }
-		.cartao{ border: 1px solid var(--preto-0); border-radius: .4em;margin-top: 1em;margin-left: .8em;margin-right: .8em; }
+		.cartao{ border: 1px solid var(--preto-0); border-radius: .4em;margin-top: 1em;}
 		.cartao-cabeca{background-color: rgba(0,0,0,.01);padding: 1em;border-bottom: 1px solid var(--preto-0);font-size: 1.3em;font-weight: 600;}
 		.cartao-corpo{padding: 1em;font-size: 1.1em;font-weight: 500;}
 		.cartao-rodape{ background-color: rgba(0,0,0,.08);padding: 1.5em; border-top: 1px solid var(--preto-0);}
