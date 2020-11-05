@@ -9,6 +9,11 @@ div .coluna-auto img{ max-width: 320px; }
 .hb{display: inline-block;height: 4px; background-color: white;margin: 1px 0;opacity: .7;}
 .cx-hb{float: left;width: 32px;margin-left: 15px;display: none;cursor: pointer; }
 
+.nav-hb-chkbx, .menu-exibe {
+	display: none;
+}
+.nav-hb-chkb:checked ~ .img1 { display: none;}
+
 @media screen and (max-width:640px){
 	.cx-hb{ display: block; }
 }
