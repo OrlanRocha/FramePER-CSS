@@ -30,7 +30,7 @@ input[type=checkbox]{
  .menu ul li { width: 100%;max-width: 100%;border-bottom: 2px solid transparent; }
  .menu ul li:hover{border-bottom: 2px solid var(--amarelo-1);}
  .menu-0:checked ~ .menu { width: 80%;padding: 3em;padding-top: 6em;}
-
+ .acesso { max-width: 25vw; }
 @media screen and (max-width:640px){
 	.cx-hb { display: block; }
 	.margem-caixa { margin-top: 20px; }
