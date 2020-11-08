@@ -43,6 +43,7 @@
 		h5 { font-size: 1em; }
 
 		hr{border: none;border-top:1px solid var(--preto-0);padding: 0; margin:0;}
+		small {width: 100%;max-width: 100%; font-size: .6rem;font-weight: 400;font-family: robot;padding-top: 0;text-align: right !important; }
 
 		input[type=text], input[type=email], input[type=search], input[type=password]{
 			padding-top: .8rem;padding-bottom: .8rem;padding: 1rem;border: 1px solid var(--preto-0);border-radius: .1em;font-size: 1rem;
@@ -210,6 +211,8 @@
 		.ng-6{ font-weight: 700; }
 		.ng-7{ font-weight: 800; }
 		.ng-8{ font-weight: 900; }
+
+		.italico { font-style: oblique; }
 
 		/*BORDAS*/
 		.borda { border: 1px solid var(--preto-0);border-radius: .1em; }
