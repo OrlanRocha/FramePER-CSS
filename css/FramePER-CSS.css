@@ -4,7 +4,7 @@
 		  --azul-1: rgba(63,131,191, .9);
 		  --verde-0: rgba(131, 191, 63, 0.2);
 		  --verde-1: rgba(131, 191, 63, 0.9);
-		  --vermelho-0: rgba(225, 14, 14, 0.2);.
+		  --vermelho-0: rgba(225, 14, 14, 0.2);
 		  --vermelho-1: rgba(225, 14, 14, .9);
 		  --lilas-0: rgba(119, 14, 225, 0.2);
 		  --lilas-1: rgba(119, 14, 225, 0.9);
@@ -16,7 +16,7 @@
 		}
 
 	    /*RESETE INICIAL*/
-		* {-webkit-box-sizing: border-box;box-sizing: border-box;font-size: .9em;font-weight: 300;color: var(--preto-1);font-family: Arial;-webkit-transition: all;-o-transition: all;transition: all;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;width: 100%;}
+		* {-webkit-box-sizing: border-box;box-sizing: border-box;font-size: .9em;font-weight: 300;color: var(--preto-1);font-family: Arial,sans-serif;-webkit-transition: all;-o-transition: all;transition: all;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;width: 100%;}
 
 		/*LARGURA INICIAL DA TAG'S 100% */
 		body { width: 100%; margin: 0 auto;} 
@@ -31,9 +31,12 @@
 		ul, nav {width: 100%;}
 		li{ list-style-type: none;font-size: 1em;}
 
-
 		/*BOTOES e LINKS REMOVIDOS ESTILOS E CORES DE BORDAS, OPS: BORDAR DEFINIDAS MAS SEM CORES PARA NAO VAR PROBLEMAS EM MUDANDAS DURANTE*/
-		button, a {outline: none;outline-style: none;text-decoration: none;border: 1px solid transparent;background-color: transparent;color: var(--preto-1);-webkit-transition: all .8s;-o-transition: all .8s;transition: all .8s; }
+		button, a {outline: none;outline-style: none;text-decoration: none;border: 1px solid transparent;background-color: transparent;color: var(--preto-1);-webkit-transition: all .8s;-o-transition: all .8s;transition: all .8s;border: none; }
+		a:link {text-decoration: none; }
+		a:visited {text-decoration: none; }
+		a:hover {text-decoration: none;opacity: .6; }
+		a:active {text-decoration: none; } 
 		b, strong { font-weight: 600; }
 
 		h1 { font-size: 4em; }
@@ -43,7 +46,7 @@
 		h5 { font-size: 1em; }
 
 		hr{border: none;border-top:1px solid var(--preto-0);padding: 0; margin:0;}
-		small {width: 100%;max-width: 100%; font-size: .6rem;font-weight: 400;font-family: robot;padding-top: 0;text-align: right !important; }
+		small {width: 100%;max-width: 100%; font-size: .6rem;font-weight: 400;font-family: robot,sans-serif;padding-top: 0;text-align: right !important; }
 
 		input[type=text], input[type=email], input[type=search], input[type=password]{
 			padding-top: .8rem;padding-bottom: .8rem;padding: 1rem;border: 1px solid var(--preto-0);border-radius: .1em;font-size: 1rem;

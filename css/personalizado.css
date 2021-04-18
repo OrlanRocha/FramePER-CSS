@@ -1,14 +1,14 @@
 div .coluna-auto img{ max-width: 320px; }
 
-.pernso-1{background-image: url('https://i.imgur.com/P9D1DZs.jpg');background-attachment: fixed;background-repeat: no-repeat;min-height: 250px;}
+.pernso-1{background-image: url('../img/PapelDeParede/papel-de-parede-0.jpg');background-attachment: fixed;background-repeat: no-repeat;min-height: 250px;}
 .pernso-2{margin-bottom: -20px;}
 .pernso-3{background-image: -webkit-gradient(linear,left top, left bottom,from(white),to(rgba(0,50,255,.2)));background-image: -o-linear-gradient(top,white,rgba(0,50,255,.2));background-image: linear-gradient(180deg,white,rgba(0,50,255,.2));}
 
-.nav ul li a{ border-bottom: 2px solid transparent;-webkit-transition: border .6s;-o-transition: border .6s;transition: border .6s;padding-bottom: .1em; }
+.nav ul li a{ border-bottom: 2px solid transparent;-webkit-transition: border .6s;-o-transition: border .6s;transition: border .5s;padding-bottom: .1em; }
 .nav ul li a:hover{border-bottom: 2px solid var(--amarelo-1);}
 
 .hb{display: inline-block;height: 4px; background-color: white;margin: 1px 0;opacity: .7;}
-.cx-hb{float: left;width: 32px;margin-left: 1.4em;margin-top: 1.4em;display: none;cursor: pointer;position: fixed;z-index: 3; }
+.cx-hb{float: left;width: 54px;display: none;cursor: pointer;position: fixed;z-index: 3;background-color: rgba(63,131,191, 1);padding: .7em 1em .7em 1.4em;margin-top: .8em;border-radius: 0 1em 1em 0;}
 
   input[type=checkbox]{display: none;}
  .menu {width: 0;position: fixed;z-index: 1;top: 0;left: 0;background-color: rgba(63,131,191, 1);overflow-x: hidden;-webkit-transition: 0.5s;-o-transition: 0.5s;transition: 0.5s;height: 100%;margin: 0 auto;}
@@ -20,5 +20,5 @@ div .coluna-auto img{ max-width: 320px; }
  .menu ul li:hover{border-bottom: 2px solid var(--amarelo-1);}
  .menu-0:checked ~ .menu { width: 80%;padding: 3em;padding-top: 6em;}
  .acesso { max-width: 360px; }
-
+ .img-flex-scale:hover{ transform: scale(1.5); }
 @media screen and (max-width:640px){ .cx-hb { display: block; } .margem-caixa { margin-top: 20px; } }
