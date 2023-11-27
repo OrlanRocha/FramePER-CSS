@@ -3,9 +3,6 @@ FramePE CSS
 
 Este projeto demonstra um conjunto de classes CSS reutilizáveis e personalizáveis para aprimorar sua experiência de desenvolvimento web. Os estilos são projetados para serem flexíveis e podem ser facilmente integrados aos seus projetos.
 
-# Awesome CSS Styles
-
-This project demonstrates a set of reusable and customizable CSS classes to enhance your web development experience. The styles are designed to be flexible and can be easily integrated into your projects.
 
 ## Color Palette
 
