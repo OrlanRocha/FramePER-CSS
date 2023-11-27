@@ -3,6 +3,7 @@ FramePE CSS
 
 Framework personalizado para mais facilidade com o Português - Brasil. 
 
+<code>
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -35,3 +36,4 @@ Framework personalizado para mais facilidade com o Português - Brasil.
 </body>
 
 </html>
+</code>
