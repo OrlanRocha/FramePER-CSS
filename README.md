@@ -3,8 +3,6 @@ FramePE CSS
 
 Framework personalizado para mais facilidade com o Português - Brasil. 
 
-# Awesome CSS Styles
-
 This project demonstrates a set of reusable and customizable CSS classes to enhance your web development experience. The styles are designed to be flexible and can be easily integrated into your projects.
 
 ## Color Palette
