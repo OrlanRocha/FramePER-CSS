@@ -52,12 +52,24 @@
       fill: var(--red);
       stroke: var(--red);
     }
-    .sidebar-sticky-box {
+    aside.span-lg-3 {
+      align-self: start;
       position: sticky;
       top: 5.5rem;
+    }
+    .sidebar-sticky-box {
       max-height: calc(100vh - 6.5rem);
       overflow-y: auto;
+      overflow-x: hidden;
       scrollbar-width: thin;
+      padding-right: 0.25rem;
+    }
+    .sidebar-sticky-box::-webkit-scrollbar {
+      width: 4px;
+    }
+    .sidebar-sticky-box::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -69,7 +81,7 @@
       <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
         <span class="icon-box"><i class="icon icon-activity text-primary"></i></span>
         <span>Frame Social</span>
-        <span class="badge badge-primary badge-xs">v2.19</span>
+        <span class="badge badge-primary badge-xs">v2.20</span>
       </a>
 
       <!-- Quick Command Palette Search trigger -->
@@ -104,10 +116,12 @@
         <!-- Menu do Usuário Dropdown -->
         <div class="dropdown">
           <button class="btn btn-ghost p-1 dropdown-toggle" aria-label="Menu do Usuário">
-            <span class="avatar avatar-sm p-relative">
-              AD
-              <span class="badge badge-green badge-dot p-absolute" style="bottom: 0; right: 0;"></span>
-            </span>
+            <div class="avatar-wrapper">
+              <span class="avatar avatar-sm bg-primary text-white">
+                <i class="icon icon-user" style="font-size: 1rem;"></i>
+              </span>
+              <span class="avatar-status status-online"></span>
+            </div>
           </button>
           <div class="dropdown-menu dropdown-menu-end">
             <span class="dropdown-header">Admin Silva (@adminsilva)</span>
@@ -133,10 +147,12 @@
           <!-- Mini Profile Card -->
           <div class="card p-3 shadow-xs stack gap-2" style="background: var(--bg-surface);">
             <div class="d-flex align-items-center gap-3">
-              <span class="avatar avatar-lg p-relative">
-                AD
-                <span class="badge badge-green badge-dot p-absolute" style="bottom: 1px; right: 1px;"></span>
-              </span>
+              <div class="avatar-wrapper">
+                <span class="avatar avatar-lg bg-primary text-white shadow-xs">
+                  <i class="icon icon-user" style="font-size: 1.85rem;"></i>
+                </span>
+                <span class="avatar-status status-online"></span>
+              </div>
               <div>
                 <strong class="d-block f-s-3">Admin Silva</strong>
                 <span class="text-muted f-s-1">@adminsilva &bull; Pro</span>
@@ -276,7 +292,7 @@
         <!-- Post Creator Box -->
         <div class="card p-4 shadow-xs stack gap-3" style="background: var(--bg-surface);">
           <div class="d-flex align-items-center gap-3">
-            <span class="avatar">AD</span>
+            <span class="avatar bg-primary text-white"><i class="icon icon-user" style="font-size: 1.25rem;"></i></span>
             <input type="text" class="input input-lg flex-1" placeholder="No que você está trabalhando hoje, Admin?" data-toggle="modal" data-target="#modalNewPost" readonly style="cursor: pointer;">
           </div>
 
@@ -420,7 +436,7 @@
 
             <!-- Comment Input -->
             <div class="d-flex align-items-center gap-2 m-t-1">
-              <span class="avatar avatar-sm">AD</span>
+              <span class="avatar avatar-sm bg-primary text-white"><i class="icon icon-user" style="font-size: 0.95rem;"></i></span>
               <input type="text" id="comment-box-1" class="input input-sm flex-1" placeholder="Escreva uma resposta pública...">
               <button class="btn btn-primary btn-sm" onclick="FramePER.Notify.success('Comentário', 'Seu comentário foi publicado com sucesso!')">
                 <i class="icon icon-check"></i>
@@ -603,11 +619,26 @@
             </div>
 
             <div class="cluster gap-2">
-              <span class="avatar avatar-sm bg-primary text-white p-relative" title="Ana Clara (Online)">AC <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
-              <span class="avatar avatar-sm bg-blue text-white p-relative" title="Carlos Eduardo (Online)">CE <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
-              <span class="avatar avatar-sm bg-green text-white p-relative" title="Roberto Santos (Online)">RS <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
-              <span class="avatar avatar-sm bg-purple text-white p-relative" title="Juliana Costa (Online)">JC <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
-              <span class="avatar avatar-sm bg-amber text-white p-relative" title="Thiago Silva (Online)">TS <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
+              <div class="avatar-wrapper" title="Ana Clara (Online)">
+                <span class="avatar avatar-sm bg-primary text-white">AC</span>
+                <span class="avatar-status status-online"></span>
+              </div>
+              <div class="avatar-wrapper" title="Carlos Eduardo (Online)">
+                <span class="avatar avatar-sm bg-blue text-white">CE</span>
+                <span class="avatar-status status-online"></span>
+              </div>
+              <div class="avatar-wrapper" title="Roberto Santos (Online)">
+                <span class="avatar avatar-sm bg-green text-white">RS</span>
+                <span class="avatar-status status-online"></span>
+              </div>
+              <div class="avatar-wrapper" title="Juliana Costa (Online)">
+                <span class="avatar avatar-sm bg-purple text-white">JC</span>
+                <span class="avatar-status status-online"></span>
+              </div>
+              <div class="avatar-wrapper" title="Thiago Silva (Online)">
+                <span class="avatar avatar-sm bg-amber text-white">TS</span>
+                <span class="avatar-status status-online"></span>
+              </div>
             </div>
           </div>
 
@@ -628,7 +659,10 @@
       </div>
       <div class="modal-body stack gap-3">
         <div class="d-flex align-items-center gap-3">
-          <span class="avatar">AD</span>
+          <div class="avatar-wrapper">
+            <span class="avatar bg-primary text-white"><i class="icon icon-user" style="font-size: 1.25rem;"></i></span>
+            <span class="avatar-status status-online"></span>
+          </div>
           <div>
             <span class="f-w-semibold d-block">Admin Silva</span>
             <span class="badge badge-primary badge-xs">Público para Todos</span>
@@ -657,7 +691,7 @@
   </div>
 
   <footer class="container p-y-4 txt-center f-s-2 text-muted">
-    Frame PER v2.19.0 · Rede Social com Componentes Vanilla JS, SCSS & SVG Nativo
+    Frame PER v2.20.0 · Rede Social com Componentes Vanilla JS, SCSS & SVG Nativo
   </footer>
 
   <script src="../dist/framePER.min.js"></script>

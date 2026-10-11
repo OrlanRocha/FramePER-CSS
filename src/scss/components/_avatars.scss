@@ -22,6 +22,11 @@
   &.avatar-lg { width: 3.5rem; height: 3.5rem; font-size: 1.25rem; }
   &.avatar-xl { width: 5rem; height: 5rem; font-size: 1.75rem; }
   &.avatar-square { border-radius: var(--radius-md); }
+
+  .icon {
+    display: inline-block;
+    flex-shrink: 0;
+  }
 }
 
 .avatar-group {
@@ -38,6 +43,8 @@
 .avatar-wrapper {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   .avatar-status {
     position: absolute;
@@ -48,6 +55,7 @@
     border-radius: 50%;
     border: 2px solid var(--bg-surface);
     background-color: var(--text-muted);
+    z-index: 2;
 
     &.status-online,
     &.online { background-color: var(--green); }
@@ -57,6 +65,31 @@
     &.away { background-color: var(--yellow); }
     &.status-offline,
     &.offline { background-color: var(--text-muted); }
+  }
+
+  .avatar.avatar-xs ~ .avatar-status,
+  .avatar-xs + .avatar-status {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-width: 1.5px;
+  }
+
+  .avatar.avatar-lg ~ .avatar-status,
+  .avatar-lg + .avatar-status {
+    width: 0.9375rem;
+    height: 0.9375rem;
+    border-width: 2.5px;
+    bottom: 2px;
+    right: 2px;
+  }
+
+  .avatar.avatar-xl ~ .avatar-status,
+  .avatar-xl + .avatar-status {
+    width: 1.1875rem;
+    height: 1.1875rem;
+    border-width: 3px;
+    bottom: 4px;
+    right: 4px;
   }
 }
 

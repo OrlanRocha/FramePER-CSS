@@ -60,10 +60,13 @@ document.addEventListener('DOMContentLoaded', function () {
             link.classList.add('active');
             var nav = link.closest('.docs-nav');
             if (nav) {
-              var linkRect = link.getBoundingClientRect();
-              var navRect = nav.getBoundingClientRect();
-              if (linkRect.top < navRect.top || linkRect.bottom > navRect.bottom) {
-                link.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              var linkTop = link.offsetTop - nav.offsetTop;
+              var linkBottom = linkTop + link.offsetHeight;
+              if (linkTop < nav.scrollTop || linkBottom > (nav.scrollTop + nav.clientHeight)) {
+                nav.scrollTo({
+                  top: linkTop - (nav.clientHeight / 2) + (link.offsetHeight / 2),
+                  behavior: 'smooth'
+                });
               }
             }
           }
