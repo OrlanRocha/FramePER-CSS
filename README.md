@@ -1,13 +1,26 @@
 # Frame PER
 
-![NPM Version](https://img.shields.io/badge/version-2.18.0-blue.svg)
+![NPM Version](https://img.shields.io/badge/version-2.19.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Frame PER** é um **UI Framework** (CSS & JS) moderno, elegante, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa. Combina design minimalista de alto padrão (Dribbble/Apple/Vercel) com utilitários flexíveis, modo escuro nativo, **Kanban Board Drag-and-Drop (`FramePER.Kanban`)**, **Data Grid Dinâmico com Paginação & Exportação (`FramePER.DataGrid`)**, **Tree View Interativo com Checkboxes & Busca em Tempo Real (`FramePER.TreeView`)**, **Split View & Painéis Redimensionáveis (`FramePER.SplitPane`)**, **Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**, **Validador Reativo de Formulários (`FramePER.FormValidator`)**, **Menu de Contexto de Botão Direito & Dropdowns Multinível (`FramePER.ContextMenu`)**, **Abas Reativas com Slider Animado (`FramePER.Tabs`)**, **Accordions Fluidos com scrollHeight (`FramePER.Accordion`)**, **Popovers Inteligentes com Auto-Posicionamento 4D (`FramePER.Popover`)**, **File Uploader Avançado (`FramePER.Upload`) com Drag & Drop e progresso individual**, **Template Delivery & Restaurante (cardápio digital, sacola, cupom e rastreio de pedido com stepper)**, **Datepicker nativo (Data única & Range)**, **Select pesquisável com Multi-Select e chips**, **Tooltips direcionais em 4 posições**, **Command Palette (Ctrl+K)**, **Framework de Gráficos Vetoriais SVG com animações e modo misto**, biblioteca de **107 ícones vetoriais** Pure CSS e utilitários interativos de ponta.
+**Frame PER** é um **UI Framework** (CSS & JS) moderno, elegante, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa. Combina design minimalista de alto padrão (Dribbble/Apple/Vercel) com utilitários flexíveis, modo escuro nativo, **Timeline / Linha do Tempo Vertical (`FramePER.Timeline`)**, **Split View & Painéis Redimensionáveis Otimizados (`FramePER.SplitPane`)**, **Kanban Board Drag-and-Drop (`FramePER.Kanban`)**, **Data Grid Dinâmico com Paginação & Exportação (`FramePER.DataGrid`)**, **Tree View Interativo com Checkboxes & Busca em Tempo Real (`FramePER.TreeView`)**, **Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**, **Validador Reativo de Formulários (`FramePER.FormValidator`)**, **Menu de Contexto de Botão Direito & Dropdowns Multinível (`FramePER.ContextMenu`)**, **Abas Reativas com Slider Animado (`FramePER.Tabs`)**, **Accordions Fluidos com scrollHeight (`FramePER.Accordion`)**, **Popovers Inteligentes com Auto-Posicionamento 4D (`FramePER.Popover`)**, **File Uploader Avançado (`FramePER.Upload`) com Drag & Drop e progresso individual**, **Template Delivery & Restaurante**, **Rede Social Moderna com componentes ricos**, **Command Palette (Ctrl+K)**, **Framework de Gráficos Vetoriais SVG**, biblioteca de **107 ícones vetoriais** Pure CSS e utilitários interativos de ponta.
 
 ---
 
 ## 🚀 Principais Recursos & Componentes
+
+- **⏱️ Timeline / Linha do Tempo Vertical (`FramePER.Timeline`)**:
+  - **Zero Dependências & Estrutura Vertical Flexível**: Histórico cronológico pixel-perfect para rastreamento de entregas, pedidos, status de pipelines e logs de auditoria.
+  - **Conectores Verticais Inteligentes**: Suporte a conectores contínuos sólidos, tracejados (`.is-dashed`) e concluídos (`.is-completed`), com cálculo automático no último nó.
+  - **Pontos Coloridos & Pulse Animado**: Variantes semânticas (`point-primary`, `point-success`, `point-warning`, `point-danger`, `point-purple`), nós com ícones vetoriais SVG e anel pulsante (`has-pulse`).
+  - **Modo Compacto & Adição Dinâmica**: Variante `.timeline-compact` para painéis laterais e métodos dinâmicos `addItem()`, `removeItem()`, `setStatus()` e evento `frameper:timeline:change`.
+
+- **🪟 Split View & Painéis Redimensionáveis Otimizados (`FramePER.SplitPane`)**:
+  - **Zero Dependências & Resizing Suave**: Divisores ajustáveis via Pointer Events (`setPointerCapture`) com badge flutuante em tempo real de proporção (`.split-ratio-badge`) e transição fluida `.is-animated`.
+  - **Cálculo Inteligente de Limites**: Parser unificado para porcentagens (`%`) e dimensões em pixels (`px`), eliminando travamentos em containers responsivos.
+  - **Acessibilidade Completa por Teclado**: Gutter com `tabindex="0"`, `role="separator"` e controle por setas (`←`, `→`, `↑`, `↓`), atalhos de `Home` e `End` para limites e `Enter`/`Espaço` para alternar colapso.
+  - **Orientação Horizontal & Vertical**: Suporte a layouts lado a lado ou empilhados verticalmente (`.split-vertical`) com calhas divisórias fluidas (`.split-gutter` e `.gutter-handle`).
+  - **Persistência Automática em LocalStorage**: Restauração transparente da proporção entre recarregamentos de página via `data-persist="key"`.
 
 - **📋 Kanban Board Drag-and-Drop (`FramePER.Kanban`)**:
   - **Zero Dependências & HTML5 Drag & Drop Nativo**: Quadro ágil de cartões com arraste suave entre colunas e reordenação interna sem peso de bibliotecas terceiras.
@@ -15,29 +28,6 @@
   - **Contadores de Coluna Automáticos**: Atualização em tempo real das badges de contagem de cada coluna ao movimentar, adicionar ou remover cards.
   - **Adição Dinâmica & Persistência Local**: Método `addCard(columnId, cardData)` e persistência transparente de posições em `localStorage` via atributo `data-persist="chave"`.
   - **API Programática & Eventos**: Métodos `addCard()`, `removeCard()`, `moveCard()`, `getColumns()`, `getCards()` e eventos `frameper:kanban:move`, `frameper:kanban:add`.
-
-- **📊 Data Grid Dinâmico & Tabela Rica (`FramePER.DataGrid`)**:
-  - **Zero Dependências & Engine Client-Side**: Transforma qualquer tabela HTML existente ou conjunto de dados JSON em uma grade interativa de dados de alto desempenho.
-  - **Ordenação Multi-coluna & Indicadores**: Alternância fluida entre ascendente, descendente e neutra com chevrons SVG nos cabeçalhos (`th.sortable`).
-  - **Paginação Client-Side Completa**: Navegação por páginas, seletor de quantidade de registros por página (`pageSize: 5, 10, 25, 50`) e indicador textual dinâmico.
-  - **Busca Global em Tempo Real**: Barra de pesquisa integrada que filtra instantaneamente registros por qualquer coluna mantendo o estado de paginação e totais.
-  - **Seleção Múltipla de Linhas (Checkboxes)**: Checkbox no cabeçalho com suporte a estado indeterminado, seleção individual e contagem de itens ativos.
-  - **Exportação Nativa Direta**: Download direto em CSV (`exportCSV()`) e JSON (`exportJSON()`) com codificação e escape automático de caracteres UTF-8.
-
-- **🌲 Tree View Interativo & Hierarquias (`FramePER.TreeView`)**:
-  - **Zero Dependências & Estrutura Hierárquica Ilimitada**: Renderização desktop-class com WAI-ARIA (`role="tree"`, `role="treeitem"`), linhas guias visuais e animação fluida de expansão nos chevrons.
-  - **Checkboxes Tri-State em Cascata**: Propagação bidirecional de seleção: marcar nó pai atualiza recursivamente todos os filhos; alterar filhos atualiza dinamicamente ancestrais para marcado, desmarcado ou indeterminado (`indeterminate`).
-  - **Busca em Tempo Real com Realce & Auto-Expansão**: Filtragem instantânea de nós via método `filter(termo)` com realce visual dos termos encontrados (`<mark class="tree-highlight">`) e expansão automática de pastas ancestrais.
-  - **Uso Híbrido (HTML Declarativo ou JSON Dinâmico)**: Inicialização instantânea sobre marcação existente (`data-tree-view`, `data-checkable`) ou geração dinâmica a partir de matriz JSON (`options.data`).
-  - **API Programática & Eventos**: Métodos `expandAll()`, `collapseAll()`, `toggle(id)`, `select(id)`, `check(id, state)`, `getChecked()`, `getSelected()` e eventos `frameper:tree:select`, `frameper:tree:check`, `frameper:tree:toggle`.
-
-- **🪟 Split View & Painéis Redimensionáveis (`FramePER.SplitPane`)**:
-  - **Zero Dependências & Resizing Suave**: Divisores ajustáveis via Pointer Events (`pointerdown`, `pointermove`, `pointerup`) com captura contínua (`setPointerCapture`) e aceleração nativa.
-  - **Orientação Horizontal & Vertical**: Suporte a layouts lado a lado ou empilhados verticalmente (`.split-vertical`) com calhas divisórias fluidas (`.split-gutter` e `.gutter-handle`).
-  - **Duplo-clique para Colapso Rápido**: Clique duplo no divisor para colapsar/expandir instantaneamente o painel anterior, mantendo a proporção original salva em memória.
-  - **Limites Mínimos/Máximos & Proporções**: Configuração de `minSize` e `maxSize` (em pixels ou porcentagem) para preservar layouts responsivos.
-  - **Persistência Automática em LocalStorage**: Armazenamento e restauração transparente da posição do split entre recarregamentos de página via `data-persist="key"` ou opção `persist`.
-  - **API Programática Completa**: Métodos `setSplit(pct)`, `collapse(panelIndex)`, `expand()`, `toggleCollapse()` e eventos disparados `frameper:split:resize`.
 
 - **🔔 Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**:
   - **Zero Dependências & Drawer Lateral**: Painel retrátil desktop-class com backdrop blur acionado por atributo `[data-activity-feed-toggle]` ou via API programática (`FramePER.ActivityFeed.open()`).

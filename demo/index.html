@@ -83,7 +83,7 @@
     <section class="container container-narrow txt-center p-y-6 p-relative z-10">
       <div class="d-flex justify-content-center m-b-3 slide-up">
         <span class="badge badge-pill badge-green">
-          <i class="icon icon-flame text-green m-r-1"></i> v2.18.0 · Kanban Board Drag-and-Drop, Data Grid Dinâmico & Tree View
+          <i class="icon icon-flame text-green m-r-1"></i> v2.19.0 · Timeline / Linha do Tempo, Kanban Board & Data Grid
         </span>
       </div>
       <h1 class="display-2 m-b-3 text-balance slide-up delay-1">Conheça o Frame PER</h1>
@@ -106,6 +106,7 @@
 
       <!-- Quick Feature Anchors -->
       <div class="cluster justify-content-center gap-2 m-t-4 slide-up delay-4">
+        <a class="badge badge-subtle badge-pill" href="#timeline-demo"><i class="icon icon-clock m-r-1"></i> Timeline (Linha do Tempo)</a>
         <a class="badge badge-subtle badge-pill" href="#kanban-demo"><i class="icon icon-layout m-r-1"></i> Kanban Board (Cards)</a>
         <a class="badge badge-subtle badge-pill" href="#data-grid-demo"><i class="icon icon-activity m-r-1"></i> Data Grid (Tabela)</a>
         <a class="badge badge-subtle badge-pill" href="#tree-view-demo"><i class="icon icon-folder m-r-1"></i> Tree View (Árvore)</a>
@@ -1040,7 +1041,7 @@
               <span class="badge badge-blue">Horizontal</span>
             </div>
 
-            <div id="demo-split-horizontal" class="split-pane" data-split-pane data-initial-split="32" data-min-size="120" data-persist="demo-split-h" style="height: 280px; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden;">
+            <div id="demo-split-horizontal" class="split-pane" data-split-pane data-initial-split="32" data-min-size="15%" data-max-size="85%" data-persist="demo-split-h" style="height: 280px; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden;">
               <div class="split-panel bg-subtle p-3 stack gap-2" style="overflow-y: auto;">
                 <div class="f-w-semibold f-s-2 text-muted d-flex align-items-center justify-content-between">
                   <span><i class="icon icon-folder m-r-1"></i> PROJETO</span>
@@ -1073,7 +1074,7 @@
 const split = FramePER.SplitPane.create('#editor-split', {
   direction: 'horizontal',
   initialSplit: 35,
-  minSize: 150,
+  minSize: '15%',
   persist: 'user-layout-pref'
 });
 
@@ -1094,7 +1095,7 @@ split.toggleCollapse();</code></pre>
               <span class="badge badge-purple">Vertical</span>
             </div>
 
-            <div class="split-pane split-vertical" data-split-pane data-initial-split="55" data-min-size="80" style="height: 280px; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden;">
+            <div class="split-pane split-vertical" data-split-pane data-initial-split="55" data-min-size="20%" data-max-size="80%" style="height: 280px; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden;">
               <div class="split-panel p-3 stack gap-2 bg-surface" style="overflow-y: auto;">
                 <div class="d-flex align-items-center justify-content-between border-b p-b-2">
                   <span class="f-w-semibold f-s-2"><i class="icon icon-activity text-primary m-r-1"></i> Painel Superior (Monitor de Métricas)</span>
@@ -1699,10 +1700,171 @@ split.toggleCollapse();</code></pre>
         </div>
       </section>
 
+      <!-- Timeline Demo (v2.19.0) -->
+      <section id="timeline-demo" class="docs-section m-b-6 slide-up delay-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 m-b-4">
+          <div>
+            <div class="cluster gap-2 align-items-center m-b-1">
+              <span class="badge badge-primary badge-pill"><i class="icon icon-flame"></i> Novidade v2.19.0</span>
+              <span class="badge badge-purple">FramePER.Timeline</span>
+              <span class="badge badge-subtle">Vertical & Conectores</span>
+            </div>
+            <h2 class="h3 m-0">Timeline / Linha do Tempo Interativa</h2>
+            <p class="text-muted f-s-2 m-0">Rastreamento cronológico de eventos, pedidos e entregas com pontos coloridos, animação de pulso, conectores inteligentes e atualização em tempo real</p>
+          </div>
+          <div class="cluster gap-2">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-timeline-advance">
+              <i class="icon icon-check"></i> Avançar Etapa
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-timeline-add-demo">
+              <i class="icon icon-plus"></i> Novo Evento
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-md-2 gap-4">
+          <!-- Coluna 1: Linha de Tempo Detalhada de Rastreio -->
+          <div class="card p-4 shadow-xs" style="background: var(--bg-surface);">
+            <div class="d-flex justify-content-between align-items-center m-b-3">
+              <h3 class="h5 m-0 d-flex align-items-center gap-2">
+                <i class="icon icon-truck text-primary"></i> Rastreio de Pedido #48291
+              </h3>
+              <span class="badge badge-success badge-sm" id="timeline-status-badge">Em Trânsito</span>
+            </div>
+
+            <ul class="timeline" id="demo-order-timeline" data-timeline>
+              <li class="timeline-item is-completed" data-item-id="step-1">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div class="timeline-connector is-completed"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">Pedido Confirmado e Pago</h4>
+                    <span class="timeline-time">10/10 às 09:15</span>
+                  </div>
+                  <p class="timeline-body">Pagamento via PIX aprovado com sucesso. NF-e nº 10928 emitida.</p>
+                </div>
+              </li>
+
+              <li class="timeline-item is-completed" data-item-id="step-2">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div class="timeline-connector is-completed"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">Separação e Embalagem</h4>
+                    <span class="badge badge-subtle badge-xs">CD São Paulo</span>
+                    <span class="timeline-time">10/10 às 14:30</span>
+                  </div>
+                  <p class="timeline-body">Itens conferidos e embalados em caixa biodegradável selada.</p>
+                </div>
+              </li>
+
+              <li class="timeline-item is-active" data-item-id="step-3">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-primary has-pulse">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  </div>
+                  <div class="timeline-connector is-dashed"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">Em Trânsito para Entrega</h4>
+                    <span class="badge badge-primary badge-xs">Em Rota</span>
+                    <span class="timeline-time">11/10 às 08:20</span>
+                  </div>
+                  <p class="timeline-body">Pacote despachado com a transportadora. Previsão de chegada hoje até as 18h.</p>
+                </div>
+              </li>
+
+              <li class="timeline-item is-pending" data-item-id="step-4">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-dot"></div>
+                  <div class="timeline-connector"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">Objeto Entregue ao Destinatário</h4>
+                    <span class="timeline-time">Aguardando</span>
+                  </div>
+                  <p class="timeline-body">Confirmação de recebimento assinada pelo cliente ou portaria.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Coluna 2: Linha de Tempo Compacta de Auditoria / Sistema -->
+          <div class="card p-4 shadow-xs" style="background: var(--bg-surface);">
+            <div class="d-flex justify-content-between align-items-center m-b-3">
+              <h3 class="h5 m-0 d-flex align-items-center gap-2">
+                <i class="icon icon-activity text-purple"></i> Log de Auditoria & Sistema
+              </h3>
+              <span class="badge badge-subtle badge-sm">Compact Mode</span>
+            </div>
+
+            <ul class="timeline timeline-compact" id="demo-audit-timeline" data-timeline data-compact="true">
+              <li class="timeline-item">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  </div>
+                  <div class="timeline-connector"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">Deploy de Produção v2.19.0</h4>
+                    <span class="timeline-time">Há 5 min</span>
+                  </div>
+                  <p class="timeline-body">Novas rotas de API e componente Timeline implantados com zero downtime.</p>
+                </div>
+              </li>
+
+              <li class="timeline-item">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-warning">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  </div>
+                  <div class="timeline-connector"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">Alerta de CPU Spike (87%)</h4>
+                    <span class="timeline-time">Há 22 min</span>
+                  </div>
+                  <p class="timeline-body">Cluster redimensionado automaticamente para equilibrar a carga de requisições.</p>
+                </div>
+              </li>
+
+              <li class="timeline-item">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div class="timeline-connector"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">Backup Diário Concluído</h4>
+                    <span class="timeline-time">Hoje às 03:00</span>
+                  </div>
+                  <p class="timeline-body">Snapshot completo do banco de dados relacional criptografado e salvo em bucket multi-região.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
     </section>
 
     <footer class="container p-y-5 txt-center f-s-2 text-muted p-relative z-10">
-      Frame PER v2.18.0 · Framework CSS + JS + SVG sem dependências
+      Frame PER v2.19.0 · Framework CSS + JS + SVG sem dependências
     </footer>
   </main>
 

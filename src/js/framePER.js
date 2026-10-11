@@ -94,6 +94,7 @@
                 this.initTreeView();
                 this.initDataGrid();
                 this.initKanban();
+                this.initTimeline();
             },
             initContextMenu: function() {
                 if (FramePER.ContextMenu && FramePER.ContextMenu.init) {
@@ -128,6 +129,11 @@
             initKanban: function() {
                 if (FramePER.Kanban && FramePER.Kanban.init) {
                     FramePER.Kanban.init();
+                }
+            },
+            initTimeline: function() {
+                if (FramePER.Timeline && FramePER.Timeline.init) {
+                    FramePER.Timeline.init();
                 }
             },
             initTables: function() {
@@ -2161,6 +2167,14 @@
                     desc: 'Quadro interativo com arraste suave de cartões e colunas ágeis',
                     icon: 'icon-layout',
                     action: () => { window.location.href = 'index.html#kanban-demo'; }
+                },
+                {
+                    group: 'Componentes & Docs',
+                    id: 'nav-timeline',
+                    title: 'Timeline / Linha do Tempo',
+                    desc: 'Histórico cronológico, tracking de etapas e status dinâmico',
+                    icon: 'icon-clock',
+                    action: () => { window.location.href = 'index.html#timeline-demo'; }
                 },
                 {
                     group: 'Componentes & Docs',
@@ -5163,8 +5177,8 @@
                     this.options = Object.assign({
                         direction: isVertical ? 'vertical' : 'horizontal',
                         initialSplit: parseFloat(this.container.getAttribute('data-initial-split')) || 50,
-                        minSize: parseFloat(this.container.getAttribute('data-min-size')) || 10,
-                        maxSize: parseFloat(this.container.getAttribute('data-max-size')) || 90,
+                        rawMinSize: this.container.getAttribute('data-min-size') || options.minSize || 10,
+                        rawMaxSize: this.container.getAttribute('data-max-size') || options.maxSize || 90,
                         persist: this.container.getAttribute('data-persist') || null,
                         onResize: null,
                         onCollapse: null
@@ -5177,6 +5191,42 @@
 
                     this._init();
                     this.container._frameSplitPane = this;
+                }
+
+                _parseSize(val, totalPixels = 0, fallback = 10) {
+                    if (val === null || val === undefined) return fallback;
+                    if (typeof val === 'string') {
+                        const s = val.trim();
+                        if (s.endsWith('%')) {
+                            const p = parseFloat(s);
+                            return isNaN(p) ? fallback : p;
+                        }
+                        if (s.endsWith('px')) {
+                            const px = parseFloat(s);
+                            return totalPixels > 0 ? (px / totalPixels) * 100 : (isNaN(px) ? fallback : px);
+                        }
+                    }
+                    const num = parseFloat(val);
+                    if (isNaN(num)) return fallback;
+                    // Se o número for maior que 50 e temos a dimensão em pixels do container, é valor em px
+                    if (num > 50 && totalPixels > 0) {
+                        return (num / totalPixels) * 100;
+                    }
+                    return num;
+                }
+
+                _getBounds() {
+                    const rect = this.container.getBoundingClientRect();
+                    const total = this.options.direction === 'vertical' ? rect.height : rect.width;
+                    let min = this._parseSize(this.options.rawMinSize, total, 10);
+                    let max = this._parseSize(this.options.rawMaxSize, total, 90);
+                    if (min === null || isNaN(min)) min = 10;
+                    if (max === null || isNaN(max)) max = 90;
+                    if (min >= max) {
+                        min = 10;
+                        max = 90;
+                    }
+                    return { min: Math.max(2, min), max: Math.min(98, max) };
                 }
 
                 _init() {
@@ -5197,13 +5247,55 @@
                         this.container.insertBefore(this.gutter, this.panel2);
                     }
 
+                    // Floating ratio badge
+                    this.ratioBadge = this.gutter.querySelector('.split-ratio-badge');
+                    if (!this.ratioBadge) {
+                        this.ratioBadge = document.createElement('div');
+                        this.ratioBadge.className = 'split-ratio-badge';
+                        this.ratioBadge.setAttribute('aria-hidden', 'true');
+                        this.gutter.appendChild(this.ratioBadge);
+                    }
+
+                    // Acessibilidade ARIA
+                    this.gutter.setAttribute('tabindex', '0');
+                    this.gutter.setAttribute('role', 'separator');
+                    this.gutter.setAttribute('aria-orientation', this.options.direction);
+                    this.gutter.setAttribute('aria-valuenow', Math.round(this.split));
+                    this.gutter.setAttribute('aria-valuemin', '5');
+                    this.gutter.setAttribute('aria-valuemax', '95');
+                    this.gutter.setAttribute('aria-label', 'Separador redimensionável de painéis');
+
+                    // Teclado para acessibilidade
+                    this.gutter.addEventListener('keydown', (e) => {
+                        const step = e.shiftKey ? 5 : 2;
+                        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            this.setSplit(this.split - step);
+                        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            this.setSplit(this.split + step);
+                        } else if (e.key === 'Home') {
+                            e.preventDefault();
+                            const bounds = this._getBounds();
+                            this.setSplit(bounds.min);
+                        } else if (e.key === 'End') {
+                            e.preventDefault();
+                            const bounds = this._getBounds();
+                            this.setSplit(bounds.max);
+                        } else if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.toggleCollapse();
+                        }
+                    });
+
                     // Restore persisted split if available
                     if (this.options.persist) {
                         try {
                             const saved = localStorage.getItem('frameper_split_' + this.options.persist);
                             if (saved !== null) {
                                 const val = parseFloat(saved);
-                                if (!isNaN(val) && val >= this.options.minSize && val <= this.options.maxSize) {
+                                const bounds = this._getBounds();
+                                if (!isNaN(val) && val >= bounds.min && val <= bounds.max) {
                                     this.split = val;
                                 }
                             }
@@ -5223,6 +5315,14 @@
                     this.gutter.classList.add('is-dragging');
                     this.gutter.setPointerCapture(e.pointerId);
 
+                    const bounds = this._getBounds();
+                    const updateBadge = (pct) => {
+                        if (this.ratioBadge) {
+                            this.ratioBadge.textContent = `${Math.round(pct)}% / ${Math.round(100 - pct)}%`;
+                        }
+                    };
+                    updateBadge(this.split);
+
                     const onPointerMove = (moveEvent) => {
                         if (!this.isDragging) return;
                         const rect = this.container.getBoundingClientRect();
@@ -5236,10 +5336,11 @@
                             percent = (offset / rect.width) * 100;
                         }
 
-                        if (percent < this.options.minSize) percent = this.options.minSize;
-                        if (percent > this.options.maxSize) percent = this.options.maxSize;
+                        if (percent < bounds.min) percent = bounds.min;
+                        if (percent > bounds.max) percent = bounds.max;
 
                         this.applySplit(percent);
+                        updateBadge(percent);
                     };
 
                     const onPointerUp = (upEvent) => {
@@ -5274,6 +5375,11 @@
                     this.panel1.style.flex = `0 0 ${this.split}%`;
                     this.panel2.style.flex = `1 1 0%`;
 
+                    this.gutter.setAttribute('aria-valuenow', Math.round(this.split));
+                    if (this.ratioBadge) {
+                        this.ratioBadge.textContent = `${Math.round(this.split)}% / ${Math.round(100 - this.split)}%`;
+                    }
+
                     if (typeof this.options.onResize === 'function') {
                         this.options.onResize(this.split, this.panel1, this.panel2);
                     }
@@ -5288,8 +5394,13 @@
                     }));
                 }
 
-                setSplit(percent) {
-                    const clamped = Math.max(this.options.minSize, Math.min(this.options.maxSize, percent));
+                setSplit(percent, animated = true) {
+                    const bounds = this._getBounds();
+                    const clamped = Math.max(bounds.min, Math.min(bounds.max, percent));
+                    if (animated) {
+                        this.container.classList.add('is-animated');
+                        setTimeout(() => this.container.classList.remove('is-animated'), 280);
+                    }
                     this.applySplit(clamped);
                     if (this.options.persist) {
                         try {
@@ -5305,6 +5416,9 @@
                 collapse(index = 0) {
                     this.savedSplit = this.split;
                     this.collapsedIndex = index;
+
+                    this.container.classList.add('is-animated');
+                    setTimeout(() => this.container.classList.remove('is-animated'), 280);
 
                     if (index === 0) {
                         this.panel1.classList.add('is-collapsed');
@@ -5328,6 +5442,8 @@
 
                 expand() {
                     if (this.collapsedIndex !== -1) {
+                        this.container.classList.add('is-animated');
+                        setTimeout(() => this.container.classList.remove('is-animated'), 280);
                         this.applySplit(this.savedSplit || 50);
                     }
                 }
@@ -6921,6 +7037,234 @@
                     });
                 }
             };
+        })(),
+
+        Timeline: (() => {
+            class Instance {
+                constructor(container, options = {}) {
+                    this.container = typeof container === 'string' ? document.querySelector(container) : container;
+                    if (!this.container) return;
+
+                    this.options = Object.assign({
+                        items: null,
+                        compact: this.container.classList.contains('timeline-compact') || this.container.getAttribute('data-compact') === 'true',
+                        onChange: null
+                    }, options);
+
+                    this._init();
+                    this.container._frameTimeline = this;
+                }
+
+                _init() {
+                    this.container.classList.add('timeline');
+                    if (this.options.compact) {
+                        this.container.classList.add('timeline-compact');
+                    }
+
+                    if (Array.isArray(this.options.items) && this.options.items.length > 0) {
+                        this.container.innerHTML = '';
+                        this.options.items.forEach(item => this.addItem(item));
+                    } else {
+                        this._enhanceDOM();
+                    }
+                }
+
+                _enhanceDOM() {
+                    const items = this.container.querySelectorAll('.timeline-item');
+                    items.forEach((item, idx) => {
+                        if (!item.getAttribute('data-item-id')) {
+                            item.setAttribute('data-item-id', `timeline-item-${idx + 1}`);
+                        }
+
+                        let axis = item.querySelector('.timeline-axis');
+                        if (!axis) {
+                            axis = document.createElement('div');
+                            axis.className = 'timeline-axis';
+
+                            let point = item.querySelector('.timeline-point');
+                            if (!point) {
+                                point = document.createElement('div');
+                                point.className = 'timeline-point point-primary';
+                                point.innerHTML = '<i class="icon icon-check"></i>';
+                            }
+                            axis.appendChild(point);
+
+                            let connector = document.createElement('div');
+                            connector.className = 'timeline-connector';
+                            if (item.classList.contains('is-completed')) {
+                                connector.classList.add('is-completed');
+                            }
+                            axis.appendChild(connector);
+
+                            item.insertBefore(axis, item.firstChild);
+                        }
+                    });
+                }
+
+                addItem(data = {}, prepend = false) {
+                    const item = document.createElement('li');
+                    item.className = 'timeline-item';
+                    const id = data.id || `timeline-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+                    item.setAttribute('data-item-id', id);
+
+                    if (data.status) {
+                        item.classList.add(`is-${data.status}`);
+                    }
+
+                    const axis = document.createElement('div');
+                    axis.className = 'timeline-axis';
+
+                    const point = document.createElement('div');
+                    point.className = `timeline-point point-${data.color || 'primary'}`;
+                    if (data.pulse) {
+                        point.classList.add('has-pulse');
+                    }
+                    if (data.dot) {
+                        point.classList.add('point-dot');
+                    }
+
+                    if (data.icon) {
+                        point.innerHTML = data.icon.startsWith('<') ? data.icon : `<i class="icon ${data.icon}"></i>`;
+                    } else if (!data.dot) {
+                        point.innerHTML = '<i class="icon icon-check"></i>';
+                    }
+                    axis.appendChild(point);
+
+                    const connector = document.createElement('div');
+                    connector.className = 'timeline-connector';
+                    if (data.status === 'completed' || data.completed) {
+                        connector.classList.add('is-completed');
+                    }
+                    if (data.dashed) {
+                        connector.classList.add('is-dashed');
+                    }
+                    axis.appendChild(connector);
+
+                    item.appendChild(axis);
+
+                    const content = document.createElement('div');
+                    content.className = 'timeline-content';
+
+                    const header = document.createElement('div');
+                    header.className = 'timeline-header';
+
+                    if (data.title) {
+                        const title = document.createElement('h4');
+                        title.className = 'timeline-title';
+                        title.textContent = data.title;
+                        header.appendChild(title);
+                    }
+
+                    if (data.badge) {
+                        const badge = document.createElement('span');
+                        badge.className = `badge ${data.badgeClass || 'badge-subtle badge-xs'}`;
+                        badge.textContent = data.badge;
+                        header.appendChild(badge);
+                    }
+
+                    if (data.time || data.date) {
+                        const time = document.createElement('span');
+                        time.className = 'timeline-time';
+                        time.textContent = data.time || data.date;
+                        header.appendChild(time);
+                    }
+
+                    content.appendChild(header);
+
+                    if (data.desc || data.body) {
+                        const body = document.createElement('p');
+                        body.className = 'timeline-body';
+                        body.innerHTML = data.desc || data.body;
+                        content.appendChild(body);
+                    }
+
+                    item.appendChild(content);
+
+                    if (prepend && this.container.firstChild) {
+                        this.container.insertBefore(item, this.container.firstChild);
+                    } else {
+                        this.container.appendChild(item);
+                    }
+
+                    this._emitChange('add', { id, item, data });
+                    return item;
+                }
+
+                removeItem(itemId) {
+                    const item = this.container.querySelector(`.timeline-item[data-item-id="${itemId}"]`);
+                    if (!item) return false;
+                    item.remove();
+                    this._emitChange('remove', { id: itemId });
+                    return true;
+                }
+
+                setStatus(itemId, status, color = null) {
+                    const item = this.container.querySelector(`.timeline-item[data-item-id="${itemId}"]`);
+                    if (!item) return false;
+
+                    item.classList.remove('is-completed', 'is-active', 'is-pending');
+                    if (status) {
+                        item.classList.add(`is-${status}`);
+                    }
+
+                    const point = item.querySelector('.timeline-point');
+                    if (point && color) {
+                        point.className = point.className.replace(/point-[a-z]+/g, '').trim();
+                        point.classList.add(`point-${color}`);
+                    }
+
+                    const connector = item.querySelector('.timeline-connector');
+                    if (connector) {
+                        if (status === 'completed') {
+                            connector.classList.add('is-completed');
+                        } else {
+                            connector.classList.remove('is-completed');
+                        }
+                    }
+
+                    this._emitChange('status', { id: itemId, status });
+                    return true;
+                }
+
+                getItems() {
+                    return Array.from(this.container.querySelectorAll('.timeline-item')).map(item => ({
+                        id: item.getAttribute('data-item-id'),
+                        title: (item.querySelector('.timeline-title') || {}).textContent || '',
+                        status: item.classList.contains('is-completed') ? 'completed' : (item.classList.contains('is-active') ? 'active' : (item.classList.contains('is-pending') ? 'pending' : 'default')),
+                        element: item
+                    }));
+                }
+
+                _emitChange(type, detail) {
+                    const evtData = Object.assign({ type }, detail);
+                    if (typeof this.options.onChange === 'function') {
+                        this.options.onChange(evtData);
+                    }
+                    this.container.dispatchEvent(new CustomEvent('frameper:timeline:change', {
+                        bubbles: true,
+                        detail: evtData
+                    }));
+                }
+
+                destroy() {
+                    delete this.container._frameTimeline;
+                }
+            }
+
+            return {
+                create: (container, options) => new Instance(container, options),
+                get: (container) => {
+                    const el = typeof container === 'string' ? document.querySelector(container) : container;
+                    return el ? el._frameTimeline : null;
+                },
+                init: () => {
+                    document.querySelectorAll('[data-timeline], .timeline').forEach(el => {
+                        if (!el._frameTimeline) {
+                            new Instance(el);
+                        }
+                    });
+                }
+            };
         })()
     };
 
@@ -6987,6 +7331,9 @@
         if (FramePER.Kanban && FramePER.Kanban.init) {
             FramePER.Kanban.init();
         }
+        if (FramePER.Timeline && FramePER.Timeline.init) {
+            FramePER.Timeline.init();
+        }
         
         // Hide global page loader if exists
         const staticLoader = document.querySelector('.page-loader-overlay');
@@ -7010,6 +7357,7 @@
     window.FramePERTreeView = FramePER.TreeView;
     window.FramePERDataGrid = FramePER.DataGrid;
     window.FramePERKanban = FramePER.Kanban;
+    window.FramePERTimeline = FramePER.Timeline;
 
 })(window, document);
 

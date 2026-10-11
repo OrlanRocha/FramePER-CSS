@@ -3,54 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rede Social | Frame PER</title>
+  <title>Frame Social | Rede Social com Componentes Modernos Frame PER</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../dist/framePER.min.css">
   <link rel="stylesheet" href="demo.css">
+  <style>
+    .story-ring {
+      padding: 2px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, #ec4899 50%, #f59e0b 100%);
+      display: inline-flex;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .story-ring:hover {
+      transform: scale(1.08);
+    }
+    .story-ring-inner {
+      border: 2px solid var(--bg-surface);
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+    }
+    .social-post-action {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+    .social-post-action:hover {
+      background: var(--bg-subtle);
+      color: var(--text-color);
+    }
+    .social-post-action.is-liked {
+      color: var(--red);
+    }
+    .social-post-action.is-liked svg {
+      fill: var(--red);
+      stroke: var(--red);
+    }
+    .sidebar-sticky-box {
+      position: sticky;
+      top: 5.5rem;
+      max-height: calc(100vh - 6.5rem);
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+  </style>
 </head>
 <body>
 
   <!-- Top Fixed Navigation -->
   <header class="navbar navbar-sticky navbar-glass">
     <div class="container d-flex justify-content-between align-items-center">
-      <a class="navbar-brand" href="index.html">
-        <span class="icon-box"><i class="icon icon-star"></i></span>
+      <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+        <span class="icon-box"><i class="icon icon-activity text-primary"></i></span>
         <span>Frame Social</span>
+        <span class="badge badge-primary badge-xs">v2.19</span>
       </a>
 
-      <!-- Search in Navbar -->
-      <div class="input-icon d-none d-md-block search-field" style="width: 22rem;">
-        <i class="icon icon-search"></i>
-        <input type="text" class="input input-sm" placeholder="Pesquisar pessoas, hashtags ou posts...">
+      <!-- Quick Command Palette Search trigger -->
+      <div class="d-none d-md-flex align-items-center" style="width: 24rem;">
+        <button class="btn btn-outline btn-sm w-100 d-flex align-items-center justify-content-between text-muted" data-command-palette aria-label="Busca rápida">
+          <span class="d-flex align-items-center gap-2">
+            <i class="icon icon-search"></i>
+            <span>Pesquisar amigos, tópicos ou tags...</span>
+          </span>
+          <kbd style="font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border);">Ctrl K</kbd>
+        </button>
       </div>
 
-      <!-- Action Icons -->
+      <!-- Action Icons & Navigation Hub -->
       <div class="cluster gap-2 align-items-center">
         <button class="btn btn-primary btn-sm d-flex align-items-center gap-2" data-toggle="modal" data-target="#modalNewPost">
-          <i class="icon icon-plus"></i> <span class="d-none d-sm-inline">Criar Post</span>
+          <i class="icon icon-plus"></i> <span class="d-none d-sm-inline">Novo Post</span>
         </button>
 
-        <button class="btn btn-ghost btn-icon p-relative" data-toggle="modal" data-target="#modalNotifications" aria-label="Notificações">
-          <i class="icon icon-bell"></i>
-          <span class="badge badge-pill badge-red badge-dot" style="position: absolute; top: 6px; right: 6px;"></span>
+        <!-- Central de Atividades Drawer Trigger -->
+        <button class="btn btn-ghost btn-icon p-relative" data-activity-feed-toggle aria-label="Central de Atividades" title="Notificações & Atividades">
+          <svg style="width:1.2rem;height:1.2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+          </svg>
+          <span class="activity-count-badge p-absolute" data-activity-badge style="top:2px;right:2px;font-size:0.65rem;padding:1px 5px;">4</span>
         </button>
 
         <button class="btn btn-ghost btn-icon theme-toggle" data-theme-toggle aria-label="Alternar Tema">
           <i class="icon icon-moon"></i><i class="icon icon-sun"></i>
         </button>
 
+        <!-- Menu do Usuário Dropdown -->
         <div class="dropdown">
-          <button class="btn btn-ghost p-1 dropdown-toggle">
-            <span class="avatar avatar-sm">AD</span>
+          <button class="btn btn-ghost p-1 dropdown-toggle" aria-label="Menu do Usuário">
+            <span class="avatar avatar-sm p-relative">
+              AD
+              <span class="badge badge-green badge-dot p-absolute" style="bottom: 0; right: 0;"></span>
+            </span>
           </button>
           <div class="dropdown-menu dropdown-menu-end">
-            <span class="dropdown-header">Admin Silva</span>
-            <a href="settings.html" class="dropdown-item"><i class="icon icon-user"></i> Ver Perfil</a>
-            <a href="settings.html" class="dropdown-item"><i class="icon icon-settings"></i> Configurações</a>
+            <span class="dropdown-header">Admin Silva (@adminsilva)</span>
+            <a href="index.html" class="dropdown-item"><i class="icon icon-home"></i> Retornar à Home</a>
+            <a href="components.html" class="dropdown-item"><i class="icon icon-settings"></i> Componentes UI</a>
+            <a href="charts.html" class="dropdown-item"><i class="icon icon-activity"></i> Gráficos SVG</a>
             <div class="dropdown-divider"></div>
-            <a href="index.html" class="dropdown-item danger"><i class="icon icon-close"></i> Sair</a>
+            <a href="index.html" class="dropdown-item text-danger"><i class="icon icon-close"></i> Sair</a>
           </div>
         </div>
       </div>
@@ -58,296 +123,491 @@
   </header>
 
   <!-- Main Grid Layout -->
-  <div class="container p-y-5">
-    <div class="grid grid-lg-12 gap-5">
+  <div class="container p-y-4">
+    <div class="grid grid-lg-12 gap-4">
 
-      <!-- LEFT SIDEBAR: Navigation Menu (3 Cols) -->
+      <!-- LEFT SIDEBAR: Navigation Menu & Profile Summary (3 Cols) -->
       <aside class="span-lg-3 d-none d-lg-block">
-        <div class="card p-3 stack gap-2 sticky-top" style="top: 5rem;">
-          <a href="social.html" class="btn btn-ghost justify-content-start gap-3 active w-100">
-            <i class="icon icon-home text-blue"></i> Feed Principal
-          </a>
-          <a href="#explore" class="btn btn-ghost justify-content-start gap-3 w-100">
-            <i class="icon icon-search"></i> Explorar
-          </a>
-          <a href="messages.html" class="btn btn-ghost justify-content-start gap-3 w-100 d-flex justify-content-between">
-            <span class="d-flex align-items-center gap-3"><i class="icon icon-envelope"></i> Mensagens</span>
-            <span class="badge badge-blue">4</span>
-          </a>
-          <a href="#notifications" class="btn btn-ghost justify-content-start gap-3 w-100" data-toggle="modal" data-target="#modalNotifications">
-            <i class="icon icon-bell"></i> Notificações
-          </a>
-          <a href="settings.html" class="btn btn-ghost justify-content-start gap-3 w-100">
-            <i class="icon icon-user"></i> Meu Perfil
-          </a>
+        <div class="sidebar-sticky-box stack gap-3">
 
-          <div class="divider m-y-2"></div>
+          <!-- Mini Profile Card -->
+          <div class="card p-3 shadow-xs stack gap-2" style="background: var(--bg-surface);">
+            <div class="d-flex align-items-center gap-3">
+              <span class="avatar avatar-lg p-relative">
+                AD
+                <span class="badge badge-green badge-dot p-absolute" style="bottom: 1px; right: 1px;"></span>
+              </span>
+              <div>
+                <strong class="d-block f-s-3">Admin Silva</strong>
+                <span class="text-muted f-s-1">@adminsilva &bull; Pro</span>
+              </div>
+            </div>
+            <p class="text-muted f-s-1 m-0">Criando interfaces escaláveis com Frame PER CSS + JS sem dependências.</p>
+            <div class="d-flex justify-content-between p-t-2 border-top f-s-1 text-muted">
+              <div><strong class="text-color d-block f-s-2">1.4k</strong> Seguidores</div>
+              <div><strong class="text-color d-block f-s-2">384</strong> Seguindo</div>
+              <div><strong class="text-color d-block f-s-2">92</strong> Posts</div>
+            </div>
+          </div>
 
-          <span class="sidebar-label px-2">Suas Comunidades</span>
-          <a href="#design" class="btn btn-ghost justify-content-start gap-2 f-s-2 text-muted">
-            <span class="avatar avatar-sm bg-subtle">UI</span> Design System BR
-          </a>
-          <a href="#dev" class="btn btn-ghost justify-content-start gap-2 f-s-2 text-muted">
-            <span class="avatar avatar-sm bg-subtle">JS</span> Frontend Developers
-          </a>
+          <!-- Sticky Navigation Links -->
+          <div class="card p-2 shadow-xs stack gap-1" style="background: var(--bg-surface);">
+            <a href="social.html" class="btn btn-ghost justify-content-start gap-3 active w-100">
+              <i class="icon icon-home text-primary"></i> Feed Principal
+            </a>
+            <a href="#explore" class="btn btn-ghost justify-content-start gap-3 w-100" data-command-palette>
+              <i class="icon icon-search"></i> Explorar & Busca
+            </a>
+            <a href="messages.html" class="btn btn-ghost justify-content-between w-100">
+              <span class="d-flex align-items-center gap-3"><i class="icon icon-envelope"></i> Mensagens</span>
+              <span class="badge badge-primary badge-sm">4</span>
+            </a>
+            <button type="button" class="btn btn-ghost justify-content-between w-100" data-activity-feed-toggle>
+              <span class="d-flex align-items-center gap-3"><i class="icon icon-bell text-amber"></i> Atividades</span>
+              <span class="badge badge-green badge-sm">Novo</span>
+            </button>
+            <a href="components.html" class="btn btn-ghost justify-content-start gap-3 w-100">
+              <i class="icon icon-layers text-purple"></i> Biblioteca UI
+            </a>
+
+            <div class="divider m-y-1"></div>
+
+            <span class="f-s-1 f-w-semibold text-muted px-2 m-t-1">Suas Comunidades</span>
+            <a href="#ui-design" class="btn btn-ghost justify-content-start gap-2 f-s-2 text-muted">
+              <span class="avatar avatar-xs bg-primary text-white">UI</span> Design Systems BR
+            </a>
+            <a href="#frontend-dev" class="btn btn-ghost justify-content-start gap-2 f-s-2 text-muted">
+              <span class="avatar avatar-xs bg-green text-white">JS</span> Vanilla & Performance
+            </a>
+            <a href="#svg-charts" class="btn btn-ghost justify-content-start gap-2 f-s-2 text-muted">
+              <span class="avatar avatar-xs bg-purple text-white">SVG</span> Gráficos Vetoriais
+            </a>
+          </div>
+
+          <!-- Quick Shortcuts Card -->
+          <div class="card p-3 shadow-xs stack gap-2" style="background: var(--bg-surface);">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="f-w-semibold f-s-2 text-muted">Atalhos Frame PER</span>
+              <span class="badge badge-subtle badge-xs">v2.19</span>
+            </div>
+            <div class="stack gap-1 f-s-1">
+              <a href="index.html#split-pane-demo" class="text-muted d-flex align-items-center gap-2">
+                <i class="icon icon-layers text-primary"></i> Split View Refinado
+              </a>
+              <a href="index.html#timeline-demo" class="text-muted d-flex align-items-center gap-2">
+                <i class="icon icon-clock text-green"></i> Timeline Vertical
+              </a>
+              <a href="index.html#kanban-demo" class="text-muted d-flex align-items-center gap-2">
+                <i class="icon icon-layout text-amber"></i> Kanban Board
+              </a>
+              <a href="charts.html" class="text-muted d-flex align-items-center gap-2">
+                <i class="icon icon-activity text-purple"></i> Gráficos Interativos
+              </a>
+            </div>
+          </div>
+
         </div>
       </aside>
 
-      <!-- CENTER CONTENT: Stories & Feed (6 Cols) -->
+      <!-- CENTER CONTENT: Stories, Creator, Tabs & Feed (6 Cols) -->
       <main class="span-lg-6 stack gap-4">
 
-        <!-- Stories Bar (Horizontal Scroll / Carousel) -->
-        <div class="card p-3 overflow-auto">
-          <div class="d-flex gap-3 align-items-center">
-            
+        <!-- Stories Carousel Bar -->
+        <div class="card p-3 shadow-xs" style="background: var(--bg-surface); overflow-x: auto;">
+          <div class="d-flex gap-3 align-items-center" style="min-width: max-content;">
+
             <!-- Create Story -->
-            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.5rem;" data-demo="toast-info">
-              <div class="avatar avatar-lg p-relative bg-subtle border">
+            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.8rem;" data-toggle="modal" data-target="#modalNewPost">
+              <div class="avatar avatar-lg p-relative bg-subtle border m-x-auto d-flex align-items-center justify-content-center">
                 <i class="icon icon-plus text-primary f-s-4"></i>
               </div>
               <span class="f-s-1 text-truncate w-100">Seu Story</span>
             </div>
 
-            <!-- Story Items -->
-            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.5rem;" data-demo="toast-info">
-              <div class="avatar avatar-lg p-1 bg-primary border" style="padding: 2px;">
-                <span class="avatar avatar-lg">AC</span>
+            <!-- Story Items with Rings -->
+            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.8rem;" data-demo="toast-info">
+              <div class="story-ring m-x-auto">
+                <div class="story-ring-inner">
+                  <span class="avatar avatar-md bg-purple text-white">AC</span>
+                </div>
               </div>
               <span class="f-s-1 text-truncate w-100">Ana Clara</span>
             </div>
 
-            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.5rem;" data-demo="toast-info">
-              <div class="avatar avatar-lg p-1 bg-blue border" style="padding: 2px;">
-                <span class="avatar avatar-lg">CE</span>
+            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.8rem;" data-demo="toast-info">
+              <div class="story-ring m-x-auto">
+                <div class="story-ring-inner">
+                  <span class="avatar avatar-md bg-blue text-white">CE</span>
+                </div>
               </div>
               <span class="f-s-1 text-truncate w-100">Carlos E.</span>
             </div>
 
-            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.5rem;" data-demo="toast-info">
-              <div class="avatar avatar-lg p-1 bg-yellow border" style="padding: 2px;">
-                <span class="avatar avatar-lg">FL</span>
+            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.8rem;" data-demo="toast-info">
+              <div class="story-ring m-x-auto">
+                <div class="story-ring-inner">
+                  <span class="avatar avatar-md bg-green text-white">FL</span>
+                </div>
               </div>
               <span class="f-s-1 text-truncate w-100">Fernanda</span>
             </div>
 
-            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.5rem;" data-demo="toast-info">
-              <div class="avatar avatar-lg p-1 bg-green border" style="padding: 2px;">
-                <span class="avatar avatar-lg">RS</span>
+            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.8rem;" data-demo="toast-info">
+              <div class="story-ring m-x-auto">
+                <div class="story-ring-inner">
+                  <span class="avatar avatar-md bg-amber text-white">RS</span>
+                </div>
               </div>
               <span class="f-s-1 text-truncate w-100">Roberto</span>
+            </div>
+
+            <div class="txt-center cursor-pointer stack gap-1 flex-shrink-0" style="width: 4.8rem;" data-demo="toast-info">
+              <div class="story-ring m-x-auto">
+                <div class="story-ring-inner">
+                  <span class="avatar avatar-md bg-red text-white">LM</span>
+                </div>
+              </div>
+              <span class="f-s-1 text-truncate w-100">Lucas M.</span>
             </div>
 
           </div>
         </div>
 
         <!-- Post Creator Box -->
-        <div class="card p-4 stack gap-3">
+        <div class="card p-4 shadow-xs stack gap-3" style="background: var(--bg-surface);">
           <div class="d-flex align-items-center gap-3">
             <span class="avatar">AD</span>
-            <input type="text" class="input input-lg flex-1" placeholder="No que você está pensando, Admin Silva?" data-toggle="modal" data-target="#modalNewPost" readonly>
+            <input type="text" class="input input-lg flex-1" placeholder="No que você está trabalhando hoje, Admin?" data-toggle="modal" data-target="#modalNewPost" readonly style="cursor: pointer;">
           </div>
-          
-          <div class="divider"></div>
+
+          <div class="divider m-y-1"></div>
 
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div class="cluster gap-2">
-              <button class="btn btn-ghost btn-sm text-muted d-flex align-items-center gap-1" data-toggle="modal" data-target="#modalNewPost">
-                <i class="icon icon-plus text-blue"></i> Foto / Mídia
+              <button type="button" class="btn btn-ghost btn-sm text-muted d-flex align-items-center gap-1" data-toggle="modal" data-target="#modalNewPost">
+                <i class="icon icon-upload text-primary"></i> Foto / Mídia
               </button>
-              <button class="btn btn-ghost btn-sm text-muted d-flex align-items-center gap-1" data-toggle="modal" data-target="#modalNewPost">
-                <i class="icon icon-star text-yellow"></i> Enquete
+              <button type="button" class="btn btn-ghost btn-sm text-muted d-flex align-items-center gap-1" data-toggle="modal" data-target="#modalNewPost">
+                <i class="icon icon-code text-green"></i> Snippet de Código
               </button>
-              <button class="btn btn-ghost btn-sm text-muted d-flex align-items-center gap-1" data-toggle="modal" data-target="#modalNewPost">
-                <i class="icon icon-check text-green"></i> Evento
+              <button type="button" class="btn btn-ghost btn-sm text-muted d-flex align-items-center gap-1" data-toggle="modal" data-target="#modalNewPost">
+                <i class="icon icon-clock text-purple"></i> Evento / Milestone
               </button>
             </div>
-            <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNewPost">Publicar</button>
+            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNewPost">
+              Publicar
+            </button>
           </div>
         </div>
 
-        <!-- POST 1: Tech & Code Showcase -->
-        <article class="card p-4 stack gap-3">
+        <!-- Feed Tabs (FramePER.Tabs com slider dinâmico) -->
+        <div class="card p-2 shadow-xs" style="background: var(--bg-surface);">
+          <div class="tabs tabs-pills" id="feed-filter-tabs">
+            <button class="tab-item active" data-tab="tab-for-you">
+              <i class="icon icon-flame text-amber m-r-1"></i> Para Você
+            </button>
+            <button class="tab-item" data-tab="tab-following">
+              <i class="icon icon-user text-primary m-r-1"></i> Seguindo
+            </button>
+            <button class="tab-item" data-tab="tab-tech">
+              <i class="icon icon-code text-green m-r-1"></i> Tópicos Tech
+            </button>
+            <button class="tab-item" data-tab="tab-media">
+              <i class="icon icon-camera text-purple m-r-1"></i> Mídia
+            </button>
+          </div>
+        </div>
+
+        <!-- POST 1: Tech & Component Showcase com Popover e Context Menu -->
+        <article class="card p-4 shadow-xs stack gap-3" style="background: var(--bg-surface);" data-post-id="post-1">
           <!-- Post Author Header -->
           <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-              <span class="avatar">AC</span>
+              <!-- Avatar com Popover Inteligente -->
+              <span class="avatar bg-primary text-white cursor-pointer" data-popover data-popover-title="Ana Clara Silva" data-popover-content="Desenvolvedora Frontend Senior especializada em UI Systems e SVG puro. 1.8k seguidores." data-popover-pos="top">AC</span>
               <div>
                 <div class="d-flex align-items-center gap-1">
-                  <span class="f-w-semibold">Ana Clara Silva</span>
-                  <i class="icon icon-check text-blue f-s-1" title="Perfil Verificado"></i>
+                  <span class="f-w-semibold cursor-pointer" data-popover data-popover-title="Ana Clara Silva" data-popover-content="Desenvolvedora Frontend Senior. Segue 240 pessoas e já publicou 114 artigos." data-popover-pos="right">Ana Clara Silva</span>
+                  <i class="icon icon-check text-primary f-s-1" title="Perfil Verificado"></i>
                 </div>
-                <small class="text-muted">Desenvolvedora Frontend &bull; há 15 min</small>
+                <small class="text-muted">Desenvolvedora Frontend &bull; há 15 min &bull; 🌐 Público</small>
               </div>
             </div>
 
-            <button class="btn btn-ghost btn-icon btn-sm" aria-label="Opções"><i class="icon icon-settings"></i></button>
+            <!-- Botão de opções com Context Menu / Dropdown -->
+            <div class="dropdown">
+              <button class="btn btn-ghost btn-icon btn-sm dropdown-toggle" aria-label="Opções do Post">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a href="javascript:void(0)" class="dropdown-item" onclick="FramePER.Notify.success('Link Copiado', 'Link do post copiado para a área de transferência!')">
+                  <i class="icon icon-link"></i> Copiar Link
+                </a>
+                <a href="javascript:void(0)" class="dropdown-item" onclick="FramePER.Notify.info('Favoritos', 'Publicação salva nos seus itens favoritos.')">
+                  <i class="icon icon-bookmark"></i> Salvar Post
+                </a>
+                <a href="javascript:void(0)" class="dropdown-item" onclick="FramePER.Notify.info('Silenciado', 'Você não verá mais publicações de Ana Clara.')">
+                  <i class="icon icon-bell-off"></i> Silenciar Autora
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="FramePER.Notify.warning('Denúncia', 'Publicação enviada para análise da moderação.')">
+                  <i class="icon icon-shield"></i> Denunciar
+                </a>
+              </div>
+            </div>
           </div>
 
-          <!-- Post Content Text -->
-          <p class="m-0">
-            Acabamos de lançar a versão 2.1 do <strong>Frame PER</strong>! O suporte a tabelas inteligentes com ordenação nativa e modais laterais ficou incrível. O que acharam do tema escuro? 🚀✨
+          <!-- Post Content -->
+          <p class="m-0 leading-relaxed">
+            Acabamos de integrar o novo <strong>Split View com Painéis Redimensionáveis</strong> e o componente <strong>Timeline Vertical</strong> na suíte do Frame PER v2.19! O divisor agora conta com feedback dinâmico de porcentagem, suporte a teclado (setas & home/end) e transições suaves de redimensionamento. 🚀✨
           </p>
 
           <!-- Hashtags -->
           <div class="cluster gap-2">
-            <span class="badge badge-blue">#FramePER</span>
-            <span class="badge badge-blue">#WebDev</span>
-            <span class="badge badge-blue">#DesignSystem</span>
+            <span class="badge badge-primary">#FramePER</span>
+            <span class="badge badge-green">#SplitView</span>
+            <span class="badge badge-purple">#Timeline</span>
+            <span class="badge badge-subtle">#ZeroDependencies</span>
           </div>
 
-          <!-- Offline Vector SVG Image Showcase -->
-          <div class="card bg-subtle p-0 overflow-hidden border d-flex align-items-center justify-content-center p-y-6">
-            <svg width="100%" height="220" viewBox="0 0 600 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="600" height="220" rx="8" fill="var(--bg-surface)"/>
-              <circle cx="300" cy="110" r="70" fill="var(--primary)" opacity="0.15"/>
-              <path d="M260 85L220 110L260 135" stroke="var(--primary)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M340 85L380 110L340 135" stroke="var(--primary)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M310 75L290 145" stroke="var(--primary)" stroke-width="6" stroke-linecap="round"/>
-              <text x="300" y="190" text-anchor="middle" fill="var(--text-main)" font-size="16" font-family="Inter, sans-serif" font-weight="600">Frame PER UI Component System</text>
+          <!-- Offline Vector SVG Showcase Banner -->
+          <div class="card bg-subtle p-0 overflow-hidden border d-flex align-items-center justify-content-center" style="min-height: 180px;">
+            <svg width="100%" height="200" viewBox="0 0 600 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="600" height="200" rx="8" fill="var(--bg-surface)"/>
+              <rect x="30" y="30" width="240" height="140" rx="6" fill="var(--bg-subtle)" stroke="var(--border-color)"/>
+              <rect x="280" y="30" width="10" height="140" rx="5" fill="var(--primary)"/>
+              <rect x="300" y="30" width="270" height="140" rx="6" fill="var(--bg-subtle)" stroke="var(--border-color)"/>
+              <circle cx="285" cy="100" r="14" fill="var(--primary)"/>
+              <path d="M281 96L277 100L281 104M289 96L293 100L289 104" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="150" y="105" text-anchor="middle" fill="var(--text-color)" font-size="13" font-family="Inter, sans-serif" font-weight="600">Painel 1 (45%)</text>
+              <text x="435" y="105" text-anchor="middle" fill="var(--text-color)" font-size="13" font-family="Inter, sans-serif" font-weight="600">Painel 2 (55%)</text>
             </svg>
           </div>
 
-          <!-- Interaction Stats & Buttons Bar -->
-          <div class="d-flex align-items-center justify-content-between text-muted f-s-2 p-y-1 border-top border-bottom">
-            <span>❤️ <strong>142</strong> curtidas</span>
+          <!-- Interaction Stats & Action Bar -->
+          <div class="d-flex align-items-center justify-content-between text-muted f-s-2 p-y-2 border-top border-bottom">
+            <span>❤️ <strong id="post-1-likes">142</strong> curtidas</span>
             <div class="cluster gap-3">
               <span>💬 28 comentários</span>
-              <span>🔄 12 compart.</span>
+              <span>🔄 12 compartilhamentos</span>
             </div>
           </div>
 
           <div class="d-flex align-items-center justify-content-around">
-            <button class="btn btn-ghost btn-sm text-muted gap-2" data-demo="toast-success"><i class="icon icon-star text-red"></i> Curtir</button>
-            <button class="btn btn-ghost btn-sm text-muted gap-2"><i class="icon icon-envelope"></i> Comentar</button>
-            <button class="btn btn-ghost btn-sm text-muted gap-2" data-demo="toast-info"><i class="icon icon-arrow-right"></i> Compartilhar</button>
+            <button type="button" class="social-post-action" id="btn-like-post-1">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <span>Curtir</span>
+            </button>
+            <button type="button" class="social-post-action" onclick="document.getElementById('comment-box-1').focus()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              <span>Comentar</span>
+            </button>
+            <button type="button" class="social-post-action" onclick="FramePER.Notify.info('Compartilhado', 'Link do post compartilhado!')">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Compartilhar</span>
+            </button>
           </div>
 
           <!-- Comments Section Preview -->
-          <div class="stack gap-2 bg-subtle p-3 rounded m-t-2">
+          <div class="stack gap-2 bg-subtle p-3 rounded">
             <div class="d-flex align-items-start gap-2">
-              <span class="avatar avatar-sm">CE</span>
+              <span class="avatar avatar-sm bg-blue text-white">CE</span>
               <div class="bg-surface p-2 rounded border flex-1 f-s-2">
-                <strong class="d-block">Carlos Eduardo</strong>
-                Ficou espetacular! As animações dos modais laterais são super suaves.
+                <strong class="d-block text-color">Carlos Eduardo</strong>
+                Ficou espetacular! O arraste do divisor com snap e o suporte a setas de acessibilidade ficaram perfeitos.
               </div>
             </div>
 
             <!-- Comment Input -->
             <div class="d-flex align-items-center gap-2 m-t-1">
               <span class="avatar avatar-sm">AD</span>
-              <input type="text" class="input input-sm flex-1" placeholder="Escreva um comentário...">
-              <button class="btn btn-primary btn-sm" data-demo="toast-success"><i class="icon icon-arrow-right"></i></button>
+              <input type="text" id="comment-box-1" class="input input-sm flex-1" placeholder="Escreva uma resposta pública...">
+              <button class="btn btn-primary btn-sm" onclick="FramePER.Notify.success('Comentário', 'Seu comentário foi publicado com sucesso!')">
+                <i class="icon icon-check"></i>
+              </button>
             </div>
           </div>
         </article>
 
-        <!-- POST 2: Community Announcement -->
-        <article class="card p-4 stack gap-3">
+        <!-- POST 2: Roadmap com Timeline Vertical (FramePER.Timeline) -->
+        <article class="card p-4 shadow-xs stack gap-3" style="background: var(--bg-surface);" data-post-id="post-2">
           <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-              <span class="avatar bg-blue">JS</span>
+              <span class="avatar bg-green text-white">FP</span>
               <div>
-                <span class="f-w-semibold">Frontend Developers BR</span>
-                <small class="text-muted d-block">Publicado por Roberto Santos &bull; há 2 horas</small>
+                <div class="d-flex align-items-center gap-1">
+                  <span class="f-w-semibold">Time Frame PER Core</span>
+                  <span class="badge badge-green badge-xs">Oficial</span>
+                </div>
+                <small class="text-muted">Publicado há 1 hora &bull; Novidades</small>
               </div>
             </div>
-            <button class="btn btn-outline btn-sm">Participar</button>
+            <span class="badge badge-primary badge-sm">Roadmap 2026</span>
           </div>
 
-          <p class="m-0">
-            Atenção comunidade! O workshop online sobre CSS moderno sem dependências acontece nesta quinta-feira às 19:00. Vagas limitadas!
+          <p class="m-0 leading-relaxed">
+            Confira a evolução recente da plataforma com o componente nativo <strong>FramePER.Timeline</strong> integrado diretamente neste post:
           </p>
 
-          <div class="d-flex align-items-center justify-content-between text-muted f-s-2 p-y-1 border-top border-bottom">
-            <span>❤️ <strong>89</strong> curtidas</span>
-            <span>💬 14 comentários</span>
+          <!-- Embedded Native Timeline Component -->
+          <div class="p-3 bg-subtle rounded border">
+            <ul class="timeline timeline-compact" data-timeline data-compact="true">
+              <li class="timeline-item is-completed">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div class="timeline-connector is-completed"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">v2.17.0 · Data Grid Dinâmico</h4>
+                    <span class="timeline-time">Entregue</span>
+                  </div>
+                  <p class="timeline-body">Ordenação multi-coluna, paginação client-side e exportação CSV/JSON.</p>
+                </div>
+              </li>
+
+              <li class="timeline-item is-completed">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div class="timeline-connector is-completed"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">v2.18.0 · Kanban Board Drag-and-Drop</h4>
+                    <span class="timeline-time">Entregue</span>
+                  </div>
+                  <p class="timeline-body">Arraste suave de cartões entre colunas e persistência em localStorage.</p>
+                </div>
+              </li>
+
+              <li class="timeline-item is-active">
+                <div class="timeline-axis">
+                  <div class="timeline-point point-primary has-pulse">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div class="timeline-connector is-dashed"></div>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h4 class="timeline-title">v2.19.0 · Timeline & Split View Otimizado</h4>
+                    <span class="badge badge-primary badge-xs">Atual</span>
+                    <span class="timeline-time">Agora</span>
+                  </div>
+                  <p class="timeline-body">Conectores verticais inteligentes, pulse reativo e SplitPane desktop-class.</p>
+                </div>
+              </li>
+            </ul>
           </div>
 
-          <div class="d-flex align-items-center justify-content-around">
-            <button class="btn btn-ghost btn-sm text-muted gap-2" data-demo="toast-success"><i class="icon icon-star text-red"></i> Curtir</button>
-            <button class="btn btn-ghost btn-sm text-muted gap-2"><i class="icon icon-envelope"></i> Comentar</button>
+          <div class="d-flex align-items-center justify-content-between text-muted f-s-2 p-y-2 border-top">
+            <span>❤️ <strong>98</strong> curtidas</span>
+            <span>💬 19 comentários</span>
           </div>
         </article>
 
       </main>
 
-      <!-- RIGHT SIDEBAR: Trends & Suggestions (3 Cols) -->
+      <!-- RIGHT SIDEBAR: Trends, Weekly Analytics & Suggestions (3 Cols) -->
       <aside class="span-lg-3 d-none d-lg-block">
-        <div class="stack gap-4 sticky-top" style="top: 5rem;">
+        <div class="sidebar-sticky-box stack gap-3">
 
           <!-- Trending Topics Card -->
-          <div class="card p-4 stack gap-3">
-            <h3 class="card-title f-s-4">Assuntos do Momento</h3>
-            
+          <div class="card p-3 shadow-xs stack gap-2" style="background: var(--bg-surface);">
+            <div class="d-flex justify-content-between align-items-center">
+              <strong class="f-s-3">Assuntos do Momento</strong>
+              <i class="icon icon-flame text-amber"></i>
+            </div>
+
             <div class="stack gap-2 f-s-2">
-              <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex justify-content-between align-items-center cursor-pointer" onclick="FramePER.Notify.info('Tópico', 'Filtrando posts com #FramePER219')">
                 <div>
-                  <strong class="d-block text-main">#FramePER2.1</strong>
-                  <span class="text-muted f-s-1">14.2k publicações</span>
+                  <strong class="d-block text-color">#FramePER219</strong>
+                  <span class="text-muted f-s-1">18.4k publicações</span>
                 </div>
-                <i class="icon icon-arrow-right text-muted f-s-1"></i>
+                <span class="badge badge-subtle badge-xs">+32%</span>
               </div>
 
-              <div class="divider"></div>
+              <div class="divider m-y-0"></div>
 
-              <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex justify-content-between align-items-center cursor-pointer" onclick="FramePER.Notify.info('Tópico', 'Filtrando posts com #SplitView')">
                 <div>
-                  <strong class="d-block text-main">#SideModals</strong>
-                  <span class="text-muted f-s-1">8.9k publicações</span>
+                  <strong class="d-block text-color">#SplitView</strong>
+                  <span class="text-muted f-s-1">9.2k publicações</span>
                 </div>
-                <i class="icon icon-arrow-right text-muted f-s-1"></i>
+                <span class="badge badge-subtle badge-xs">Trending</span>
               </div>
 
-              <div class="divider"></div>
+              <div class="divider m-y-0"></div>
 
-              <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex justify-content-between align-items-center cursor-pointer" onclick="FramePER.Notify.info('Tópico', 'Filtrando posts com #TimelineVertical')">
                 <div>
-                  <strong class="d-block text-main">#WebDesign2026</strong>
-                  <span class="text-muted f-s-1">22.4k publicações</span>
+                  <strong class="d-block text-color">#TimelineVertical</strong>
+                  <span class="text-muted f-s-1">6.1k publicações</span>
                 </div>
-                <i class="icon icon-arrow-right text-muted f-s-1"></i>
+                <span class="badge badge-subtle badge-xs">Novo</span>
               </div>
             </div>
           </div>
 
-          <!-- Suggested Follows -->
-          <div class="card p-4 stack gap-3">
-            <h3 class="card-title f-s-4">Quem Seguir</h3>
+          <!-- Weekly Social Analytics Card (FramePER.Chart SVG) -->
+          <div class="card p-3 shadow-xs stack gap-2" style="background: var(--bg-surface);">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong class="f-s-3">Alcance do Seu Perfil</strong>
+                <span class="text-muted f-s-1 d-block">+34% vs semana anterior</span>
+              </div>
+              <span class="badge badge-green badge-sm">7 Dias</span>
+            </div>
+
+            <div style="height: 110px;" id="social-mini-chart" data-chart="area" data-chart-data='{"labels":["Seg","Ter","Qua","Qui","Sex","Sab","Dom"],"series":[{"name":"Visualizações","color":"#2563eb","values":[120,180,240,210,310,290,380]}]}'></div>
+          </div>
+
+          <!-- Suggested Connections Card -->
+          <div class="card p-3 shadow-xs stack gap-2" style="background: var(--bg-surface);">
+            <strong class="f-s-3">Quem Seguir</strong>
 
             <div class="stack gap-3">
               <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
-                  <span class="avatar avatar-sm">FL</span>
+                  <span class="avatar avatar-sm bg-purple text-white">FL</span>
                   <div>
-                    <span class="f-w-medium f-s-2 d-block">Fernanda Lima</span>
-                    <small class="text-muted f-s-1">Em comum: 12 amigos</small>
+                    <span class="f-w-semibold f-s-2 d-block">Fernanda Lima</span>
+                    <small class="text-muted f-s-1">12 amigos em comum</small>
                   </div>
                 </div>
-                <button class="btn btn-outline btn-sm" data-demo="toast-success">Seguir</button>
+                <button class="btn btn-outline btn-xs" onclick="this.textContent = 'Seguindo'; this.classList.remove('btn-outline'); this.classList.add('btn-ghost'); FramePER.Notify.success('Conexão', 'Você agora segue Fernanda Lima!')">Seguir</button>
               </div>
 
               <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
-                  <span class="avatar avatar-sm">LM</span>
+                  <span class="avatar avatar-sm bg-amber text-white">LM</span>
                   <div>
-                    <span class="f-w-medium f-s-2 d-block">Lucas Mendes</span>
-                    <small class="text-muted f-s-1">Em comum: 8 amigos</small>
+                    <span class="f-w-semibold f-s-2 d-block">Lucas Mendes</span>
+                    <small class="text-muted f-s-1">Dev UI em SP</small>
                   </div>
                 </div>
-                <button class="btn btn-outline btn-sm" data-demo="toast-success">Seguir</button>
+                <button class="btn btn-outline btn-xs" onclick="this.textContent = 'Seguindo'; this.classList.remove('btn-outline'); this.classList.add('btn-ghost'); FramePER.Notify.success('Conexão', 'Você agora segue Lucas Mendes!')">Seguir</button>
               </div>
             </div>
           </div>
 
-          <!-- Online Friends List -->
-          <div class="card p-4 stack gap-2">
-            <h3 class="card-title f-s-4 m-b-1">Amigos Online (6)</h3>
+          <!-- Online Friends Card -->
+          <div class="card p-3 shadow-xs stack gap-2" style="background: var(--bg-surface);">
+            <div class="d-flex justify-content-between align-items-center">
+              <strong class="f-s-3">Conexões Online</strong>
+              <span class="badge badge-green badge-dot">6 ativos</span>
+            </div>
 
             <div class="cluster gap-2">
-              <span class="avatar avatar-sm p-relative" title="Ana Clara (Online)">AC <span class="badge badge-green badge-dot" style="position:absolute; bottom:0; right:0;"></span></span>
-              <span class="avatar avatar-sm p-relative" title="Carlos Eduardo (Online)">CE <span class="badge badge-green badge-dot" style="position:absolute; bottom:0; right:0;"></span></span>
-              <span class="avatar avatar-sm p-relative" title="Roberto Santos (Online)">RS <span class="badge badge-green badge-dot" style="position:absolute; bottom:0; right:0;"></span></span>
-              <span class="avatar avatar-sm p-relative" title="Juliana Costa (Online)">JC <span class="badge badge-green badge-dot" style="position:absolute; bottom:0; right:0;"></span></span>
+              <span class="avatar avatar-sm bg-primary text-white p-relative" title="Ana Clara (Online)">AC <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
+              <span class="avatar avatar-sm bg-blue text-white p-relative" title="Carlos Eduardo (Online)">CE <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
+              <span class="avatar avatar-sm bg-green text-white p-relative" title="Roberto Santos (Online)">RS <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
+              <span class="avatar avatar-sm bg-purple text-white p-relative" title="Juliana Costa (Online)">JC <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
+              <span class="avatar avatar-sm bg-amber text-white p-relative" title="Thiago Silva (Online)">TS <span class="badge badge-green badge-dot p-absolute" style="bottom:0; right:0;"></span></span>
             </div>
           </div>
 
@@ -357,55 +617,13 @@
     </div>
   </div>
 
-  <!-- SIDE MODAL: Notifications Drawer (Right Side Modal) -->
-  <div id="modalNotifications" class="modal modal-side modal-side-right">
-    <div class="modal-content stack gap-4">
-      <div class="modal-header">
-        <h3 class="modal-title">Notificações Recentes</h3>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
-      </div>
-      <div class="modal-body stack gap-3">
-        <div class="alert alert-blue p-3 d-flex align-items-start gap-2">
-          <i class="icon icon-star text-blue f-s-3"></i>
-          <div>
-            <strong class="d-block text-main">Ana Clara curtiu seu post</strong>
-            <small class="text-muted">há 5 minutos</small>
-          </div>
-        </div>
-
-        <div class="alert alert-green p-3 d-flex align-items-start gap-2">
-          <i class="icon icon-check text-green f-s-3"></i>
-          <div>
-            <strong class="d-block text-main">Carlos comentou no seu arquivo</strong>
-            <small class="text-muted">há 40 minutos</small>
-          </div>
-        </div>
-
-        <div class="card p-3 bg-subtle stack gap-2">
-          <span class="f-w-semibold f-s-2 text-main">Solicitação de Amizade</span>
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-2">
-              <span class="avatar avatar-sm">LM</span>
-              <span class="f-s-2">Lucas Mendes</span>
-            </div>
-            <div class="cluster gap-1">
-              <button class="btn btn-primary btn-sm" data-dismiss="modal" data-demo="toast-success">Aceitar</button>
-              <button class="btn btn-ghost btn-sm danger" data-dismiss="modal">Recusar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary w-100" data-dismiss="modal">Fechar Painel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: Create New Post -->
+  <!-- MODAL: Create New Post com File Uploader Integrado -->
   <div id="modalNewPost" class="modal">
-    <div class="modal-content stack gap-4" style="max-width: 32rem;">
+    <div class="modal-content stack gap-3" style="max-width: 34rem;">
       <div class="modal-header">
-        <h3 class="modal-title">Criar Publicação</h3>
+        <h3 class="modal-title d-flex align-items-center gap-2">
+          <i class="icon icon-plus text-primary"></i> Criar Nova Publicação
+        </h3>
         <button class="modal-close" data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body stack gap-3">
@@ -413,29 +631,68 @@
           <span class="avatar">AD</span>
           <div>
             <span class="f-w-semibold d-block">Admin Silva</span>
-            <span class="badge badge-blue">Público</span>
+            <span class="badge badge-primary badge-xs">Público para Todos</span>
           </div>
         </div>
 
-        <textarea class="input" rows="4" placeholder="O que você quer compartilhar hoje com a comunidade?" style="resize: none;"></textarea>
+        <textarea class="input" rows="3" placeholder="No que você quer compartilhar hoje com a comunidade?" style="resize: none;" id="new-post-content"></textarea>
 
-        <div class="card p-3 bg-subtle d-flex align-items-center justify-content-between flex-wrap gap-2 border">
-          <span class="f-s-2 text-muted">Adicionar à sua publicação:</span>
-          <div class="cluster gap-2">
-            <button class="btn btn-ghost btn-icon btn-sm text-blue" title="Foto"><i class="icon icon-plus"></i></button>
-            <button class="btn btn-ghost btn-icon btn-sm text-yellow" title="Enquete"><i class="icon icon-star"></i></button>
-            <button class="btn btn-ghost btn-icon btn-sm text-green" title="Localização"><i class="icon icon-check"></i></button>
+        <!-- File Uploader Integrado (FramePER.Upload) -->
+        <div>
+          <label class="form-label f-s-2 text-muted m-b-1">Anexar Mídia ou Foto</label>
+          <div class="file-uploader" data-uploader data-uploader-max-size="5MB" data-uploader-accept="image/*,.pdf" style="min-height: 120px;">
+            <div class="uploader-dropzone p-3 txt-center border border-dashed rounded bg-subtle cursor-pointer">
+              <i class="icon icon-upload text-primary f-s-4 m-b-1"></i>
+              <div class="f-s-2 text-color f-w-medium">Arraste fotos ou clique para navegar</div>
+              <small class="text-muted f-s-1">PNG, JPG, SVG ou WEBP até 5MB</small>
+            </div>
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-        <button class="btn btn-primary" data-dismiss="modal" data-demo="toast-success">Publicar Agora</button>
+        <button class="btn btn-primary" id="btn-submit-new-post" data-dismiss="modal">Publicar Agora</button>
       </div>
     </div>
   </div>
 
+  <footer class="container p-y-4 txt-center f-s-2 text-muted">
+    Frame PER v2.19.0 · Rede Social com Componentes Vanilla JS, SCSS & SVG Nativo
+  </footer>
+
   <script src="../dist/framePER.min.js"></script>
   <script src="demo.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Like Toggle
+      var btnLike = document.getElementById('btn-like-post-1');
+      var likesCountEl = document.getElementById('post-1-likes');
+      if (btnLike && likesCountEl) {
+        var isLiked = false;
+        var count = 142;
+        btnLike.addEventListener('click', function () {
+          isLiked = !isLiked;
+          count += isLiked ? 1 : -1;
+          likesCountEl.textContent = count;
+          btnLike.classList.toggle('is-liked', isLiked);
+          if (window.FramePER && window.FramePER.Notify) {
+            window.FramePER.Notify.info('Reação', isLiked ? 'Você curtiu esta publicação!' : 'Curtida removida.');
+          }
+        });
+      }
+
+      // New Post Submission
+      var btnSubmitPost = document.getElementById('btn-submit-new-post');
+      if (btnSubmitPost) {
+        btnSubmitPost.addEventListener('click', function () {
+          var input = document.getElementById('new-post-content');
+          if (window.FramePER && window.FramePER.Notify) {
+            window.FramePER.Notify.success('Publicação Criada', 'Seu post foi compartilhado com sucesso no feed!');
+          }
+          if (input) input.value = '';
+        });
+      }
+    });
+  </script>
 </body>
 </html>

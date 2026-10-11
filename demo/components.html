@@ -58,8 +58,17 @@
 
     <!-- Sticky Table of Contents -->
     <aside class="docs-nav stack gap-1">
-      <span class="sidebar-label">Componentes</span>
-      <a href="#sec-buttons" class="active">Botões & Grupos</a>
+      <span class="sidebar-label">Navegação Rápida</span>
+      <a href="#sec-split-pane" class="active"><span class="badge badge-purple badge-xs">v2.19</span> Split View</a>
+      <a href="#sec-timeline"><span class="badge badge-primary badge-xs">v2.19</span> Timeline Vertical</a>
+      <a href="#sec-kanban"><span class="badge badge-primary badge-xs">v2.18</span> Kanban Board</a>
+      <a href="#sec-datagrid"><span class="badge badge-primary badge-xs">v2.17</span> Data Grid</a>
+      <a href="#sec-treeview"><span class="badge badge-primary badge-xs">v2.16</span> Tree View</a>
+      <a href="#sec-uploader"><span class="badge badge-subtle badge-xs">Novo</span> File Uploader</a>
+      <a href="#sec-popovers"><span class="badge badge-subtle badge-xs">Novo</span> Popovers</a>
+      <div class="divider m-y-1"></div>
+      <span class="sidebar-label">Componentes Base</span>
+      <a href="#sec-buttons">Botões & Grupos</a>
       <a href="#sec-forms">Formulários & Máscaras</a>
       <a href="#sec-datepicker">Datepicker & Select</a>
       <a href="#sec-tooltips">Tooltips Flutuantes</a>
@@ -72,7 +81,7 @@
       <a href="#sec-stepper">Steppers de Progresso</a>
       <a href="#sec-skeleton">Skeleton Loading</a>
       <a href="#sec-tabs">Abas & Navegação</a>
-      <a href="#sec-accordions">Acordeão</a>
+      <a href="#sec-accordions">Acordeão Fluido</a>
       <a href="#sec-tables">Tabelas Interativas</a>
       <a href="#sec-overlays">Modais & Offcanvas</a>
       <a href="#sec-js">Toasts & Loaders</a>
@@ -80,6 +89,226 @@
 
     <!-- Content Sections -->
     <main class="stack gap-6">
+
+      <!-- Split View & Painéis Redimensionáveis (v2.19) -->
+      <section id="sec-split-pane" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Split View & Painéis Redimensionáveis</h2>
+          <span class="badge badge-purple badge-sm">v2.19</span>
+        </div>
+        <p class="lead">Divisores ajustáveis com arraste suave, suporte completo a teclado (setas & Home/End), duplo clique para colapsar, transição suave e badge dinâmica de porcentagem.</p>
+
+        <div class="preview stack gap-3">
+          <div class="split-pane" data-split-pane data-initial-split="35" data-min-size="15%" data-max-size="85%" style="height: 240px; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+            <div class="split-panel bg-subtle p-3 stack gap-2">
+              <span class="f-w-semibold f-s-2 text-muted">Painel Lateral (35%)</span>
+              <p class="f-s-2 text-muted m-0">Arraste o divisor central ou dê duplo clique no divisor para alternar o colapso.</p>
+            </div>
+            <div class="split-gutter">
+              <div class="gutter-handle"></div>
+            </div>
+            <div class="split-panel p-3 stack gap-2 bg-surface">
+              <span class="f-w-semibold f-s-2">Área Principal (65%)</span>
+              <p class="f-s-2 text-muted m-0">Use o teclado: selecione o divisor com Tab e aperte &larr; / &rarr; para ajustar a proporção.</p>
+            </div>
+          </div>
+        </div>
+        <pre><code><span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"split-pane"</span> <span class="tok-f">data-split-pane</span> <span class="tok-f">data-initial-split</span>=<span class="tok-s">"35"</span> <span class="tok-f">data-min-size</span>=<span class="tok-s">"15%"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"split-panel"</span><span class="tok-k">&gt;</span>Painel Lateral<span class="tok-k">&lt;/div&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"split-gutter"</span><span class="tok-k">&gt;&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"gutter-handle"</span><span class="tok-k">&gt;&lt;/div&gt;&lt;/div&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"split-panel"</span><span class="tok-k">&gt;</span>Área Principal<span class="tok-k">&lt;/div&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+      <!-- Timeline / Linha do Tempo Vertical (v2.19) -->
+      <section id="sec-timeline" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Timeline / Linha do Tempo Vertical</h2>
+          <span class="badge badge-primary badge-sm">v2.19</span>
+        </div>
+        <p class="lead">Linha cronológica com conectores verticais, ícones semânticos, variantes de cor, pulse animado e atualização dinâmica de status.</p>
+
+        <div class="preview stack gap-3">
+          <ul class="timeline timeline-compact" data-timeline data-compact="true">
+            <li class="timeline-item is-completed">
+              <div class="timeline-axis">
+                <div class="timeline-point point-success">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="timeline-connector is-completed"></div>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <h4 class="timeline-title">Etapa 1 · Inicialização</h4>
+                  <span class="timeline-time">Concluído</span>
+                </div>
+                <p class="timeline-body">Módulos carregados e validados.</p>
+              </div>
+            </li>
+            <li class="timeline-item is-active">
+              <div class="timeline-axis">
+                <div class="timeline-point point-primary has-pulse">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="timeline-connector is-dashed"></div>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <h4 class="timeline-title">Etapa 2 · Execução em Andamento</h4>
+                  <span class="badge badge-primary badge-xs">Ativo</span>
+                </div>
+                <p class="timeline-body">Processamento de dados com anel pulsante suave.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <pre><code><span class="tok-k">&lt;ul</span> <span class="tok-f">class</span>=<span class="tok-s">"timeline timeline-compact"</span> <span class="tok-f">data-timeline</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;li</span> <span class="tok-f">class</span>=<span class="tok-s">"timeline-item is-completed"</span><span class="tok-k">&gt;</span>...<span class="tok-k">&lt;/li&gt;</span>
+  <span class="tok-k">&lt;li</span> <span class="tok-f">class</span>=<span class="tok-s">"timeline-item is-active"</span><span class="tok-k">&gt;</span>...<span class="tok-k">&lt;/li&gt;</span>
+<span class="tok-k">&lt;/ul&gt;</span></code></pre>
+      </section>
+
+      <!-- Kanban Board Drag-and-Drop (v2.18) -->
+      <section id="sec-kanban" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Kanban Board Drag-and-Drop</h2>
+          <span class="badge badge-primary badge-sm">v2.18</span>
+        </div>
+        <p class="lead">Quadro ágil desktop-class com arraste suave de cartões entre colunas, contadores reativos e persistência local.</p>
+
+        <div class="preview">
+          <div class="kanban-board" data-kanban style="min-height: 200px;">
+            <div class="kanban-column" data-column-id="demo-todo">
+              <div class="kanban-column-header">
+                <h4 class="kanban-column-title"><span class="kanban-column-dot" style="background: var(--amber);"></span> A Fazer</h4>
+                <span class="kanban-count">1</span>
+              </div>
+              <div class="kanban-column-body">
+                <div class="kanban-card" data-card-id="card-c1">
+                  <div class="kanban-card-title">Criar Componente</div>
+                  <div class="kanban-card-desc">Arraste para a coluna ao lado.</div>
+                </div>
+              </div>
+            </div>
+            <div class="kanban-column" data-column-id="demo-done">
+              <div class="kanban-column-header">
+                <h4 class="kanban-column-title"><span class="kanban-column-dot" style="background: var(--green);"></span> Concluído</h4>
+                <span class="kanban-count">0</span>
+              </div>
+              <div class="kanban-column-body"></div>
+            </div>
+          </div>
+        </div>
+        <pre><code><span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"kanban-board"</span> <span class="tok-f">data-kanban</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"kanban-column"</span> <span class="tok-f">data-column-id</span>=<span class="tok-s">"todo"</span><span class="tok-k">&gt;</span>...<span class="tok-k">&lt;/div&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+      <!-- Data Grid Dinâmico (v2.17) -->
+      <section id="sec-datagrid" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Data Grid Dinâmico</h2>
+          <span class="badge badge-primary badge-sm">v2.17</span>
+        </div>
+        <p class="lead">Grade de dados de alta performance com ordenação multi-coluna, paginação client-side, busca global e exportação CSV/JSON.</p>
+
+        <div class="preview">
+          <table class="table table-striped" data-grid data-page-size="3" data-searchable="true">
+            <thead>
+              <tr>
+                <th data-field="nome" class="sortable">Nome</th>
+                <th data-field="cargo" class="sortable">Cargo</th>
+                <th data-field="status">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Camila Dias</td><td>Tech Lead</td><td><span class="badge badge-green badge-xs">Ativo</span></td></tr>
+              <tr><td>Lucas Rocha</td><td>Backend Dev</td><td><span class="badge badge-primary badge-xs">Ativo</span></td></tr>
+              <tr><td>Beatriz Silva</td><td>Designer UI</td><td><span class="badge badge-purple badge-xs">Ativo</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre><code><span class="tok-k">&lt;table</span> <span class="tok-f">class</span>=<span class="tok-s">"table"</span> <span class="tok-f">data-grid</span> <span class="tok-f">data-searchable</span>=<span class="tok-s">"true"</span> <span class="tok-f">data-page-size</span>=<span class="tok-s">"10"</span><span class="tok-k">&gt;</span>...<span class="tok-k">&lt;/table&gt;</span></code></pre>
+      </section>
+
+      <!-- Tree View Árvore (v2.16) -->
+      <section id="sec-treeview" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Tree View Hierárquico</h2>
+          <span class="badge badge-primary badge-sm">v2.16</span>
+        </div>
+        <p class="lead">Árvore de diretórios com checkboxes tri-state em cascata, busca com realce visual e animação fluida de expansão.</p>
+
+        <div class="preview">
+          <div class="tree-view" data-tree-view data-checkable="true">
+            <ul class="tree-root">
+              <li class="tree-node is-expanded">
+                <div class="tree-node-content">
+                  <span class="tree-chevron"><i class="icon icon-chevron-right"></i></span>
+                  <input type="checkbox" class="tree-checkbox">
+                  <i class="icon icon-folder text-amber m-r-1"></i>
+                  <span class="tree-label">src/</span>
+                </div>
+                <ul class="tree-children">
+                  <li class="tree-node">
+                    <div class="tree-node-content">
+                      <span class="tree-spacer"></span>
+                      <input type="checkbox" class="tree-checkbox">
+                      <i class="icon icon-code text-green m-r-1"></i>
+                      <span class="tree-label">framePER.js</span>
+                    </div>
+                  </li>
+                  <li class="tree-node">
+                    <div class="tree-node-content">
+                      <span class="tree-spacer"></span>
+                      <input type="checkbox" class="tree-checkbox">
+                      <i class="icon icon-layers text-primary m-r-1"></i>
+                      <span class="tree-label">framePER.scss</span>
+                    </div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <pre><code><span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"tree-view"</span> <span class="tok-f">data-tree-view</span> <span class="tok-f">data-checkable</span>=<span class="tok-s">"true"</span><span class="tok-k">&gt;</span>...<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+      <!-- File Uploader -->
+      <section id="sec-uploader" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">File Uploader Interativo</h2>
+          <span class="badge badge-subtle badge-sm">Novo</span>
+        </div>
+        <p class="lead">Upload com Drag & Drop nativo, miniaturas visuais de imagens, validação de tipos e barra de progresso individual.</p>
+
+        <div class="preview">
+          <div class="file-uploader" data-uploader data-uploader-max-size="10MB">
+            <div class="uploader-dropzone p-4 txt-center border border-dashed rounded bg-subtle cursor-pointer">
+              <i class="icon icon-upload text-primary f-s-4 m-b-1"></i>
+              <div class="f-s-2 text-color f-w-medium">Arraste seus arquivos para cá ou navegue</div>
+              <small class="text-muted f-s-1">Suporta imagens, PDFs e documentos de até 10MB</small>
+            </div>
+          </div>
+        </div>
+        <pre><code><span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"file-uploader"</span> <span class="tok-f">data-uploader</span> <span class="tok-f">data-uploader-max-size</span>=<span class="tok-s">"10MB"</span><span class="tok-k">&gt;</span>...<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+      <!-- Popovers Inteligentes -->
+      <section id="sec-popovers" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Popovers Inteligentes</h2>
+          <span class="badge badge-subtle badge-sm">Novo</span>
+        </div>
+        <p class="lead">Caixas flutuantes ricas com auto-posicionamento 4D, detecção de bordas da viewport e fechamento automático ao clicar fora.</p>
+
+        <div class="preview cluster gap-3">
+          <button class="btn btn-outline" data-popover data-popover-title="Popover Superior" data-popover-content="Conteúdo explicativo rico com detecção inteligente de bordas." data-popover-pos="top">Popover Superior</button>
+          <button class="btn btn-outline" data-popover data-popover-title="Popover Direito" data-popover-content="Posicionado fluidamente à direita do elemento." data-popover-pos="right">Popover Direito</button>
+          <button class="btn btn-outline" data-popover data-popover-title="Popover Inferior" data-popover-content="Inverte para cima caso encoste na margem inferior." data-popover-pos="bottom">Popover Inferior</button>
+        </div>
+        <pre><code><span class="tok-k">&lt;button</span> <span class="tok-f">data-popover</span> <span class="tok-f">data-popover-title</span>=<span class="tok-s">"Título"</span> <span class="tok-f">data-popover-content</span>=<span class="tok-s">"Texto descritivo"</span> <span class="tok-f">data-popover-pos</span>=<span class="tok-s">"top"</span><span class="tok-k">&gt;</span>...<span class="tok-k">&lt;/button&gt;</span></code></pre>
+      </section>
 
       <!-- Buttons -->
       <section id="sec-buttons" class="docs-section">

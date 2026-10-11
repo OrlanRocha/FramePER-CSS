@@ -40,21 +40,36 @@ document.addEventListener('DOMContentLoaded', function () {
     render();
   }
 
-  // Table of contents scroll-spy
+  // Table of contents scroll-spy with auto sidebar tracking
   var links = Array.prototype.slice.call(document.querySelectorAll('.docs-nav a'));
   if (links.length && 'IntersectionObserver' in window) {
     var map = {};
-    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    links.forEach(function (a) {
+      var href = a.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        map[href.slice(1)] = a;
+      }
+    });
 
     var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
           links.forEach(function (a) { a.classList.remove('active'); });
           var link = map[entry.target.id];
-          if (link) link.classList.add('active');
+          if (link) {
+            link.classList.add('active');
+            var nav = link.closest('.docs-nav');
+            if (nav) {
+              var linkRect = link.getBoundingClientRect();
+              var navRect = nav.getBoundingClientRect();
+              if (linkRect.top < navRect.top || linkRect.bottom > navRect.bottom) {
+                link.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
+            }
+          }
         }
       });
-    }, { rootMargin: '-20% 0px -70% 0px' });
+    }, { rootMargin: '-15% 0px -65% 0px' });
 
     document.querySelectorAll('.docs-section').forEach(function (s) { observer.observe(s); });
   }
@@ -129,25 +144,37 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnSplit30) {
       btnSplit30.addEventListener('click', function () {
         var inst = getSplitInst();
-        if (inst) inst.setSplit(30);
+        if (inst) {
+          inst.setSplit(30);
+          if (F && F.Notify) F.Notify.info('Split View', 'Proporção alterada para 30% / 70%', 1500);
+        }
       });
     }
     if (btnSplit50) {
       btnSplit50.addEventListener('click', function () {
         var inst = getSplitInst();
-        if (inst) inst.setSplit(50);
+        if (inst) {
+          inst.setSplit(50);
+          if (F && F.Notify) F.Notify.info('Split View', 'Proporção equilibrada em 50% / 50%', 1500);
+        }
       });
     }
     if (btnSplit70) {
       btnSplit70.addEventListener('click', function () {
         var inst = getSplitInst();
-        if (inst) inst.setSplit(70);
+        if (inst) {
+          inst.setSplit(70);
+          if (F && F.Notify) F.Notify.info('Split View', 'Proporção alterada para 70% / 30%', 1500);
+        }
       });
     }
     if (btnSplitCollapse) {
       btnSplitCollapse.addEventListener('click', function () {
         var inst = getSplitInst();
-        if (inst) inst.toggleCollapse();
+        if (inst) {
+          inst.toggleCollapse();
+          if (F && F.Notify) F.Notify.info('Split View', 'Colapso do painel alternado!', 1500);
+        }
       });
     }
   }
@@ -371,5 +398,116 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // Handlers para Timeline Demo (v2.19.0)
+  var orderTimelineEl = document.getElementById('demo-order-timeline');
+  var auditTimelineEl = document.getElementById('demo-audit-timeline');
+  var btnTimelineAdvance = document.getElementById('btn-timeline-advance');
+  var btnTimelineAdd = document.getElementById('btn-timeline-add-demo');
+  var timelineBadge = document.getElementById('timeline-status-badge');
+
+  var getOrderTimeline = function () {
+    return orderTimelineEl ? (orderTimelineEl._frameTimeline || (F && F.Timeline && F.Timeline.get(orderTimelineEl))) : null;
+  };
+
+  var getAuditTimeline = function () {
+    return auditTimelineEl ? (auditTimelineEl._frameTimeline || (F && F.Timeline && F.Timeline.get(auditTimelineEl))) : null;
+  };
+
+  if (btnTimelineAdvance) {
+    var stepAdvanced = false;
+    btnTimelineAdvance.addEventListener('click', function () {
+      var timeline = getOrderTimeline();
+      if (!timeline) return;
+
+      if (!stepAdvanced) {
+        // Conclui a etapa 3 e ativa a etapa 4
+        timeline.setStatus('step-3', 'completed', 'success');
+        timeline.setStatus('step-4', 'completed', 'success');
+
+        var step4 = orderTimelineEl.querySelector('[data-item-id="step-4"]');
+        if (step4) {
+          var point = step4.querySelector('.timeline-point');
+          if (point) {
+            point.classList.remove('point-dot');
+            point.classList.add('point-success');
+            point.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:0.9rem;height:0.9rem"><polyline points="20 6 9 17 4 12"/></svg>';
+          }
+          var timeSpan = step4.querySelector('.timeline-time');
+          if (timeSpan) timeSpan.textContent = 'Hoje às 14:45';
+        }
+
+        if (timelineBadge) {
+          timelineBadge.className = 'badge badge-green badge-sm';
+          timelineBadge.textContent = 'Entregue com Sucesso';
+        }
+
+        stepAdvanced = true;
+        btnTimelineAdvance.innerHTML = '<i class="icon icon-rotate-ccw"></i> Resetar Rastreio';
+
+        if (F && F.Notify) {
+          F.Notify.success('Rastreio Concluído', 'O pedido #48291 foi marcado como entregue!');
+        }
+      } else {
+        // Reset demo
+        timeline.setStatus('step-3', 'active', 'primary');
+        var step3Point = orderTimelineEl.querySelector('[data-item-id="step-3"] .timeline-point');
+        if (step3Point) step3Point.classList.add('has-pulse');
+
+        timeline.setStatus('step-4', 'pending', null);
+        var step4 = orderTimelineEl.querySelector('[data-item-id="step-4"]');
+        if (step4) {
+          var point = step4.querySelector('.timeline-point');
+          if (point) {
+            point.className = 'timeline-point point-dot';
+            point.innerHTML = '';
+          }
+          var timeSpan = step4.querySelector('.timeline-time');
+          if (timeSpan) timeSpan.textContent = 'Aguardando';
+        }
+
+        if (timelineBadge) {
+          timelineBadge.className = 'badge badge-success badge-sm';
+          timelineBadge.textContent = 'Em Trânsito';
+        }
+
+        stepAdvanced = false;
+        btnTimelineAdvance.innerHTML = '<i class="icon icon-check"></i> Avançar Etapa';
+
+        if (F && F.Notify) {
+          F.Notify.info('Rastreio', 'Estado do rastreio reiniciado para demonstração.');
+        }
+      }
+    });
+  }
+
+  if (btnTimelineAdd) {
+    var auditCount = 1;
+    btnTimelineAdd.addEventListener('click', function () {
+      var audit = getAuditTimeline();
+      if (audit) {
+        var actions = [
+          { title: 'Chave de API Revogada', body: 'Token com escopo administrativo foi revogado por segurança.', color: 'danger', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' },
+          { title: 'Certificado SSL Renovado', body: 'Certificado Let\'s Encrypt Wildcard atualizado com sucesso.', color: 'primary', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
+          { title: 'Novo Membro na Equipe', body: 'Usuário beatriz.design@frameper.dev ingressou no Workspace.', color: 'purple', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>' }
+        ];
+        var action = actions[(auditCount - 1) % actions.length];
+        auditCount++;
+
+        audit.addItem({
+          title: action.title,
+          desc: action.body,
+          time: 'Agora mesmo',
+          color: action.color,
+          icon: action.icon
+        }, true);
+
+        if (F && F.Notify) {
+          F.Notify.success('Novo Log Registrado', action.title + ' adicionado ao início da timeline!');
+        }
+      }
+    });
+  }
 });
+
 
