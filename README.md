@@ -1,13 +1,20 @@
 # Frame PER
 
-![NPM Version](https://img.shields.io/badge/version-2.19.0-blue.svg)
+![NPM Version](https://img.shields.io/badge/version-2.20.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Frame PER** é um **UI Framework** (CSS & JS) moderno, elegante, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa. Combina design minimalista de alto padrão (Dribbble/Apple/Vercel) com utilitários flexíveis, modo escuro nativo, **Timeline / Linha do Tempo Vertical (`FramePER.Timeline`)**, **Split View & Painéis Redimensionáveis Otimizados (`FramePER.SplitPane`)**, **Kanban Board Drag-and-Drop (`FramePER.Kanban`)**, **Data Grid Dinâmico com Paginação & Exportação (`FramePER.DataGrid`)**, **Tree View Interativo com Checkboxes & Busca em Tempo Real (`FramePER.TreeView`)**, **Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**, **Validador Reativo de Formulários (`FramePER.FormValidator`)**, **Menu de Contexto de Botão Direito & Dropdowns Multinível (`FramePER.ContextMenu`)**, **Abas Reativas com Slider Animado (`FramePER.Tabs`)**, **Accordions Fluidos com scrollHeight (`FramePER.Accordion`)**, **Popovers Inteligentes com Auto-Posicionamento 4D (`FramePER.Popover`)**, **File Uploader Avançado (`FramePER.Upload`) com Drag & Drop e progresso individual**, **Template Delivery & Restaurante**, **Rede Social Moderna com componentes ricos**, **Command Palette (Ctrl+K)**, **Framework de Gráficos Vetoriais SVG**, biblioteca de **107 ícones vetoriais** Pure CSS e utilitários interativos de ponta.
+**Frame PER** é um **UI Framework** (CSS & JS) moderno, elegante, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa. Combina design minimalista de alto padrão (Dribbble/Apple/Vercel) com utilitários flexíveis, modo escuro nativo, **Tour Guiado Interativo (`FramePER.Tour`)**, **Timeline / Linha do Tempo Vertical (`FramePER.Timeline`)**, **Split View & Painéis Redimensionáveis Otimizados (`FramePER.SplitPane`)**, **Kanban Board Drag-and-Drop (`FramePER.Kanban`)**, **Data Grid Dinâmico com Paginação & Exportação (`FramePER.DataGrid`)**, **Tree View Interativo com Checkboxes & Busca em Tempo Real (`FramePER.TreeView`)**, **Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**, **Validador Reativo de Formulários (`FramePER.FormValidator`)**, **Menu de Contexto de Botão Direito & Dropdowns Multinível (`FramePER.ContextMenu`)**, **Abas Reativas com Slider Animado (`FramePER.Tabs`)**, **Accordions Fluidos com scrollHeight (`FramePER.Accordion`)**, **Popovers Inteligentes com Auto-Posicionamento 4D (`FramePER.Popover`)**, **File Uploader Avançado (`FramePER.Upload`) com Drag & Drop e progresso individual**, **Template Delivery & Restaurante**, **Rede Social Moderna com componentes ricos**, **Command Palette (Ctrl+K)**, **Framework de Gráficos Vetoriais SVG**, biblioteca de **107 ícones vetoriais** Pure CSS e utilitários interativos de ponta.
 
 ---
 
 ## 🚀 Principais Recursos & Componentes
+
+- **🧭 Tour Guiado Interativo (Product Onboarding) (`FramePER.Tour`)**:
+  - **Zero Dependências & Spotlight Cutout**: Foco visual dinâmico com anel pulsante que recorta e destaca o elemento alvo na tela com transição geométrica fluida.
+  - **Popover Inteligente com Auto-Posicionamento**: Detecção de bordas da viewport (`top`, `bottom`, `left`, `right`), seta indicadora e badge de contagem de etapas (`Passo X de Y`).
+  - **Navegação Completa por Teclado**: Navegue com setas do teclado (`←`, `→`), avance com `Enter` e encerre o onboarding com tecla `Esc`.
+  - **Uso Híbrido (Declarativo ou JavaScript)**: Acionamento via atributos HTML5 (`data-tour-step`, `data-tour-title`, `data-tour-content`, `data-tour-start`) ou via API (`FramePER.Tour.create({ steps: [...] })`).
+  - **Eventos & Callbacks**: Métodos `start()`, `next()`, `prev()`, `goTo()`, `end()` e eventos customizados `frameper:tour:start`, `frameper:tour:change`, `frameper:tour:complete`, `frameper:tour:skip`.
 
 - **⏱️ Timeline / Linha do Tempo Vertical (`FramePER.Timeline`)**:
   - **Zero Dependências & Estrutura Vertical Flexível**: Histórico cronológico pixel-perfect para rastreamento de entregas, pedidos, status de pipelines e logs de auditoria.

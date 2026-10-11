@@ -508,6 +508,57 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // Handlers para Tour Guiado (v2.20.0)
+  var btnStartInteractiveTour = document.getElementById('btn-start-interactive-tour');
+  var btnStartSpotlightStep = document.getElementById('btn-start-spotlight-step');
+
+  if (btnStartInteractiveTour) {
+    btnStartInteractiveTour.addEventListener('click', function () {
+      if (F && F.Tour) {
+        F.Tour.start({
+          steps: [
+            {
+              target: '#tour-card-spotlight-1',
+              title: 'Spotlight com Anel Pulsante',
+              content: 'O foco focal recorta o elemento exato na tela, permitindo guiar novos usuários com clareza.',
+              placement: 'top'
+            },
+            {
+              target: '#tour-card-spotlight-2',
+              title: 'Controles Completos por Teclado',
+              content: 'Pressione as setas do teclado (ou Enter) para navegar entre os passos sem tocar no mouse.',
+              placement: 'top'
+            },
+            {
+              target: '#tour-card-spotlight-3',
+              title: 'Compatibilidade & Dark Mode',
+              content: 'Funciona nativamente em temas claros e escuros sem nenhuma biblioteca externa!',
+              placement: 'top'
+            }
+          ]
+        });
+      }
+    });
+  }
+
+  if (btnStartSpotlightStep) {
+    btnStartSpotlightStep.addEventListener('click', function () {
+      if (F && F.Tour) {
+        F.Tour.start({
+          steps: [
+            {
+              target: '#split-pane-demo',
+              title: 'Split View & Painéis Redimensionáveis',
+              content: 'Arraste a calha para redimensionar em tempo real ou use as setas do teclado.',
+              placement: 'top'
+            }
+          ]
+        });
+      }
+    });
+  }
 });
+
 
 

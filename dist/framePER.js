@@ -95,6 +95,7 @@
                 this.initDataGrid();
                 this.initKanban();
                 this.initTimeline();
+                this.initTour();
             },
             initContextMenu: function() {
                 if (FramePER.ContextMenu && FramePER.ContextMenu.init) {
@@ -134,6 +135,11 @@
             initTimeline: function() {
                 if (FramePER.Timeline && FramePER.Timeline.init) {
                     FramePER.Timeline.init();
+                }
+            },
+            initTour: function() {
+                if (FramePER.Tour && FramePER.Tour.init) {
+                    FramePER.Tour.init();
                 }
             },
             initTables: function() {
@@ -2183,6 +2189,19 @@
                     desc: 'Documentação dos utilitários CSS e JS',
                     icon: 'icon-info',
                     action: () => { window.location.href = 'manual.html'; }
+                },
+                {
+                    group: 'Ações do Sistema',
+                    id: 'action-tour',
+                    title: 'Iniciar Tour Guiado Interativo',
+                    desc: 'Apresentação passo a passo com foco spotlight em recursos',
+                    icon: 'icon-compass',
+                    badge: 'Tour',
+                    action: () => {
+                        if (window.FramePER && window.FramePER.Tour) {
+                            window.FramePER.Tour.start();
+                        }
+                    }
                 },
                 {
                     group: 'Ações do Sistema',
@@ -7265,6 +7284,292 @@
                     });
                 }
             };
+        })(),
+
+        Tour: (() => {
+            class Instance {
+                constructor(options = {}) {
+                    this.options = Object.assign({
+                        steps: [],
+                        keyboard: true,
+                        padding: 8,
+                        onStart: null,
+                        onStepChange: null,
+                        onComplete: null,
+                        onSkip: null
+                    }, options);
+
+                    this.currentIndex = -1;
+                    this.isActive = false;
+                    this.overlay = null;
+                    this.spotlight = null;
+                    this.popover = null;
+                    this._onKeyDown = this._onKeyDown.bind(this);
+                    this._onResize = this._onResize.bind(this);
+                }
+
+                _ensureDOM() {
+                    if (!this.overlay) {
+                        this.overlay = document.createElement('div');
+                        this.overlay.className = 'tour-overlay';
+
+                        this.spotlight = document.createElement('div');
+                        this.spotlight.className = 'tour-spotlight';
+                        this.overlay.appendChild(this.spotlight);
+
+                        this.popover = document.createElement('div');
+                        this.popover.className = 'tour-popover';
+                        this.popover.innerHTML = `
+                            <div class="tour-arrow"></div>
+                            <div class="tour-header">
+                                <span class="tour-step-badge"></span>
+                                <button type="button" class="tour-close-btn" aria-label="Fechar tour">&times;</button>
+                            </div>
+                            <h3 class="tour-title"></h3>
+                            <div class="tour-body"></div>
+                            <div class="tour-footer">
+                                <div class="tour-dots"></div>
+                                <div class="tour-actions">
+                                    <button type="button" class="btn btn-ghost btn-xs tour-skip-btn">Pular</button>
+                                    <button type="button" class="btn btn-outline btn-xs tour-prev-btn">Anterior</button>
+                                    <button type="button" class="btn btn-primary btn-xs tour-next-btn">Próximo</button>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(this.overlay);
+                        document.body.appendChild(this.popover);
+
+                        this.popover.querySelector('.tour-close-btn').addEventListener('click', () => this.end(true));
+                        this.popover.querySelector('.tour-skip-btn').addEventListener('click', () => this.end(true));
+                        this.popover.querySelector('.tour-prev-btn').addEventListener('click', () => this.prev());
+                        this.popover.querySelector('.tour-next-btn').addEventListener('click', () => this.next());
+                    }
+                }
+
+                start(stepIndex = 0) {
+                    if (!this.options.steps || this.options.steps.length === 0) {
+                        this._discoverSteps();
+                    }
+                    if (this.options.steps.length === 0) return;
+
+                    this._ensureDOM();
+                    this.isActive = true;
+                    this.overlay.classList.add('is-active');
+
+                    if (this.options.keyboard) {
+                        window.addEventListener('keydown', this._onKeyDown);
+                    }
+                    window.addEventListener('resize', this._onResize);
+                    window.addEventListener('scroll', this._onResize, true);
+
+                    this._emit('start');
+                    this.goTo(stepIndex);
+                }
+
+                _discoverSteps() {
+                    const els = Array.from(document.querySelectorAll('[data-tour-step]')).sort((a, b) => {
+                        return (parseInt(a.getAttribute('data-tour-step')) || 0) - (parseInt(b.getAttribute('data-tour-step')) || 0);
+                    });
+                    this.options.steps = els.map(el => ({
+                        target: el,
+                        title: el.getAttribute('data-tour-title') || '',
+                        content: el.getAttribute('data-tour-content') || '',
+                        placement: el.getAttribute('data-tour-placement') || 'bottom',
+                        rounded: el.getAttribute('data-tour-rounded') === 'true'
+                    }));
+                }
+
+                goTo(index) {
+                    if (index < 0 || index >= this.options.steps.length) return;
+                    this.currentIndex = index;
+                    const step = this.options.steps[this.currentIndex];
+
+                    const target = typeof step.target === 'string' ? document.querySelector(step.target) : step.target;
+                    if (!target) {
+                        if (index < this.options.steps.length - 1) {
+                            this.goTo(index + 1);
+                        } else {
+                            this.end();
+                        }
+                        return;
+                    }
+
+                    document.querySelectorAll('.tour-target-highlight').forEach(el => el.classList.remove('tour-target-highlight'));
+                    target.classList.add('tour-target-highlight');
+
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+
+                    setTimeout(() => {
+                        this._positionSpotlightAndPopover(target, step);
+                    }, 220);
+
+                    if (typeof this.options.onStepChange === 'function') {
+                        this.options.onStepChange(this.currentIndex, step);
+                    }
+                    this._emit('change', { stepIndex: this.currentIndex, step });
+                }
+
+                _positionSpotlightAndPopover(target, step) {
+                    if (!this.isActive) return;
+
+                    const rect = target.getBoundingClientRect();
+                    const pad = this.options.padding || 8;
+
+                    this.spotlight.style.top = `${Math.max(0, rect.top - pad)}px`;
+                    this.spotlight.style.left = `${Math.max(0, rect.left - pad)}px`;
+                    this.spotlight.style.width = `${rect.width + pad * 2}px`;
+                    this.spotlight.style.height = `${rect.height + pad * 2}px`;
+                    this.spotlight.classList.toggle('is-rounded', !!step.rounded);
+
+                    this.popover.querySelector('.tour-step-badge').textContent = `Passo ${this.currentIndex + 1} de ${this.options.steps.length}`;
+                    this.popover.querySelector('.tour-title').textContent = step.title || '';
+                    this.popover.querySelector('.tour-body').innerHTML = step.content || step.desc || '';
+
+                    const dotsContainer = this.popover.querySelector('.tour-dots');
+                    dotsContainer.innerHTML = '';
+                    this.options.steps.forEach((_, idx) => {
+                        const dot = document.createElement('span');
+                        dot.className = `tour-dot ${idx === this.currentIndex ? 'is-active' : ''}`;
+                        dotsContainer.appendChild(dot);
+                    });
+
+                    const prevBtn = this.popover.querySelector('.tour-prev-btn');
+                    const nextBtn = this.popover.querySelector('.tour-next-btn');
+                    const skipBtn = this.popover.querySelector('.tour-skip-btn');
+
+                    prevBtn.style.display = this.currentIndex === 0 ? 'none' : 'inline-flex';
+                    if (this.currentIndex === this.options.steps.length - 1) {
+                        nextBtn.textContent = 'Concluir';
+                        skipBtn.style.display = 'none';
+                    } else {
+                        nextBtn.textContent = 'Próximo';
+                        skipBtn.style.display = 'inline-flex';
+                    }
+
+                    const placement = step.placement || 'bottom';
+                    this.popover.setAttribute('data-placement', placement);
+
+                    const popoverRect = this.popover.getBoundingClientRect();
+                    const popW = popoverRect.width || 340;
+                    const popH = popoverRect.height || 180;
+                    const margin = 14;
+
+                    let top = 0;
+                    let left = 0;
+
+                    if (placement === 'bottom') {
+                        top = rect.bottom + pad + margin;
+                        left = rect.left + rect.width / 2 - popW / 2;
+                    } else if (placement === 'top') {
+                        top = rect.top - pad - margin - popH;
+                        left = rect.left + rect.width / 2 - popW / 2;
+                    } else if (placement === 'left') {
+                        top = rect.top + rect.height / 2 - popH / 2;
+                        left = rect.left - pad - margin - popW;
+                    } else if (placement === 'right') {
+                        top = rect.top + rect.height / 2 - popH / 2;
+                        left = rect.right + pad + margin;
+                    }
+
+                    const maxLeft = window.innerWidth - popW - 12;
+                    const maxTop = window.innerHeight - popH - 12;
+                    left = Math.max(12, Math.min(left, maxLeft));
+                    top = Math.max(12, Math.min(top, maxTop));
+
+                    this.popover.style.top = `${top}px`;
+                    this.popover.style.left = `${left}px`;
+                    this.popover.classList.add('is-visible');
+                }
+
+                next() {
+                    if (this.currentIndex < this.options.steps.length - 1) {
+                        this.goTo(this.currentIndex + 1);
+                    } else {
+                        this.end(false);
+                    }
+                }
+
+                prev() {
+                    if (this.currentIndex > 0) {
+                        this.goTo(this.currentIndex - 1);
+                    }
+                }
+
+                end(skipped = false) {
+                    if (!this.isActive) return;
+                    this.isActive = false;
+
+                    if (this.overlay) {
+                        this.overlay.classList.remove('is-active');
+                    }
+                    if (this.popover) {
+                        this.popover.classList.remove('is-visible');
+                    }
+                    document.querySelectorAll('.tour-target-highlight').forEach(el => el.classList.remove('tour-target-highlight'));
+
+                    window.removeEventListener('keydown', this._onKeyDown);
+                    window.removeEventListener('resize', this._onResize);
+                    window.removeEventListener('scroll', this._onResize, true);
+
+                    if (skipped) {
+                        if (typeof this.options.onSkip === 'function') this.options.onSkip();
+                        this._emit('skip');
+                    } else {
+                        if (typeof this.options.onComplete === 'function') this.options.onComplete();
+                        this._emit('complete');
+                    }
+                }
+
+                _onKeyDown(e) {
+                    if (!this.isActive) return;
+                    if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                        e.preventDefault();
+                        this.next();
+                    } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        this.prev();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        this.end(true);
+                    }
+                }
+
+                _onResize() {
+                    if (!this.isActive || this.currentIndex === -1) return;
+                    const step = this.options.steps[this.currentIndex];
+                    const target = typeof step.target === 'string' ? document.querySelector(step.target) : step.target;
+                    if (target) {
+                        this._positionSpotlightAndPopover(target, step);
+                    }
+                }
+
+                _emit(type, detail = {}) {
+                    document.dispatchEvent(new CustomEvent(`frameper:tour:${type}`, {
+                        bubbles: true,
+                        detail
+                    }));
+                }
+            }
+
+            return {
+                create: (options) => new Instance(options),
+                start: (options) => {
+                    const tour = new Instance(options);
+                    tour.start();
+                    return tour;
+                },
+                init: () => {
+                    document.querySelectorAll('[data-tour-start]').forEach(btn => {
+                        if (!btn._frameTourBound) {
+                            btn._frameTourBound = true;
+                            btn.addEventListener('click', () => {
+                                const tour = new Instance();
+                                tour.start();
+                            });
+                        }
+                    });
+                }
+            };
         })()
     };
 
@@ -7334,6 +7639,9 @@
         if (FramePER.Timeline && FramePER.Timeline.init) {
             FramePER.Timeline.init();
         }
+        if (FramePER.Tour && FramePER.Tour.init) {
+            FramePER.Tour.init();
+        }
         
         // Hide global page loader if exists
         const staticLoader = document.querySelector('.page-loader-overlay');
@@ -7358,6 +7666,8 @@
     window.FramePERDataGrid = FramePER.DataGrid;
     window.FramePERKanban = FramePER.Kanban;
     window.FramePERTimeline = FramePER.Timeline;
+    window.FramePERTour = FramePER.Tour;
 
 })(window, document);
+
 

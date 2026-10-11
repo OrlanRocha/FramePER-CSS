@@ -59,7 +59,8 @@
     <!-- Sticky Table of Contents -->
     <aside class="docs-nav stack gap-1">
       <span class="sidebar-label">Navegação Rápida</span>
-      <a href="#sec-split-pane" class="active"><span class="badge badge-purple badge-xs">v2.19</span> Split View</a>
+      <a href="#sec-tour" class="active"><span class="badge badge-primary badge-xs">v2.20</span> Tour Guiado</a>
+      <a href="#sec-split-pane"><span class="badge badge-purple badge-xs">v2.19</span> Split View</a>
       <a href="#sec-timeline"><span class="badge badge-primary badge-xs">v2.19</span> Timeline Vertical</a>
       <a href="#sec-kanban"><span class="badge badge-primary badge-xs">v2.18</span> Kanban Board</a>
       <a href="#sec-datagrid"><span class="badge badge-primary badge-xs">v2.17</span> Data Grid</a>
@@ -89,6 +90,27 @@
 
     <!-- Content Sections -->
     <main class="stack gap-6">
+
+      <!-- Tour Guiado Interativo (v2.20) -->
+      <section id="sec-tour" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Tour Guiado Interativo (Product Tour)</h2>
+          <span class="badge badge-primary badge-sm">v2.20</span>
+        </div>
+        <p class="lead">Experiência guiada de onboarding com foco visual dinâmico (spotlight cutout), navegação por teclado, auto-posicionamento e dots de progresso.</p>
+
+        <div class="preview cluster gap-3">
+          <button type="button" class="btn btn-primary" id="btn-components-tour" data-tour-start>
+            <i class="icon icon-compass"></i> Iniciar Tour de Exemplo
+          </button>
+        </div>
+        <pre><code><span class="tok-k">const</span> tour = <span class="tok-k">FramePER</span>.<span class="tok-k">Tour</span>.<span class="tok-f">create</span>({
+  steps: [
+    { target: <span class="tok-s">'#meu-elemento'</span>, title: <span class="tok-s">'Destaque'</span>, content: <span class="tok-s">'Explicação do recurso.'</span>, placement: <span class="tok-s">'bottom'</span> }
+  ]
+});
+tour.<span class="tok-f">start</span>();</code></pre>
+      </section>
 
       <!-- Split View & Painéis Redimensionáveis (v2.19) -->
       <section id="sec-split-pane" class="docs-section">

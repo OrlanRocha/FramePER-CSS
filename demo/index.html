@@ -41,7 +41,7 @@
 
     <!-- Header Navigation -->
     <header class="container d-flex justify-content-between align-items-center p-y-4 p-relative z-10">
-      <a class="navbar-brand" href="index.html">
+      <a class="navbar-brand" href="index.html" data-tour-step="1" data-tour-title="Frame PER UI Framework" data-tour-content="Design system modular, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa." data-tour-placement="bottom">
         <span class="icon-box"><i class="icon icon-activity text-primary"></i></span>
         <span>Frame PER</span>
       </a>
@@ -53,13 +53,13 @@
           <i class="icon icon-activity m-r-1"></i> Gráficos SVG <span class="badge badge-primary badge-sm m-l-1">Novo</span>
         </a>
         <a class="nav-link" href="dashboard.html">Admin Suite</a>
-        <a class="nav-link" href="store.html">Loja E-Commerce</a>
+        <a class="nav-link" href="social.html">Rede Social</a>
         <a class="nav-link" href="components.html">Componentes</a>
         <a class="nav-link" href="manual.html">Manual API</a>
       </nav>
 
       <div class="cluster gap-2 align-items-center">
-        <button class="btn btn-outline btn-sm d-none d-sm-inline-flex align-items-center gap-2" data-command-palette aria-label="Busca rápida">
+        <button class="btn btn-outline btn-sm d-none d-sm-inline-flex align-items-center gap-2" data-command-palette aria-label="Busca rápida" data-tour-step="2" data-tour-title="Command Palette (Ctrl+K)" data-tour-content="Busca global instantânea e execução de comandos diretamente pelo teclado." data-tour-placement="bottom">
           <i class="icon icon-search"></i>
           <span>Buscar</span>
           <kbd style="font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border);">Ctrl K</kbd>
@@ -67,13 +67,13 @@
         <a class="btn btn-ghost btn-sm" href="https://github.com/OrlanRocha/FramePER" target="_blank" rel="noopener">
           GitHub <i class="icon icon-external"></i>
         </a>
-        <button class="btn btn-ghost btn-icon p-relative" data-activity-feed-toggle aria-label="Central de Atividades e Notificações" title="Notificações">
+        <button class="btn btn-ghost btn-icon p-relative" data-activity-feed-toggle aria-label="Central de Atividades e Notificações" title="Notificações" data-tour-step="3" data-tour-title="Central de Atividades" data-tour-content="Painel retrátil com feed dinâmico de notificações, logs e alertas do sistema." data-tour-placement="left">
           <svg style="width:1.2rem;height:1.2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
           </svg>
           <span class="activity-count-badge p-absolute" data-activity-badge style="top:2px;right:2px;font-size:0.65rem;padding:1px 5px;">3</span>
         </button>
-        <button class="btn btn-ghost btn-icon theme-toggle" data-theme-toggle aria-label="Alternar tema">
+        <button class="btn btn-ghost btn-icon theme-toggle" data-theme-toggle aria-label="Alternar tema" data-tour-step="4" data-tour-title="Dark & Light Mode" data-tour-content="Alternância instantânea de temas com detecção automática da preferência do sistema operacional." data-tour-placement="bottom" data-tour-rounded="true">
           <i class="icon icon-moon"></i><i class="icon icon-sun"></i>
         </button>
       </div>
@@ -83,21 +83,24 @@
     <section class="container container-narrow txt-center p-y-6 p-relative z-10">
       <div class="d-flex justify-content-center m-b-3 slide-up">
         <span class="badge badge-pill badge-green">
-          <i class="icon icon-flame text-green m-r-1"></i> v2.19.0 · Timeline / Linha do Tempo, Kanban Board & Data Grid
+          <i class="icon icon-flame text-green m-r-1"></i> v2.20.0 · Tour Guiado Interativo, Timeline & Split View Refinado
         </span>
       </div>
       <h1 class="display-2 m-b-3 text-balance slide-up delay-1">Conheça o Frame PER</h1>
       <p class="lead max-w-md m-x-auto slide-up delay-2">
-        Interfaces modernas, dark mode nativo, suíte administrativa completa e uma engine gráfica vetorial de alto desempenho sem nenhuma dependência externa.
+        Interfaces modernas, dark mode nativo, suíte administrativa completa, onboarding interativo e uma engine gráfica vetorial de alto desempenho sem nenhuma dependência externa.
       </p>
 
       <!-- Primary Action Buttons directly in the Hero -->
       <div class="cluster justify-content-center gap-3 m-t-5 slide-up delay-3">
-        <a class="btn btn-primary btn-lg" href="charts.html">
-          <i class="icon icon-activity"></i> Ver Gráficos SVG <span class="badge badge-white badge-sm m-l-1">Novo</span>
+        <button type="button" class="btn btn-primary btn-lg" data-tour-start>
+          <i class="icon icon-compass"></i> Iniciar Tour Guiado <span class="badge badge-white badge-sm m-l-1">v2.20</span>
+        </button>
+        <a class="btn btn-outline btn-lg" href="charts.html">
+          <i class="icon icon-activity"></i> Ver Gráficos SVG
         </a>
-        <a class="btn btn-outline btn-lg" href="dashboard.html">
-          <i class="icon icon-home"></i> Painel Admin
+        <a class="btn btn-outline btn-lg" href="social.html">
+          <i class="icon icon-star"></i> Rede Social
         </a>
         <a class="btn btn-ghost btn-lg" href="components.html">
           <i class="icon icon-settings"></i> Componentes UI
@@ -106,6 +109,7 @@
 
       <!-- Quick Feature Anchors -->
       <div class="cluster justify-content-center gap-2 m-t-4 slide-up delay-4">
+        <a class="badge badge-subtle badge-pill" href="#tour-demo"><i class="icon icon-compass m-r-1"></i> Tour Guiado (Onboarding)</a>
         <a class="badge badge-subtle badge-pill" href="#timeline-demo"><i class="icon icon-clock m-r-1"></i> Timeline (Linha do Tempo)</a>
         <a class="badge badge-subtle badge-pill" href="#kanban-demo"><i class="icon icon-layout m-r-1"></i> Kanban Board (Cards)</a>
         <a class="badge badge-subtle badge-pill" href="#data-grid-demo"><i class="icon icon-activity m-r-1"></i> Data Grid (Tabela)</a>
@@ -1859,12 +1863,53 @@ split.toggleCollapse();</code></pre>
             </ul>
           </div>
         </div>
+      <!-- Tour Guiado Interativo Section (v2.20.0) -->
+      <section id="tour-demo" class="docs-section m-b-6 slide-up delay-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 m-b-4">
+          <div>
+            <div class="cluster gap-2 align-items-center m-b-1">
+              <span class="badge badge-primary badge-pill"><i class="icon icon-flame"></i> Novidade v2.20.0</span>
+              <span class="badge badge-purple">FramePER.Tour</span>
+              <span class="badge badge-subtle">Spotlight & Onboarding</span>
+            </div>
+            <h2 class="h3 m-0">Tour Guiado Interativo (Product Onboarding)</h2>
+            <p class="text-muted f-s-2 m-0">Apresentação passo a passo com foco visual dinâmico (spotlight cutout), auto-posicionamento, atalhos de teclado e dots indicadores</p>
+          </div>
+          <div class="cluster gap-2">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-start-interactive-tour">
+              <i class="icon icon-compass"></i> Iniciar Tour Interativo
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-start-spotlight-step">
+              Foco no Split View
+            </button>
+          </div>
+        </div>
+
+        <div class="card p-4 shadow-xs" style="background: var(--bg-surface);">
+          <div class="grid grid-md-3 gap-4 text-center">
+            <div class="p-4 rounded border bg-subtle stack gap-2" id="tour-card-spotlight-1">
+              <div class="avatar avatar-lg bg-primary text-white m-x-auto"><i class="icon icon-star"></i></div>
+              <h3 class="h5 m-0">Foco Spotlight</h3>
+              <p class="f-s-2 text-muted m-0">Recorte focal com anel pulsante que direciona o olhar do usuário com precisão.</p>
+            </div>
+            <div class="p-4 rounded border bg-subtle stack gap-2" id="tour-card-spotlight-2">
+              <div class="avatar avatar-lg bg-green text-white m-x-auto"><i class="icon icon-check"></i></div>
+              <h3 class="h5 m-0">Navegação Fluida</h3>
+              <p class="f-s-2 text-muted m-0">Avance com seta para a direita ou Enter, retorne com esquerda e cancele com Esc.</p>
+            </div>
+            <div class="p-4 rounded border bg-subtle stack gap-2" id="tour-card-spotlight-3">
+              <div class="avatar avatar-lg bg-purple text-white m-x-auto"><i class="icon icon-layers"></i></div>
+              <h3 class="h5 m-0">Zero Dependências</h3>
+              <p class="f-s-2 text-muted m-0">100% puro Vanilla JS com cálculos geométricos e adaptação instantânea a Dark Mode.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
     </section>
 
     <footer class="container p-y-5 txt-center f-s-2 text-muted p-relative z-10">
-      Frame PER v2.19.0 · Framework CSS + JS + SVG sem dependências
+      Frame PER v2.20.0 · Framework CSS + JS + SVG sem dependências
     </footer>
   </main>
 
