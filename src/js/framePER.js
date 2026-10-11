@@ -92,6 +92,7 @@
                 this.initActivityFeed();
                 this.initSplitPane();
                 this.initTreeView();
+                this.initDataGrid();
             },
             initContextMenu: function() {
                 if (FramePER.ContextMenu && FramePER.ContextMenu.init) {
@@ -116,6 +117,11 @@
             initTreeView: function() {
                 if (FramePER.TreeView && FramePER.TreeView.init) {
                     FramePER.TreeView.init();
+                }
+            },
+            initDataGrid: function() {
+                if (FramePER.DataGrid && FramePER.DataGrid.init) {
+                    FramePER.DataGrid.init();
                 }
             },
             initTables: function() {
@@ -2133,6 +2139,14 @@
                     desc: 'Árvore hierárquica, checkboxes tri-state e filtro em tempo real',
                     icon: 'icon-folder',
                     action: () => { window.location.href = 'index.html#tree-view-demo'; }
+                },
+                {
+                    group: 'Componentes & Docs',
+                    id: 'nav-data-grid',
+                    title: 'Data Grid Dinâmico',
+                    desc: 'Tabela rica com paginação client-side, ordenação e exportação CSV/JSON',
+                    icon: 'icon-activity',
+                    action: () => { window.location.href = 'index.html#data-grid-demo'; }
                 },
                 {
                     group: 'Componentes & Docs',
@@ -5874,6 +5888,636 @@
                     });
                 }
             };
+        })(),
+
+        DataGrid: (() => {
+            const SORT_ICON_SVG = '<span class="sort-indicator"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></span>';
+            const SEARCH_ICON_SVG = '<span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>';
+
+            class Instance {
+                constructor(container, options = {}) {
+                    this.container = typeof container === 'string' ? document.querySelector(container) : container;
+                    if (!this.container) return;
+
+                    this.options = Object.assign({
+                        data: null,
+                        columns: null,
+                        pageSize: parseInt(this.container.getAttribute('data-page-size'), 10) || 10,
+                        pageSizeOptions: [5, 10, 25, 50],
+                        searchable: this.container.getAttribute('data-searchable') !== 'false',
+                        selectable: this.container.getAttribute('data-selectable') !== 'false',
+                        pagination: this.container.getAttribute('data-pagination') !== 'false',
+                        exportable: this.container.getAttribute('data-exportable') !== 'false',
+                        emptyText: 'Nenhum registro encontrado',
+                        onSelect: null,
+                        onChange: null
+                    }, options);
+
+                    this.allData = [];
+                    this.columns = [];
+                    this.filteredData = [];
+                    this.currentPage = 1;
+                    this.pageSize = this.options.pageSize;
+                    this.sortColumn = null;
+                    this.sortDirection = null;
+                    this.searchQuery = '';
+                    this.selectedIds = new Set();
+
+                    this._init();
+                    this.container._frameDataGrid = this;
+                }
+
+                _init() {
+                    let existingTable = this.container.tagName === 'TABLE' ? this.container : this.container.querySelector('table');
+
+                    if (existingTable && (!Array.isArray(this.options.data) || this.options.data.length === 0)) {
+                        this._extractFromTable(existingTable);
+                    } else if (Array.isArray(this.options.data)) {
+                        this.allData = this.options.data.map((item, idx) => Object.assign({ _gridId: `row-${idx + 1}` }, item));
+                        if (Array.isArray(this.options.columns) && this.options.columns.length > 0) {
+                            this.columns = this.options.columns;
+                        } else if (this.allData.length > 0) {
+                            this.columns = Object.keys(this.allData[0])
+                                .filter(k => k !== '_gridId')
+                                .map(k => ({ key: k, title: k.charAt(0).toUpperCase() + k.slice(1), sortable: true }));
+                        }
+                    }
+
+                    this.filteredData = [...this.allData];
+                    this._buildDOM();
+                    this._render();
+                }
+
+                _extractFromTable(table) {
+                    const ths = table.querySelectorAll('thead th');
+                    this.columns = [];
+                    ths.forEach((th, idx) => {
+                        const key = th.getAttribute('data-key') || th.getAttribute('data-field') || `col_${idx}`;
+                        const title = th.textContent.trim();
+                        const sortable = th.classList.contains('sortable') || th.getAttribute('data-sortable') !== 'false';
+                        this.columns.push({ key, title, sortable });
+                    });
+
+                    const trs = table.querySelectorAll('tbody tr');
+                    this.allData = [];
+                    trs.forEach((tr, rIdx) => {
+                        const rowObj = { _gridId: tr.getAttribute('data-id') || `row-${rIdx + 1}` };
+                        const tds = tr.querySelectorAll('td');
+                        tds.forEach((td, cIdx) => {
+                            const col = this.columns[cIdx];
+                            if (col) {
+                                rowObj[col.key] = td.innerHTML.trim();
+                                rowObj[`_${col.key}_raw`] = td.textContent.trim();
+                            }
+                        });
+                        this.allData.push(rowObj);
+                    });
+
+                    if (this.container.tagName === 'TABLE') {
+                        const wrapper = document.createElement('div');
+                        this.container.parentNode.insertBefore(wrapper, this.container);
+                        this.container.remove();
+                        this.container = wrapper;
+                    } else {
+                        table.remove();
+                    }
+                }
+
+                _buildDOM() {
+                    this.container.classList.add('data-grid-container');
+                    this.container.innerHTML = '';
+
+                    if (this.options.searchable || this.options.exportable) {
+                        this.toolbarEl = document.createElement('div');
+                        this.toolbarEl.className = 'data-grid-toolbar';
+
+                        if (this.options.searchable) {
+                            const searchWrap = document.createElement('div');
+                            searchWrap.className = 'data-grid-search';
+                            searchWrap.innerHTML = `${SEARCH_ICON_SVG}<input type="text" class="input input-sm" placeholder="Buscar registros...">`;
+                            this.searchInput = searchWrap.querySelector('input');
+                            this.searchInput.addEventListener('input', () => {
+                                this.filter(this.searchInput.value);
+                            });
+                            this.toolbarEl.appendChild(searchWrap);
+                        }
+
+                        if (this.options.exportable) {
+                            const actionsWrap = document.createElement('div');
+                            actionsWrap.className = 'data-grid-actions';
+
+                            const csvBtn = document.createElement('button');
+                            csvBtn.type = 'button';
+                            csvBtn.className = 'btn btn-outline btn-sm';
+                            csvBtn.innerHTML = '<i class="icon icon-download m-r-1"></i> CSV';
+                            csvBtn.addEventListener('click', () => this.exportCSV());
+
+                            const jsonBtn = document.createElement('button');
+                            jsonBtn.type = 'button';
+                            jsonBtn.className = 'btn btn-ghost btn-sm';
+                            jsonBtn.innerHTML = 'JSON';
+                            jsonBtn.addEventListener('click', () => this.exportJSON());
+
+                            actionsWrap.appendChild(csvBtn);
+                            actionsWrap.appendChild(jsonBtn);
+                            this.toolbarEl.appendChild(actionsWrap);
+                        }
+
+                        this.container.appendChild(this.toolbarEl);
+                    }
+
+                    this.tableWrapperEl = document.createElement('div');
+                    this.tableWrapperEl.className = 'data-grid-table-wrapper';
+
+                    this.tableEl = document.createElement('table');
+                    this.tableEl.className = 'data-grid-table';
+
+                    this.theadEl = document.createElement('thead');
+                    this.tableEl.appendChild(this.theadEl);
+
+                    this.tbodyEl = document.createElement('tbody');
+                    this.tableEl.appendChild(this.tbodyEl);
+
+                    this.tableWrapperEl.appendChild(this.tableEl);
+                    this.container.appendChild(this.tableWrapperEl);
+
+                    if (this.options.pagination) {
+                        this.footerEl = document.createElement('div');
+                        this.footerEl.className = 'data-grid-footer';
+
+                        this.infoEl = document.createElement('div');
+                        this.infoEl.className = 'data-grid-info';
+                        this.footerEl.appendChild(this.infoEl);
+
+                        const rightWrap = document.createElement('div');
+                        rightWrap.className = 'd-flex align-items-center gap-3';
+
+                        const pageSizeWrap = document.createElement('div');
+                        pageSizeWrap.className = 'data-grid-page-size';
+                        pageSizeWrap.innerHTML = `<span>Exibir:</span><select></select>`;
+                        this.pageSizeSelect = pageSizeWrap.querySelector('select');
+                        this.options.pageSizeOptions.forEach(opt => {
+                            const op = document.createElement('option');
+                            op.value = opt;
+                            op.textContent = `${opt} / pág`;
+                            if (opt === this.pageSize) op.selected = true;
+                            this.pageSizeSelect.appendChild(op);
+                        });
+                        this.pageSizeSelect.addEventListener('change', () => {
+                            this.setPageSize(parseInt(this.pageSizeSelect.value, 10));
+                        });
+                        rightWrap.appendChild(pageSizeWrap);
+
+                        this.paginationEl = document.createElement('div');
+                        this.paginationEl.className = 'data-grid-pagination';
+                        rightWrap.appendChild(this.paginationEl);
+
+                        this.footerEl.appendChild(rightWrap);
+                        this.container.appendChild(this.footerEl);
+                    }
+                }
+
+                _render() {
+                    this._renderThead();
+                    this._renderTbody();
+                    this._renderFooter();
+                }
+
+                _renderThead() {
+                    this.theadEl.innerHTML = '';
+                    const tr = document.createElement('tr');
+
+                    if (this.options.selectable) {
+                        const thSelect = document.createElement('th');
+                        thSelect.className = 'th-select';
+                        const selectAllCb = document.createElement('input');
+                        selectAllCb.type = 'checkbox';
+                        selectAllCb.className = 'data-grid-checkbox';
+
+                        const pageData = this._getCurrentPageData();
+                        if (pageData.length > 0) {
+                            const allSelected = pageData.every(r => this.selectedIds.has(r._gridId));
+                            const someSelected = pageData.some(r => this.selectedIds.has(r._gridId));
+                            selectAllCb.checked = allSelected;
+                            selectAllCb.indeterminate = !allSelected && someSelected;
+                        } else {
+                            selectAllCb.checked = false;
+                        }
+
+                        selectAllCb.addEventListener('change', () => {
+                            if (selectAllCb.checked) {
+                                pageData.forEach(r => this.selectedIds.add(r._gridId));
+                            } else {
+                                pageData.forEach(r => this.selectedIds.delete(r._gridId));
+                            }
+                            this._renderTbody();
+                            this._emitSelect();
+                        });
+
+                        thSelect.appendChild(selectAllCb);
+                        tr.appendChild(thSelect);
+                    }
+
+                    this.columns.forEach(col => {
+                        const th = document.createElement('th');
+                        th.textContent = col.title || col.key;
+                        th.setAttribute('data-col-key', col.key);
+
+                        if (col.sortable !== false) {
+                            th.classList.add('sortable');
+                            th.innerHTML = `<span>${col.title || col.key}</span>${SORT_ICON_SVG}`;
+
+                            if (this.sortColumn === col.key) {
+                                th.classList.add(this.sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                            }
+
+                            th.addEventListener('click', () => {
+                                this._handleSortClick(col.key);
+                            });
+                        }
+
+                        tr.appendChild(th);
+                    });
+
+                    this.theadEl.appendChild(tr);
+                }
+
+                _renderTbody() {
+                    this.tbodyEl.innerHTML = '';
+                    const pageData = this._getCurrentPageData();
+
+                    if (pageData.length === 0) {
+                        const tr = document.createElement('tr');
+                        const td = document.createElement('td');
+                        const totalCols = this.columns.length + (this.options.selectable ? 1 : 0);
+                        td.setAttribute('colspan', totalCols);
+                        td.className = 'data-grid-empty';
+                        td.innerHTML = `<div class="empty-icon"><i class="icon icon-info"></i></div><div>${this.options.emptyText}</div>`;
+                        tr.appendChild(td);
+                        this.tbodyEl.appendChild(tr);
+                        return;
+                    }
+
+                    pageData.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.setAttribute('data-row-id', row._gridId);
+                        const isSelected = this.selectedIds.has(row._gridId);
+                        if (isSelected) {
+                            tr.classList.add('is-selected');
+                        }
+
+                        if (this.options.selectable) {
+                            const tdSelect = document.createElement('td');
+                            tdSelect.className = 'td-select';
+                            const cb = document.createElement('input');
+                            cb.type = 'checkbox';
+                            cb.className = 'data-grid-checkbox';
+                            cb.checked = isSelected;
+
+                            cb.addEventListener('change', (e) => {
+                                e.stopPropagation();
+                                if (cb.checked) {
+                                    this.selectedIds.add(row._gridId);
+                                    tr.classList.add('is-selected');
+                                } else {
+                                    this.selectedIds.delete(row._gridId);
+                                    tr.classList.remove('is-selected');
+                                }
+                                this._updateSelectAllHeader();
+                                this._emitSelect();
+                            });
+
+                            tdSelect.appendChild(cb);
+                            tr.appendChild(tdSelect);
+                        }
+
+                        this.columns.forEach(col => {
+                            const td = document.createElement('td');
+                            const val = row[col.key];
+                            if (typeof col.render === 'function') {
+                                td.innerHTML = col.render(val, row);
+                            } else {
+                                td.innerHTML = val !== undefined && val !== null ? val : '';
+                            }
+                            tr.appendChild(td);
+                        });
+
+                        tr.addEventListener('click', (e) => {
+                            if (e.target.closest('.data-grid-checkbox')) return;
+                            if (this.options.selectable) {
+                                const cb = tr.querySelector('.data-grid-checkbox');
+                                if (cb) {
+                                    cb.checked = !cb.checked;
+                                    cb.dispatchEvent(new Event('change'));
+                                }
+                            }
+                        });
+
+                        this.tbodyEl.appendChild(tr);
+                    });
+                }
+
+                _updateSelectAllHeader() {
+                    const selectAllCb = this.theadEl.querySelector('.th-select input');
+                    if (!selectAllCb) return;
+
+                    const pageData = this._getCurrentPageData();
+                    if (pageData.length === 0) {
+                        selectAllCb.checked = false;
+                        selectAllCb.indeterminate = false;
+                        return;
+                    }
+
+                    const allSelected = pageData.every(r => this.selectedIds.has(r._gridId));
+                    const someSelected = pageData.some(r => this.selectedIds.has(r._gridId));
+
+                    selectAllCb.checked = allSelected;
+                    selectAllCb.indeterminate = !allSelected && someSelected;
+                }
+
+                _renderFooter() {
+                    if (!this.options.pagination || !this.footerEl) return;
+
+                    const total = this.filteredData.length;
+                    const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+                    const start = total === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+                    const end = Math.min(total, this.currentPage * this.pageSize);
+
+                    const selectedCount = this.selectedIds.size;
+                    const selectedText = selectedCount > 0 ? ` · <span class="text-primary f-w-semibold">${selectedCount} selecionado(s)</span>` : '';
+
+                    this.infoEl.innerHTML = `<span>Exibindo <strong>${start}</strong> a <strong>${end}</strong> de <strong>${total}</strong> registros${selectedText}</span>`;
+
+                    this.paginationEl.innerHTML = '';
+
+                    const prevBtn = document.createElement('button');
+                    prevBtn.type = 'button';
+                    prevBtn.className = 'page-btn';
+                    prevBtn.innerHTML = '‹';
+                    prevBtn.disabled = this.currentPage <= 1;
+                    prevBtn.addEventListener('click', () => this.setPage(this.currentPage - 1));
+                    this.paginationEl.appendChild(prevBtn);
+
+                    let startPage = Math.max(1, this.currentPage - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+                    if (endPage - startPage < 4) {
+                        startPage = Math.max(1, endPage - 4);
+                    }
+
+                    for (let p = startPage; p <= endPage; p++) {
+                        const pageBtn = document.createElement('button');
+                        pageBtn.type = 'button';
+                        pageBtn.className = `page-btn ${p === this.currentPage ? 'is-active' : ''}`;
+                        pageBtn.textContent = p;
+                        const pageNum = p;
+                        pageBtn.addEventListener('click', () => this.setPage(pageNum));
+                        this.paginationEl.appendChild(pageBtn);
+                    }
+
+                    const nextBtn = document.createElement('button');
+                    nextBtn.type = 'button';
+                    nextBtn.className = 'page-btn';
+                    nextBtn.innerHTML = '›';
+                    nextBtn.disabled = this.currentPage >= totalPages;
+                    nextBtn.addEventListener('click', () => this.setPage(this.currentPage + 1));
+                    this.paginationEl.appendChild(nextBtn);
+                }
+
+                _getCurrentPageData() {
+                    if (!this.options.pagination) return this.filteredData;
+                    const start = (this.currentPage - 1) * this.pageSize;
+                    return this.filteredData.slice(start, start + this.pageSize);
+                }
+
+                _handleSortClick(key) {
+                    if (this.sortColumn === key) {
+                        if (this.sortDirection === 'asc') {
+                            this.sortDirection = 'desc';
+                        } else if (this.sortDirection === 'desc') {
+                            this.sortColumn = null;
+                            this.sortDirection = null;
+                        }
+                    } else {
+                        this.sortColumn = key;
+                        this.sortDirection = 'asc';
+                    }
+                    this._applySort();
+                    this._render();
+                    this._emitChange();
+                }
+
+                _applySort() {
+                    if (!this.sortColumn || !this.sortDirection) {
+                        const query = this.searchQuery;
+                        if (query) {
+                            this.filteredData = this.allData.filter(row => this._matchRow(row, query));
+                        } else {
+                            this.filteredData = [...this.allData];
+                        }
+                        return;
+                    }
+
+                    const key = this.sortColumn;
+                    const dir = this.sortDirection === 'asc' ? 1 : -1;
+
+                    this.filteredData.sort((a, b) => {
+                        let valA = a[`_${key}_raw`] !== undefined ? a[`_${key}_raw`] : a[key];
+                        let valB = b[`_${key}_raw`] !== undefined ? b[`_${key}_raw`] : b[key];
+
+                        if (valA === undefined || valA === null) valA = '';
+                        if (valB === undefined || valB === null) valB = '';
+
+                        const numA = Number(valA);
+                        const numB = Number(valB);
+
+                        if (!isNaN(numA) && !isNaN(numB) && valA !== '' && valB !== '') {
+                            return (numA - numB) * dir;
+                        }
+
+                        return String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+                    });
+                }
+
+                _matchRow(row, query) {
+                    const q = query.toLowerCase();
+                    return this.columns.some(col => {
+                        const val = row[`_${col.key}_raw`] !== undefined ? row[`_${col.key}_raw`] : row[col.key];
+                        if (val === undefined || val === null) return false;
+                        return String(val).toLowerCase().includes(q);
+                    });
+                }
+
+                filter(query) {
+                    this.searchQuery = (query || '').trim();
+                    if (!this.searchQuery) {
+                        this.filteredData = [...this.allData];
+                    } else {
+                        this.filteredData = this.allData.filter(row => this._matchRow(row, this.searchQuery));
+                    }
+                    if (this.sortColumn && this.sortDirection) {
+                        this._applySort();
+                    }
+                    this.currentPage = 1;
+                    this._render();
+                    this._emitChange();
+
+                    this.container.dispatchEvent(new CustomEvent('frameper:datagrid:filter', {
+                        bubbles: true,
+                        detail: { query: this.searchQuery, count: this.filteredData.length }
+                    }));
+
+                    return this.filteredData.length;
+                }
+
+                setPage(page) {
+                    const totalPages = Math.max(1, Math.ceil(this.filteredData.length / this.pageSize));
+                    if (page < 1 || page > totalPages) return;
+                    this.currentPage = page;
+                    this._render();
+                    this._emitChange();
+                }
+
+                setPageSize(size) {
+                    this.pageSize = Math.max(1, size);
+                    this.currentPage = 1;
+                    this._render();
+                    this._emitChange();
+                }
+
+                sort(columnKey, direction = 'asc') {
+                    this.sortColumn = columnKey;
+                    this.sortDirection = direction;
+                    this._applySort();
+                    this._render();
+                    this._emitChange();
+                }
+
+                selectAll() {
+                    this.allData.forEach(r => this.selectedIds.add(r._gridId));
+                    this._renderTbody();
+                    this._renderFooter();
+                    this._updateSelectAllHeader();
+                    this._emitSelect();
+                }
+
+                deselectAll() {
+                    this.selectedIds.clear();
+                    this._renderTbody();
+                    this._renderFooter();
+                    this._updateSelectAllHeader();
+                    this._emitSelect();
+                }
+
+                getSelected() {
+                    return this.allData.filter(r => this.selectedIds.has(r._gridId));
+                }
+
+                getSelectedIds() {
+                    return Array.from(this.selectedIds);
+                }
+
+                setData(data) {
+                    this.allData = (data || []).map((item, idx) => Object.assign({ _gridId: `row-${idx + 1}` }, item));
+                    this.selectedIds.clear();
+                    this.filter(this.searchQuery);
+                }
+
+                exportCSV(filename = 'exportacao.csv') {
+                    if (this.columns.length === 0 || this.filteredData.length === 0) return;
+
+                    const headers = this.columns.map(c => `"${(c.title || c.key).replace(/"/g, '""')}"`).join(',');
+                    const rows = this.filteredData.map(row => {
+                        return this.columns.map(c => {
+                            let val = row[`_${c.key}_raw`] !== undefined ? row[`_${c.key}_raw`] : row[c.key];
+                            if (val === undefined || val === null) val = '';
+                            val = String(val).replace(/<[^>]*>/g, '').replace(/"/g, '""');
+                            return `"${val}"`;
+                        }).join(',');
+                    });
+
+                    const csvContent = '\uFEFF' + [headers, ...rows].join('\r\n');
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', filename);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }
+
+                exportJSON(filename = 'exportacao.json') {
+                    const cleanData = this.filteredData.map(row => {
+                        const obj = {};
+                        this.columns.forEach(c => {
+                            let val = row[`_${c.key}_raw`] !== undefined ? row[`_${c.key}_raw`] : row[c.key];
+                            if (typeof val === 'string') val = val.replace(/<[^>]*>/g, '');
+                            obj[c.key] = val;
+                        });
+                        return obj;
+                    });
+
+                    const jsonString = JSON.stringify(cleanData, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', filename);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }
+
+                _emitSelect() {
+                    const selected = this.getSelected();
+                    if (typeof this.options.onSelect === 'function') {
+                        this.options.onSelect(selected);
+                    }
+                    this.container.dispatchEvent(new CustomEvent('frameper:datagrid:select', {
+                        bubbles: true,
+                        detail: { selected, count: selected.length }
+                    }));
+                }
+
+                _emitChange() {
+                    const state = {
+                        page: this.currentPage,
+                        pageSize: this.pageSize,
+                        total: this.filteredData.length,
+                        sortColumn: this.sortColumn,
+                        sortDirection: this.sortDirection
+                    };
+                    if (typeof this.options.onChange === 'function') {
+                        this.options.onChange(state);
+                    }
+                    this.container.dispatchEvent(new CustomEvent('frameper:datagrid:change', {
+                        bubbles: true,
+                        detail: state
+                    }));
+                }
+
+                destroy() {
+                    delete this.container._frameDataGrid;
+                    this.container.innerHTML = '';
+                }
+            }
+
+            return {
+                create: (container, options) => new Instance(container, options),
+                get: (container) => {
+                    const el = typeof container === 'string' ? document.querySelector(container) : container;
+                    return el ? el._frameDataGrid : null;
+                },
+                init: () => {
+                    document.querySelectorAll('[data-grid], [data-datagrid]').forEach(el => {
+                        if (!el._frameDataGrid) {
+                            new Instance(el);
+                        }
+                    });
+                }
+            };
         })()
     };
 
@@ -5934,6 +6578,9 @@
         if (FramePER.TreeView && FramePER.TreeView.init) {
             FramePER.TreeView.init();
         }
+        if (FramePER.DataGrid && FramePER.DataGrid.init) {
+            FramePER.DataGrid.init();
+        }
         
         // Hide global page loader if exists
         const staticLoader = document.querySelector('.page-loader-overlay');
@@ -5955,6 +6602,7 @@
     window.FramePERActivityFeed = FramePER.ActivityFeed;
     window.FramePERSplitPane = FramePER.SplitPane;
     window.FramePERTreeView = FramePER.TreeView;
+    window.FramePERDataGrid = FramePER.DataGrid;
 
 })(window, document);
 

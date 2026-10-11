@@ -83,7 +83,7 @@
     <section class="container container-narrow txt-center p-y-6 p-relative z-10">
       <div class="d-flex justify-content-center m-b-3 slide-up">
         <span class="badge badge-pill badge-green">
-          <i class="icon icon-flame text-green m-r-1"></i> v2.16.0 · Tree View Interativo com Checkboxes & Busca, Split View & Central de Atividades
+          <i class="icon icon-flame text-green m-r-1"></i> v2.17.0 · Data Grid Dinâmico com Paginação & Exportação, Tree View & Split View
         </span>
       </div>
       <h1 class="display-2 m-b-3 text-balance slide-up delay-1">Conheça o Frame PER</h1>
@@ -106,6 +106,7 @@
 
       <!-- Quick Feature Anchors -->
       <div class="cluster justify-content-center gap-2 m-t-4 slide-up delay-4">
+        <a class="badge badge-subtle badge-pill" href="#data-grid-demo"><i class="icon icon-activity m-r-1"></i> Data Grid (Tabela)</a>
         <a class="badge badge-subtle badge-pill" href="#tree-view-demo"><i class="icon icon-folder m-r-1"></i> Tree View (Árvore)</a>
         <a class="badge badge-subtle badge-pill" href="#split-pane-demo"><i class="icon icon-layers m-r-1"></i> Split View (Panels)</a>
         <a class="badge badge-subtle badge-pill" href="#activity-feed-demo"><i class="icon icon-bell m-r-1"></i> Central de Atividades</a>
@@ -1383,10 +1384,161 @@ split.toggleCollapse();</code></pre>
         </div>
       </section>
 
+      <!-- Data Grid Dinâmico Section (v2.17.0) -->
+      <section id="data-grid-demo" class="docs-section m-b-6 slide-up delay-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 m-b-4">
+          <div>
+            <div class="cluster gap-2 align-items-center m-b-1">
+              <span class="badge badge-primary badge-pill"><i class="icon icon-flame"></i> Novidade v2.17.0</span>
+              <span class="badge badge-purple">FramePER.DataGrid</span>
+              <span class="badge badge-subtle">Client-Side Engine</span>
+            </div>
+            <h2 class="h3 m-0">Data Grid Dinâmico & Tabela Rica</h2>
+            <p class="text-muted f-s-2 m-0">Grade de dados desktop-class com ordenação multi-colunas, busca global em tempo real, seleção múltipla de linhas, paginação client-side e exportação direta em CSV e JSON</p>
+          </div>
+          <div class="cluster gap-2">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-grid-select-all">Selecionar Todos</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-grid-deselect-all">Desmarcar</button>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-grid-get-selected">
+              <i class="icon icon-check"></i> Ver Selecionados
+            </button>
+          </div>
+        </div>
+
+        <div class="card p-0 shadow-xs">
+          <!-- Tabela com Atributos Declarativos do DataGrid -->
+          <div id="demo-datagrid" data-grid data-page-size="5" data-searchable="true" data-exportable="true" data-selectable="true" data-pagination="true">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th data-key="id" data-sortable="true">ID</th>
+                  <th data-key="customer" data-sortable="true">Cliente</th>
+                  <th data-key="email" data-sortable="true">E-mail</th>
+                  <th data-key="plan" data-sortable="true">Plano</th>
+                  <th data-key="amount" data-sortable="true">Valor (R$)</th>
+                  <th data-key="status" data-sortable="true">Status</th>
+                  <th data-key="date" data-sortable="true">Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-id="ord-101">
+                  <td><code>#101</code></td>
+                  <td><strong>Camila Duarte</strong></td>
+                  <td>camila.duarte@empresa.com.br</td>
+                  <td><span class="badge badge-purple badge-xs">Enterprise</span></td>
+                  <td>1.250,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>10/10/2026</td>
+                </tr>
+                <tr data-id="ord-102">
+                  <td><code>#102</code></td>
+                  <td><strong>Lucas Martins</strong></td>
+                  <td>lucas.martins@startup.io</td>
+                  <td><span class="badge badge-blue badge-xs">Profissional</span></td>
+                  <td>490,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>09/10/2026</td>
+                </tr>
+                <tr data-id="ord-103">
+                  <td><code>#103</code></td>
+                  <td><strong>Beatriz Silveira</strong></td>
+                  <td>beatriz@consultoria.com</td>
+                  <td><span class="badge badge-subtle badge-xs">Starter</span></td>
+                  <td>120,00</td>
+                  <td><span class="badge badge-amber badge-xs">Pendente</span></td>
+                  <td>09/10/2026</td>
+                </tr>
+                <tr data-id="ord-104">
+                  <td><code>#104</code></td>
+                  <td><strong>Rafael Fontana</strong></td>
+                  <td>r.fontana@techlabs.dev</td>
+                  <td><span class="badge badge-purple badge-xs">Enterprise</span></td>
+                  <td>2.400,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>08/10/2026</td>
+                </tr>
+                <tr data-id="ord-105">
+                  <td><code>#105</code></td>
+                  <td><strong>Mariana Costa</strong></td>
+                  <td>mariana.costa@varejo.com.br</td>
+                  <td><span class="badge badge-blue badge-xs">Profissional</span></td>
+                  <td>490,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>08/10/2026</td>
+                </tr>
+                <tr data-id="ord-106">
+                  <td><code>#106</code></td>
+                  <td><strong>Thiago Mendonça</strong></td>
+                  <td>thiago.m@agencia.digital</td>
+                  <td><span class="badge badge-subtle badge-xs">Starter</span></td>
+                  <td>120,00</td>
+                  <td><span class="badge badge-danger badge-xs">Cancelado</span></td>
+                  <td>07/10/2026</td>
+                </tr>
+                <tr data-id="ord-107">
+                  <td><code>#107</code></td>
+                  <td><strong>Juliana Ramos</strong></td>
+                  <td>juliana.ramos@fintech.com</td>
+                  <td><span class="badge badge-purple badge-xs">Enterprise</span></td>
+                  <td>3.100,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>07/10/2026</td>
+                </tr>
+                <tr data-id="ord-108">
+                  <td><code>#108</code></td>
+                  <td><strong>Fernando Neves</strong></td>
+                  <td>fernando@logistica.net</td>
+                  <td><span class="badge badge-blue badge-xs">Profissional</span></td>
+                  <td>490,00</td>
+                  <td><span class="badge badge-amber badge-xs">Pendente</span></td>
+                  <td>06/10/2026</td>
+                </tr>
+                <tr data-id="ord-109">
+                  <td><code>#109</code></td>
+                  <td><strong>Patrícia Albuquerque</strong></td>
+                  <td>patricia@saudeplus.com.br</td>
+                  <td><span class="badge badge-purple badge-xs">Enterprise</span></td>
+                  <td>1.850,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>06/10/2026</td>
+                </tr>
+                <tr data-id="ord-110">
+                  <td><code>#110</code></td>
+                  <td><strong>Rodrigo Azevedo</strong></td>
+                  <td>rodrigo.a@designhub.co</td>
+                  <td><span class="badge badge-subtle badge-xs">Starter</span></td>
+                  <td>120,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>05/10/2026</td>
+                </tr>
+                <tr data-id="ord-111">
+                  <td><code>#111</code></td>
+                  <td><strong>Larissa Guimarães</strong></td>
+                  <td>larissa@educacao.org</td>
+                  <td><span class="badge badge-blue badge-xs">Profissional</span></td>
+                  <td>490,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>04/10/2026</td>
+                </tr>
+                <tr data-id="ord-112">
+                  <td><code>#112</code></td>
+                  <td><strong>Gabriel Borges</strong></td>
+                  <td>gabriel@seguranca.io</td>
+                  <td><span class="badge badge-purple badge-xs">Enterprise</span></td>
+                  <td>2.800,00</td>
+                  <td><span class="badge badge-green badge-xs">Pago</span></td>
+                  <td>03/10/2026</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
     </section>
 
     <footer class="container p-y-5 txt-center f-s-2 text-muted p-relative z-10">
-      Frame PER v2.16.0 · Framework CSS + JS + SVG sem dependências
+      Frame PER v2.17.0 · Framework CSS + JS + SVG sem dependências
     </footer>
   </main>
 

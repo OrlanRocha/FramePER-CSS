@@ -1,13 +1,21 @@
 # Frame PER
 
-![NPM Version](https://img.shields.io/badge/version-2.16.0-blue.svg)
+![NPM Version](https://img.shields.io/badge/version-2.17.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Frame PER** é um **UI Framework** (CSS & JS) moderno, elegante, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa. Combina design minimalista de alto padrão (Dribbble/Apple/Vercel) com utilitários flexíveis, modo escuro nativo, **Tree View Interativo com Checkboxes & Busca em Tempo Real (`FramePER.TreeView`)**, **Split View & Painéis Redimensionáveis (`FramePER.SplitPane`)**, **Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**, **Validador Reativo de Formulários (`FramePER.FormValidator`)**, **Menu de Contexto de Botão Direito & Dropdowns Multinível (`FramePER.ContextMenu`)**, **Abas Reativas com Slider Animado (`FramePER.Tabs`)**, **Accordions Fluidos com scrollHeight (`FramePER.Accordion`)**, **Popovers Inteligentes com Auto-Posicionamento 4D (`FramePER.Popover`)**, **File Uploader Avançado (`FramePER.Upload`) com Drag & Drop e progresso individual**, **Template Delivery & Restaurante (cardápio digital, sacola, cupom e rastreio de pedido com stepper)**, **Datepicker nativo (Data única & Range)**, **Select pesquisável com Multi-Select e chips**, **Tooltips direcionais em 4 posições**, **Command Palette (Ctrl+K)**, **Framework de Gráficos Vetoriais SVG com animações e modo misto**, biblioteca de **107 ícones vetoriais** Pure CSS e utilitários interativos de ponta.
+**Frame PER** é um **UI Framework** (CSS & JS) moderno, elegante, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa. Combina design minimalista de alto padrão (Dribbble/Apple/Vercel) com utilitários flexíveis, modo escuro nativo, **Data Grid Dinâmico com Paginação & Exportação (`FramePER.DataGrid`)**, **Tree View Interativo com Checkboxes & Busca em Tempo Real (`FramePER.TreeView`)**, **Split View & Painéis Redimensionáveis (`FramePER.SplitPane`)**, **Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**, **Validador Reativo de Formulários (`FramePER.FormValidator`)**, **Menu de Contexto de Botão Direito & Dropdowns Multinível (`FramePER.ContextMenu`)**, **Abas Reativas com Slider Animado (`FramePER.Tabs`)**, **Accordions Fluidos com scrollHeight (`FramePER.Accordion`)**, **Popovers Inteligentes com Auto-Posicionamento 4D (`FramePER.Popover`)**, **File Uploader Avançado (`FramePER.Upload`) com Drag & Drop e progresso individual**, **Template Delivery & Restaurante (cardápio digital, sacola, cupom e rastreio de pedido com stepper)**, **Datepicker nativo (Data única & Range)**, **Select pesquisável com Multi-Select e chips**, **Tooltips direcionais em 4 posições**, **Command Palette (Ctrl+K)**, **Framework de Gráficos Vetoriais SVG com animações e modo misto**, biblioteca de **107 ícones vetoriais** Pure CSS e utilitários interativos de ponta.
 
 ---
 
 ## 🚀 Principais Recursos & Componentes
+
+- **📊 Data Grid Dinâmico & Tabela Rica (`FramePER.DataGrid`)**:
+  - **Zero Dependências & Engine Client-Side**: Transforma qualquer tabela HTML existente ou conjunto de dados JSON em uma grade interativa de dados de alto desempenho.
+  - **Ordenação Multi-coluna & Indicadores**: Alternância fluida entre ascendente, descendente e neutra com chevrons SVG nos cabeçalhos (`th.sortable`).
+  - **Paginação Client-Side Completa**: Navegação por páginas, seletor de quantidade de registros por página (`pageSize: 5, 10, 25, 50`) e indicador textual dinâmico.
+  - **Busca Global em Tempo Real**: Barra de pesquisa integrada que filtra instantaneamente registros por qualquer coluna mantendo o estado de paginação e totais.
+  - **Seleção Múltipla de Linhas (Checkboxes)**: Checkbox no cabeçalho com suporte a estado indeterminado, seleção individual e contagem de itens ativos.
+  - **Exportação Nativa Direta**: Download direto em CSV (`exportCSV()`) e JSON (`exportJSON()`) com codificação e escape automático de caracteres UTF-8.
 
 - **🌲 Tree View Interativo & Hierarquias (`FramePER.TreeView`)**:
   - **Zero Dependências & Estrutura Hierárquica Ilimitada**: Renderização desktop-class com WAI-ARIA (`role="tree"`, `role="treeitem"`), linhas guias visuais e animação fluida de expansão nos chevrons.
@@ -414,6 +422,55 @@ Inclua os arquivos compilados `dist/framePER.min.css` e `dist/framePER.min.js` n
   document.getElementById('minha-arvore').addEventListener('frameper:tree:check', (e) => {
     console.log('Permissão alterada:', e.detail.label, e.detail.checked);
   });
+</script>
+```
+
+### Data Grid Dinâmico com Paginação & Exportação (DataGrid)
+```html
+<!-- Exemplo Declarativo sobre Tabela HTML5 -->
+<div id="minha-tabela" data-grid data-page-size="10" data-searchable="true" data-exportable="true">
+  <table class="table">
+    <thead>
+      <tr>
+        <th data-key="id" data-sortable="true">ID</th>
+        <th data-key="nome" data-sortable="true">Nome</th>
+        <th data-key="email" data-sortable="true">E-mail</th>
+        <th data-key="plano" data-sortable="true">Plano</th>
+        <th data-key="valor" data-sortable="true">Valor (R$)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-id="1">
+        <td>#1</td>
+        <td>Camila Duarte</td>
+        <td>camila@empresa.com</td>
+        <td>Enterprise</td>
+        <td>1250,00</td>
+      </tr>
+      <!-- Demais registros... -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // Inicialização ou controle via JavaScript
+  const grid = FramePER.DataGrid.create('#minha-tabela', {
+    pageSize: 10,
+    searchable: true,
+    selectable: true,
+    exportable: true,
+    onSelect: (selectedRows) => {
+      console.log('Linhas selecionadas:', selectedRows);
+    }
+  });
+
+  // Métodos da API
+  grid.filter('empresa');      // busca em tempo real
+  grid.setPage(2);             // navega para a página 2
+  grid.sort('valor', 'desc');  // ordena por valor decrescente
+  grid.selectAll();            // seleciona todas as linhas
+  grid.exportCSV('dados.csv'); // download instantâneo em CSV
+  grid.exportJSON('dados.json');// download instantâneo em JSON
 </script>
 ```
 

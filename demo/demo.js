@@ -274,5 +274,51 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   }
+
+  // Handlers para DataGrid Demo (v2.17.0)
+  var gridDemoEl = document.getElementById('demo-datagrid');
+  var btnGridSelectAll = document.getElementById('btn-grid-select-all');
+  var btnGridDeselectAll = document.getElementById('btn-grid-deselect-all');
+  var btnGridGetSelected = document.getElementById('btn-grid-get-selected');
+
+  var getGridInst = function () {
+    return gridDemoEl ? (gridDemoEl._frameDataGrid || (F && F.DataGrid && F.DataGrid.get(gridDemoEl))) : null;
+  };
+
+  if (gridDemoEl) {
+    if (btnGridSelectAll) {
+      btnGridSelectAll.addEventListener('click', function () {
+        var grid = getGridInst();
+        if (grid) grid.selectAll();
+      });
+    }
+
+    if (btnGridDeselectAll) {
+      btnGridDeselectAll.addEventListener('click', function () {
+        var grid = getGridInst();
+        if (grid) grid.deselectAll();
+      });
+    }
+
+    if (btnGridGetSelected) {
+      btnGridGetSelected.addEventListener('click', function () {
+        var grid = getGridInst();
+        if (grid) {
+          var selected = grid.getSelected();
+          if (selected.length === 0) {
+            if (F && F.Notify) F.Notify.show('Data Grid', 'Nenhuma linha selecionada na tabela.', 'warning');
+          } else {
+            var customers = selected.map(function (r) {
+              return (r._customer_raw || r.customer || r._gridId);
+            }).slice(0, 3).join(', ');
+            var extra = selected.length > 3 ? ' (+' + (selected.length - 3) + ' mais)' : '';
+            if (F && F.Notify) {
+              F.Notify.success('Linhas Selecionadas (' + selected.length + ')', customers + extra);
+            }
+          }
+        }
+      });
+    }
+  }
 });
 
