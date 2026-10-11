@@ -1,13 +1,20 @@
 # Frame PER
 
-![NPM Version](https://img.shields.io/badge/version-2.17.0-blue.svg)
+![NPM Version](https://img.shields.io/badge/version-2.18.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Frame PER** é um **UI Framework** (CSS & JS) moderno, elegante, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa. Combina design minimalista de alto padrão (Dribbble/Apple/Vercel) com utilitários flexíveis, modo escuro nativo, **Data Grid Dinâmico com Paginação & Exportação (`FramePER.DataGrid`)**, **Tree View Interativo com Checkboxes & Busca em Tempo Real (`FramePER.TreeView`)**, **Split View & Painéis Redimensionáveis (`FramePER.SplitPane`)**, **Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**, **Validador Reativo de Formulários (`FramePER.FormValidator`)**, **Menu de Contexto de Botão Direito & Dropdowns Multinível (`FramePER.ContextMenu`)**, **Abas Reativas com Slider Animado (`FramePER.Tabs`)**, **Accordions Fluidos com scrollHeight (`FramePER.Accordion`)**, **Popovers Inteligentes com Auto-Posicionamento 4D (`FramePER.Popover`)**, **File Uploader Avançado (`FramePER.Upload`) com Drag & Drop e progresso individual**, **Template Delivery & Restaurante (cardápio digital, sacola, cupom e rastreio de pedido com stepper)**, **Datepicker nativo (Data única & Range)**, **Select pesquisável com Multi-Select e chips**, **Tooltips direcionais em 4 posições**, **Command Palette (Ctrl+K)**, **Framework de Gráficos Vetoriais SVG com animações e modo misto**, biblioteca de **107 ícones vetoriais** Pure CSS e utilitários interativos de ponta.
+**Frame PER** é um **UI Framework** (CSS & JS) moderno, elegante, ultraleve e responsivo desenvolvido com SCSS modular e Vanilla JS sem nenhuma dependência externa. Combina design minimalista de alto padrão (Dribbble/Apple/Vercel) com utilitários flexíveis, modo escuro nativo, **Kanban Board Drag-and-Drop (`FramePER.Kanban`)**, **Data Grid Dinâmico com Paginação & Exportação (`FramePER.DataGrid`)**, **Tree View Interativo com Checkboxes & Busca em Tempo Real (`FramePER.TreeView`)**, **Split View & Painéis Redimensionáveis (`FramePER.SplitPane`)**, **Central de Atividades & Notificações em Drawer (`FramePER.ActivityFeed`)**, **Validador Reativo de Formulários (`FramePER.FormValidator`)**, **Menu de Contexto de Botão Direito & Dropdowns Multinível (`FramePER.ContextMenu`)**, **Abas Reativas com Slider Animado (`FramePER.Tabs`)**, **Accordions Fluidos com scrollHeight (`FramePER.Accordion`)**, **Popovers Inteligentes com Auto-Posicionamento 4D (`FramePER.Popover`)**, **File Uploader Avançado (`FramePER.Upload`) com Drag & Drop e progresso individual**, **Template Delivery & Restaurante (cardápio digital, sacola, cupom e rastreio de pedido com stepper)**, **Datepicker nativo (Data única & Range)**, **Select pesquisável com Multi-Select e chips**, **Tooltips direcionais em 4 posições**, **Command Palette (Ctrl+K)**, **Framework de Gráficos Vetoriais SVG com animações e modo misto**, biblioteca de **107 ícones vetoriais** Pure CSS e utilitários interativos de ponta.
 
 ---
 
 ## 🚀 Principais Recursos & Componentes
+
+- **📋 Kanban Board Drag-and-Drop (`FramePER.Kanban`)**:
+  - **Zero Dependências & HTML5 Drag & Drop Nativo**: Quadro ágil de cartões com arraste suave entre colunas e reordenação interna sem peso de bibliotecas terceiras.
+  - **Placeholder Visual & Feedback de Drop**: Linha guia pontilhada com cálculo dinâmico de proximidade vertical (`clientY`) para inserção precisa.
+  - **Contadores de Coluna Automáticos**: Atualização em tempo real das badges de contagem de cada coluna ao movimentar, adicionar ou remover cards.
+  - **Adição Dinâmica & Persistência Local**: Método `addCard(columnId, cardData)` e persistência transparente de posições em `localStorage` via atributo `data-persist="chave"`.
+  - **API Programática & Eventos**: Métodos `addCard()`, `removeCard()`, `moveCard()`, `getColumns()`, `getCards()` e eventos `frameper:kanban:move`, `frameper:kanban:add`.
 
 - **📊 Data Grid Dinâmico & Tabela Rica (`FramePER.DataGrid`)**:
   - **Zero Dependências & Engine Client-Side**: Transforma qualquer tabela HTML existente ou conjunto de dados JSON em uma grade interativa de dados de alto desempenho.
@@ -471,6 +478,60 @@ Inclua os arquivos compilados `dist/framePER.min.css` e `dist/framePER.min.js` n
   grid.selectAll();            // seleciona todas as linhas
   grid.exportCSV('dados.csv'); // download instantâneo em CSV
   grid.exportJSON('dados.json');// download instantâneo em JSON
+</script>
+```
+
+### Kanban Board Drag-and-Drop (Kanban)
+```html
+<!-- Estrutura Declarativa do Quadro Kanban -->
+<div id="meu-kanban" class="kanban-board" data-kanban data-persist="kanban-prefs">
+  <!-- Coluna A Fazer -->
+  <div class="kanban-column" data-column-id="col-todo">
+    <div class="kanban-column-header">
+      <h4 class="kanban-column-title">A Fazer</h4>
+      <span class="kanban-count">1</span>
+    </div>
+    <div class="kanban-column-body">
+      <div class="kanban-card" data-card-id="card-1">
+        <div class="kanban-card-tags">
+          <span class="badge badge-danger badge-xs">Prioridade Alta</span>
+        </div>
+        <div class="kanban-card-title">Criar testes unitários</div>
+        <div class="kanban-card-desc">Cobrir fluxos de checkout e pagamentos com mock.</div>
+        <div class="kanban-card-footer">
+          <span><i class="icon icon-clock"></i> Amanhã</span>
+          <span class="badge badge-pill badge-primary badge-xs">Lucas M.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coluna Concluído -->
+  <div class="kanban-column" data-column-id="col-done">
+    <div class="kanban-column-header">
+      <h4 class="kanban-column-title">Concluído</h4>
+      <span class="kanban-count">0</span>
+    </div>
+    <div class="kanban-column-body"></div>
+  </div>
+</div>
+
+<script>
+  // Inicialização e controle via JavaScript
+  const kanban = FramePER.Kanban.create('#meu-kanban', {
+    persist: 'minha-chave-storage',
+    onMove: (e) => {
+      console.log('Card movido:', e.cardId, 'Para coluna:', e.toColumnId);
+    }
+  });
+
+  // Ações programáticas
+  kanban.addCard('col-todo', {
+    title: 'Nova Tarefa via API',
+    desc: 'Criada dinamicamente via JavaScript sem recarregar a página.',
+    tags: [{ label: 'Feature', className: 'badge-purple badge-xs' }],
+    assignee: 'Mariana C.'
+  });
 </script>
 ```
 

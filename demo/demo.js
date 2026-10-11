@@ -320,5 +320,56 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   }
+
+  // Handlers para Kanban Demo (v2.18.0)
+  var kanbanBoardEl = document.getElementById('demo-kanban-board');
+  var btnKanbanAdd = document.getElementById('btn-kanban-add-demo');
+  var btnKanbanReset = document.getElementById('btn-kanban-reset');
+
+  var getKanbanInst = function () {
+    return kanbanBoardEl ? (kanbanBoardEl._frameKanban || (F && F.Kanban && F.Kanban.get(kanbanBoardEl))) : null;
+  };
+
+  if (kanbanBoardEl) {
+    var taskCount = 8;
+
+    if (btnKanbanAdd) {
+      btnKanbanAdd.addEventListener('click', function () {
+        var kanban = getKanbanInst();
+        if (kanban) {
+          var card = kanban.addCard('col-todo', {
+            id: 'card-' + (taskCount++),
+            title: 'Nova Tarefa Criada #' + (taskCount - 1),
+            desc: 'Tarefa gerada dinamicamente via API FramePER.Kanban.addCard().',
+            tags: [{ label: 'Nova', className: 'badge-purple badge-xs' }],
+            date: 'Agora',
+            assignee: 'Você'
+          });
+          if (card && F && F.Notify) {
+            F.Notify.success('Kanban', 'Nova tarefa adicionada à coluna "A Fazer"!');
+          }
+        }
+      });
+    }
+
+    if (btnKanbanReset) {
+      btnKanbanReset.addEventListener('click', function () {
+        try {
+          localStorage.removeItem('demo-kanban-state');
+        } catch (e) {}
+        if (F && F.Notify) {
+          F.Notify.info('Kanban', 'Estado salvo limpo. Recarregue a página para restaurar a ordem inicial.');
+        }
+      });
+    }
+
+    kanbanBoardEl.addEventListener('frameper:kanban:move', function (e) {
+      if (F && F.Notify && e.detail) {
+        var toCol = e.detail.toColumnId;
+        var colName = toCol === 'col-todo' ? 'A Fazer' : (toCol === 'col-progress' ? 'Em Andamento' : 'Concluído');
+        F.Notify.info('Tarefa Movida', 'Cartão movido para "' + colName + '" (posição ' + (e.detail.newIndex + 1) + ')', 2000);
+      }
+    });
+  }
 });
 
