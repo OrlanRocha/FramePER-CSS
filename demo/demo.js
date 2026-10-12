@@ -561,7 +561,34 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // Quick live search filter for icons in components.html
+  var compIconSearch = document.getElementById('comp-icons-search');
+  var compIconCount = document.getElementById('comp-icons-count');
+  var secIcons = document.getElementById('sec-icons');
+  if (compIconSearch && secIcons) {
+    var compTiles = Array.prototype.slice.call(secIcons.querySelectorAll('.icon-tile'));
+    compIconSearch.addEventListener('input', function () {
+      var q = compIconSearch.value.trim().toLowerCase();
+      var visible = 0;
+      compTiles.forEach(function (tile) {
+        var copy = (tile.getAttribute('data-copy') || '').toLowerCase();
+        var tooltip = (tile.getAttribute('data-tooltip') || '').toLowerCase();
+        var text = tile.textContent.trim().toLowerCase();
+        if (!q || copy.indexOf(q) !== -1 || tooltip.indexOf(q) !== -1 || text.indexOf(q) !== -1) {
+          tile.style.display = '';
+          visible++;
+        } else {
+          tile.style.display = 'none';
+        }
+      });
+      if (compIconCount) {
+        compIconCount.textContent = q ? visible + ' de ' + compTiles.length + ' encontrados' : 'Exibindo todos os ' + compTiles.length + ' ícones';
+      }
+    });
+  }
 });
+
 
 
 

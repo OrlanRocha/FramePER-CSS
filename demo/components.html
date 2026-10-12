@@ -25,6 +25,7 @@
         <a class="nav-link" href="dashboard.html">Dashboard</a>
         <a class="nav-link" href="charts.html">Gráficos SVG</a>
         <a class="nav-link active" href="components.html">Componentes</a>
+        <a class="nav-link" href="icons.html">Ícones</a>
         <a class="nav-link" href="manual.html">Manual API</a>
       </nav>
 
@@ -49,6 +50,7 @@
       <a class="nav-link" href="dashboard.html">Dashboard</a>
       <a class="nav-link" href="charts.html">Gráficos SVG</a>
       <a class="nav-link active" href="components.html">Componentes</a>
+      <a class="nav-link" href="icons.html">Ícones</a>
       <a class="nav-link" href="manual.html">Manual API</a>
     </div>
   </header>
@@ -75,7 +77,7 @@
       <a href="#sec-tooltips">Tooltips Flutuantes</a>
       <a href="#sec-badges">Badges & Avatares</a>
       <a href="#sec-chips">Chips & Tags</a>
-      <a href="#sec-icons">Biblioteca de Ícones</a>
+      <a href="#sec-icons" class="d-flex align-items-center justify-content-between"><span>Biblioteca de Ícones</span> <span class="badge badge-success badge-xs">280</span></a>
       <a href="#sec-cards">Cards & Estatísticas</a>
       <a href="#sec-counters">Contadores Animados</a>
       <a href="#sec-charts">Gráficos Vetoriais (SVG)</a>
@@ -677,9 +679,28 @@ tour.<span class="tok-f">start</span>();</code></pre>
       <section id="sec-icons" class="docs-section">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 m-b-2">
           <h2 class="m-0">Biblioteca de Ícones (Pure CSS SVG Masks)</h2>
-          <span class="badge badge-success badge-pill">280 Ícones Vetoriais</span>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge badge-success badge-pill">280 Ícones Vetoriais</span>
+            <a href="icons.html" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1">
+              <i class="icon icon-sparkles"></i> Catálogo Completo Dedicado &rarr;
+            </a>
+          </div>
         </div>
         <p class="lead">Coleção completa com <strong>280 ícones vetoriais puros</strong> embutidos via CSS sem dependência de fonte externa (100% livres de layout shift e coloridos dinamicamente via <code>currentColor</code>). Inclui pacotes para <strong>Redes Sociais</strong>, <strong>Navegação</strong>, <strong>Segurança</strong>, <strong>Alertas & Erros</strong>, <strong>Usuários</strong>, <strong>Finanças & Negócios</strong>, <strong>Produtividade & Office</strong>, <strong>Design & Cores</strong>, <strong>Clima & Natureza</strong>, <strong>Transporte & Viagem</strong>, <strong>Tecnologia & Dev</strong>, <strong>Beleza</strong>, <strong>Mídia</strong> e mais. Clique em qualquer ícone para copiar sua classe para a área de transferência via <code>FramePER.Clipboard</code>.</p>
+
+        <!-- Barra de Pesquisa Rápida na Seção -->
+        <div class="card p-3 m-b-3 bg-subtle border d-flex flex-row align-items-center justify-content-between flex-wrap gap-3">
+          <div style="position: relative; flex: 1 1 280px;">
+            <i class="icon icon-search" style="position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" id="comp-icons-search" class="form-control form-control-sm" style="padding-left: 2.5rem;" placeholder="Pesquisa rápida de ícones nesta página (nome ou classe)...">
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <small class="text-muted" id="comp-icons-count">Exibindo todos os ícones</small>
+            <a href="icons.html" class="btn btn-outline btn-sm">
+              <i class="icon icon-external"></i> Abrir Catálogo com Filtros Avançados
+            </a>
+          </div>
+        </div>
 
         <div class="preview preview-solo stack gap-4">
                     <!-- Coleção Exclusiva & Niche (30 Ícones Inéditos) -->
@@ -1077,7 +1098,7 @@ tour.<span class="tok-f">start</span>();</code></pre>
               <button type="button" class="icon-tile" data-copy="icon icon-newspaper" data-tooltip="Copiar .icon-newspaper"><i class="icon icon-newspaper"></i><small>newspaper</small></button>
               <button type="button" class="icon-tile" data-copy="icon icon-article" data-tooltip="Copiar .icon-article"><i class="icon icon-article"></i><small>article</small></button>
               <button type="button" class="icon-tile" data-copy="icon icon-megaphone" data-tooltip="Copiar .icon-megaphone"><i class="icon icon-megaphone"></i><small>megaphone</small></button>
-              <button type="button" class="icon-tile" data-copy="icon icon-camera" data-tooltip="Copiar .icon-camera"><i class="icon icon-camera"></i><small>camera</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-video" data-tooltip="Copiar .icon-video"><i class="icon icon-video"></i><small>video</small></button>
               <button type="button" class="icon-tile" data-copy="icon icon-mic" data-tooltip="Copiar .icon-mic"><i class="icon icon-mic"></i><small>mic</small></button>
               <button type="button" class="icon-tile" data-copy="icon icon-radio" data-tooltip="Copiar .icon-radio"><i class="icon icon-radio"></i><small>radio</small></button>
               <button type="button" class="icon-tile" data-copy="icon icon-book" data-tooltip="Copiar .icon-book"><i class="icon icon-book"></i><small>book</small></button>
@@ -1173,6 +1194,20 @@ tour.<span class="tok-f">start</span>();</code></pre>
               <button type="button" class="icon-tile" data-copy="icon icon-arrow-down" data-tooltip="Copiar .icon-arrow-down"><i class="icon icon-arrow-down"></i><small>arrow-down</small></button>
               <button type="button" class="icon-tile" data-copy="icon icon-arrow-left" data-tooltip="Copiar .icon-arrow-left"><i class="icon icon-arrow-left"></i><small>arrow-left</small></button>
               <button type="button" class="icon-tile" data-copy="icon icon-arrow-right" data-tooltip="Copiar .icon-arrow-right"><i class="icon icon-arrow-right"></i><small>arrow-right</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-info" data-tooltip="Copiar .icon-info"><i class="icon icon-info"></i><small>info</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-envelope" data-tooltip="Copiar .icon-envelope"><i class="icon icon-envelope"></i><small>envelope</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-calendar" data-tooltip="Copiar .icon-calendar"><i class="icon icon-calendar"></i><small>calendar</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-file" data-tooltip="Copiar .icon-file"><i class="icon icon-file"></i><small>file</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-file-pdf" data-tooltip="Copiar .icon-file-pdf"><i class="icon icon-file-pdf"></i><small>file-pdf</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-image" data-tooltip="Copiar .icon-image"><i class="icon icon-image"></i><small>image</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-camera" data-tooltip="Copiar .icon-camera"><i class="icon icon-camera"></i><small>camera</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-warning" data-tooltip="Copiar .icon-warning"><i class="icon icon-warning"></i><small>warning</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-x-circle" data-tooltip="Copiar .icon-x-circle"><i class="icon icon-x-circle"></i><small>x-circle</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-lightning" data-tooltip="Copiar .icon-lightning"><i class="icon icon-lightning"></i><small>lightning</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-time" data-tooltip="Copiar .icon-time"><i class="icon icon-time"></i><small>time</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-music" data-tooltip="Copiar .icon-music"><i class="icon icon-music"></i><small>music</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-chart-bar" data-tooltip="Copiar .icon-chart-bar"><i class="icon icon-chart-bar"></i><small>chart-bar</small></button>
+              <button type="button" class="icon-tile" data-copy="icon icon-gamepad" data-tooltip="Copiar .icon-gamepad"><i class="icon icon-gamepad"></i><small>gamepad</small></button>
             </div>
           </div>
         </div>
