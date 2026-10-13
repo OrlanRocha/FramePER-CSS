@@ -60,8 +60,15 @@
 
     <!-- Sticky Table of Contents -->
     <aside class="docs-nav stack gap-1">
+      <span class="sidebar-label">Novidades v2.25</span>
+      <a href="#sec-segmented-control" class="active"><span class="badge badge-primary badge-xs">v2.25</span> Segmented Control</a>
+      <a href="#sec-stat-cards"><span class="badge badge-success badge-xs">v2.25</span> Stat Cards & KPI</a>
+      <a href="#sec-rating"><span class="badge badge-warning badge-xs">v2.25</span> Star Rating & Review</a>
+      <a href="#sec-status-dot"><span class="badge badge-danger badge-xs">v2.25</span> Status Dot & Ping</a>
+      <a href="#sec-kbd"><span class="badge badge-purple badge-xs">v2.25</span> Atalhos Teclado (KBD)</a>
+      <div class="divider m-y-1"></div>
       <span class="sidebar-label">Navegação Rápida</span>
-      <a href="#sec-tour" class="active"><span class="badge badge-primary badge-xs">v2.20</span> Tour Guiado</a>
+      <a href="#sec-tour"><span class="badge badge-primary badge-xs">v2.20</span> Tour Guiado</a>
       <a href="#sec-split-pane"><span class="badge badge-purple badge-xs">v2.19</span> Split View</a>
       <a href="#sec-timeline"><span class="badge badge-primary badge-xs">v2.19</span> Timeline Vertical</a>
       <a href="#sec-kanban"><span class="badge badge-primary badge-xs">v2.18</span> Kanban Board</a>
@@ -92,6 +99,357 @@
 
     <!-- Content Sections -->
     <main class="stack gap-6">
+
+      <!-- Segmented Control (v2.25) -->
+      <section id="sec-segmented-control" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Segmented Control (Controle Segmentado)</h2>
+          <span class="badge badge-primary badge-sm">v2.25</span>
+        </div>
+        <p class="lead">Alternadores de seleção mutuamente exclusivos estilizados com pill fluido, tamanhos múltiplos, suporte a ícones, variante full-width e despacho nativo de eventos customizados (<code>change</code>).</p>
+
+        <div class="preview stack gap-4">
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Tamanhos Padrão (SM, MD, LG):</span>
+            <div class="cluster gap-3">
+              <div class="segmented-control segmented-control-sm" data-segmented-control>
+                <button type="button" class="segmented-item active" data-value="dia">Dia</button>
+                <button type="button" class="segmented-item" data-value="semana">Semana</button>
+                <button type="button" class="segmented-item" data-value="mes">Mês</button>
+              </div>
+
+              <div class="segmented-control" data-segmented-control>
+                <button type="button" class="segmented-item active" data-value="grade"><i class="icon icon-package"></i> Grade</button>
+                <button type="button" class="segmented-item" data-value="lista"><i class="icon icon-menu"></i> Lista</button>
+                <button type="button" class="segmented-item" data-value="tabela"><i class="icon icon-table"></i> Tabela</button>
+              </div>
+
+              <div class="segmented-control segmented-control-lg" data-segmented-control>
+                <button type="button" class="segmented-item active" data-value="mensal">Mensal</button>
+                <button type="button" class="segmented-item" data-value="anual">Anual (-20%)</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Variante Full-Width e Pill Arredondado:</span>
+            <div class="segmented-control segmented-control-full segmented-control-pill" data-segmented-control style="max-width: 480px;">
+              <button type="button" class="segmented-item active" data-value="todos">Todos</button>
+              <button type="button" class="segmented-item" data-value="ativos">Ativos (14)</button>
+              <button type="button" class="segmented-item" data-value="pendentes">Pendentes (3)</button>
+              <button type="button" class="segmented-item" data-value="arquivados">Arquivados</button>
+            </div>
+          </div>
+        </div>
+
+        <pre><code><span class="tok-c">&lt;!-- HTML Básico --&gt;</span>
+<span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"segmented-control"</span> <span class="tok-f">data-segmented-control</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;button</span> <span class="tok-f">type</span>=<span class="tok-s">"button"</span> <span class="tok-f">class</span>=<span class="tok-s">"segmented-item active"</span> <span class="tok-f">data-value</span>=<span class="tok-s">"grade"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-package"</span><span class="tok-k">&gt;&lt;/i&gt;</span> Grade<span class="tok-k">&lt;/button&gt;</span>
+  <span class="tok-k">&lt;button</span> <span class="tok-f">type</span>=<span class="tok-s">"button"</span> <span class="tok-f">class</span>=<span class="tok-s">"segmented-item"</span> <span class="tok-f">data-value</span>=<span class="tok-s">"lista"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-menu"</span><span class="tok-k">&gt;&lt;/i&gt;</span> Lista<span class="tok-k">&lt;/button&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span>
+
+<span class="tok-c">&lt;!-- JavaScript para Escutar Mudanças --&gt;</span>
+<span class="tok-k">document</span>.<span class="tok-f">querySelector</span>(<span class="tok-s">'[data-segmented-control]'</span>).<span class="tok-f">addEventListener</span>(<span class="tok-s">'change'</span>, <span class="tok-f">e</span> =&gt; {
+  <span class="tok-k">console</span>.<span class="tok-f">log</span>(<span class="tok-s">'Selecionado:'</span>, <span class="tok-f">e</span>.<span class="tok-f">detail</span>.<span class="tok-f">value</span>);
+});</code></pre>
+      </section>
+
+      <!-- Stat Cards / KPI Metrics (v2.25) -->
+      <section id="sec-stat-cards" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Stat Cards / KPI Metrics</h2>
+          <span class="badge badge-success badge-sm">v2.25</span>
+        </div>
+        <p class="lead">Cartões de métricas e indicadores de desempenho (KPIs) para dashboards corporativos, com borda superior temática, tendências percentuais com setas vetoriais e caixas de ícones contextuais.</p>
+
+        <div class="preview">
+          <div class="row g-3">
+            <div class="col-12 col-sm-6 col-lg-3">
+              <div class="stat-card stat-primary">
+                <div class="stat-header">
+                  <span class="stat-title">Faturamento Mensal</span>
+                  <span class="stat-icon"><i class="icon icon-coins"></i></span>
+                </div>
+                <div class="stat-value">R$ 148.920</div>
+                <div class="stat-footer">
+                  <span class="stat-trend stat-trend-up"><i class="icon icon-trend-up"></i> +14.2%</span>
+                  <span class="stat-desc">vs mês anterior</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+              <div class="stat-card stat-success">
+                <div class="stat-header">
+                  <span class="stat-title">Novos Assinantes</span>
+                  <span class="stat-icon"><i class="icon icon-user-plus"></i></span>
+                </div>
+                <div class="stat-value">1.842</div>
+                <div class="stat-footer">
+                  <span class="stat-trend stat-trend-up"><i class="icon icon-trend-up"></i> +8.6%</span>
+                  <span class="stat-desc">metas batidas</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+              <div class="stat-card stat-danger">
+                <div class="stat-header">
+                  <span class="stat-title">Taxa de Churn</span>
+                  <span class="stat-icon"><i class="icon icon-user-x"></i></span>
+                </div>
+                <div class="stat-value">2.14%</div>
+                <div class="stat-footer">
+                  <span class="stat-trend stat-trend-down"><i class="icon icon-trend-down"></i> -0.8%</span>
+                  <span class="stat-desc">redução contínua</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+              <div class="stat-card stat-purple">
+                <div class="stat-header">
+                  <span class="stat-title">Tempo de Resposta</span>
+                  <span class="stat-icon"><i class="icon icon-zap"></i></span>
+                </div>
+                <div class="stat-value">180 ms</div>
+                <div class="stat-footer">
+                  <span class="stat-trend stat-trend-neutral"><i class="icon icon-check"></i> 99.98%</span>
+                  <span class="stat-desc">uptime de SLA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <pre><code><span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"stat-card stat-primary"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"stat-header"</span><span class="tok-k">&gt;</span>
+    <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"stat-title"</span><span class="tok-k">&gt;</span>Faturamento Mensal<span class="tok-k">&lt;/span&gt;</span>
+    <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"stat-icon"</span><span class="tok-k">&gt;&lti</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-coins"</span><span class="tok-k">&gt;&lt;/i&gt;&lt;/span&gt;</span>
+  <span class="tok-k">&lt;/div&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"stat-value"</span><span class="tok-k">&gt;</span>R$ 148.920<span class="tok-k">&lt;/div&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"stat-footer"</span><span class="tok-k">&gt;</span>
+    <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"stat-trend stat-trend-up"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-trend-up"</span><span class="tok-k">&gt;&lt;/i&gt;</span> +14.2%<span class="tok-k">&lt;/span&gt;</span>
+    <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"stat-desc"</span><span class="tok-k">&gt;</span>vs mês anterior<span class="tok-k">&lt;/span&gt;</span>
+  <span class="tok-k">&lt;/div&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+      <!-- Star Rating & Review (v2.25) -->
+      <section id="sec-rating" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Star Rating & Avaliação</h2>
+          <span class="badge badge-warning badge-sm">v2.25</span>
+        </div>
+        <p class="lead">Sistema de pontuação e avaliação por estrelas com suporte a modo somente leitura, feedback interativo ao passar o mouse, seleção de nota ao clicar e múltiplos tamanhos.</p>
+
+        <div class="preview stack gap-4">
+          <div class="cluster gap-5 align-items-center flex-wrap">
+            <div>
+              <span class="d-block f-s-2 text-muted m-b-2 font-medium">Interativo com Nota (Clique para votar):</span>
+              <div class="rating rating-interactive rating-lg" data-rating data-interactive="true" data-value="4" id="demo-user-rating">
+                <span class="rating-star" title="1 estrela"><i class="icon icon-star"></i></span>
+                <span class="rating-star" title="2 estrelas"><i class="icon icon-star"></i></span>
+                <span class="rating-star" title="3 estrelas"><i class="icon icon-star"></i></span>
+                <span class="rating-star" title="4 estrelas"><i class="icon icon-star"></i></span>
+                <span class="rating-star" title="5 estrelas"><i class="icon icon-star"></i></span>
+                <span class="rating-score">4.0</span>
+              </div>
+            </div>
+
+            <div>
+              <span class="d-block f-s-2 text-muted m-b-2 font-medium">Somente Leitura (Read-only):</span>
+              <div class="rating rating-readonly rating-md" data-rating data-value="5">
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-score">5.0</span>
+                <span class="text-muted f-s-1 m-l-1">(128 avaliações)</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Escala de Tamanhos (SM, MD, LG, XL):</span>
+            <div class="stack gap-2">
+              <div class="rating rating-sm">
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-score">SM (14px)</span>
+              </div>
+              <div class="rating rating-md">
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-score">MD (18px)</span>
+              </div>
+              <div class="rating rating-lg">
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-score">LG (24px)</span>
+              </div>
+              <div class="rating rating-xl">
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-star is-filled"><i class="icon icon-star"></i></span>
+                <span class="rating-score">XL (32px)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <pre><code><span class="tok-c">&lt;!-- Componente Interativo --&gt;</span>
+<span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"rating rating-interactive rating-lg"</span> <span class="tok-f">data-rating</span> <span class="tok-f">data-interactive</span>=<span class="tok-s">"true"</span> <span class="tok-f">data-value</span>=<span class="tok-s">"4"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"rating-star"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-star"</span><span class="tok-k">&gt;&lt;/i&gt;&lt;/span&gt;</span>
+  <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"rating-star"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-star"</span><span class="tok-k">&gt;&lt;/i&gt;&lt;/span&gt;</span>
+  <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"rating-star"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-star"</span><span class="tok-k">&gt;&lt;/i&gt;&lt;/span&gt;</span>
+  <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"rating-star"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-star"</span><span class="tok-k">&gt;&lt;/i&gt;&lt;/span&gt;</span>
+  <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"rating-star"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-star"</span><span class="tok-k">&gt;&lt;/i&gt;&lt;/span&gt;</span>
+  <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"rating-score"</span><span class="tok-k">&gt;</span>4.0<span class="tok-k">&lt;/span&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span>
+
+<span class="tok-c">&lt;!-- Ouvir evento de seleção --&gt;</span>
+<span class="tok-k">document</span>.<span class="tok-f">querySelector</span>(<span class="tok-s">'#demo-user-rating'</span>).<span class="tok-f">addEventListener</span>(<span class="tok-s">'change'</span>, <span class="tok-f">e</span> =&gt; {
+  <span class="tok-k">FramePER</span>.<span class="tok-k">Notify</span>.<span class="tok-f">success</span>(<span class="tok-s">'Nota Registrada'</span>, <span class="tok-s">'Você avaliou com '</span> + <span class="tok-f">e</span>.<span class="tok-f">detail</span>.<span class="tok-f">rating</span> + <span class="tok-s">' estrelas!'</span>);
+});</code></pre>
+      </section>
+
+      <!-- Status Dot & Live Ping Pulse (v2.25) -->
+      <section id="sec-status-dot" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Status Dot & Live Ping Pulse</h2>
+          <span class="badge badge-danger badge-sm">v2.25</span>
+        </div>
+        <p class="lead">Indicadores circulares de presença, atividade e status de servidores ou usuários, com suporte à animação de pulso radar estilo Tailwind (<code>.status-dot-ping</code>) e badges compostas.</p>
+
+        <div class="preview stack gap-4">
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Estados Semânticos com Pulso Radar Ativo:</span>
+            <div class="cluster gap-4 align-items-center flex-wrap">
+              <div class="status-badge">
+                <span class="status-dot status-dot-online status-dot-ping"></span>
+                <span class="f-s-2 font-medium">Online (Disponível)</span>
+              </div>
+
+              <div class="status-badge">
+                <span class="status-dot status-dot-busy status-dot-ping"></span>
+                <span class="f-s-2 font-medium">Ocupado / Em Chamada</span>
+              </div>
+
+              <div class="status-badge">
+                <span class="status-dot status-dot-away"></span>
+                <span class="f-s-2 font-medium">Ausente</span>
+              </div>
+
+              <div class="status-badge">
+                <span class="status-dot status-dot-recording status-dot-ping"></span>
+                <span class="f-s-2 font-medium text-danger">Gravando Ao Vivo</span>
+              </div>
+
+              <div class="status-badge">
+                <span class="status-dot status-dot-offline"></span>
+                <span class="f-s-2 font-medium text-muted">Offline</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Acoplado a Avatares de Usuário:</span>
+            <div class="cluster gap-4 align-items-center">
+              <div style="position: relative; display: inline-block;">
+                <span class="avatar avatar-md avatar-primary">CR</span>
+                <span class="status-dot status-dot-online status-dot-ping" style="position: absolute; bottom: 0; right: 0; border: 2px solid var(--bg-surface);"></span>
+              </div>
+
+              <div style="position: relative; display: inline-block;">
+                <span class="avatar avatar-md avatar-success">MS</span>
+                <span class="status-dot status-dot-busy" style="position: absolute; bottom: 0; right: 0; border: 2px solid var(--bg-surface);"></span>
+              </div>
+
+              <div style="position: relative; display: inline-block;">
+                <span class="avatar avatar-md avatar-warning">AP</span>
+                <span class="status-dot status-dot-away" style="position: absolute; bottom: 0; right: 0; border: 2px solid var(--bg-surface);"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <pre><code><span class="tok-c">&lt;!-- Status Dot Isolado com Pulso Radar --&gt;</span>
+<span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"status-dot status-dot-online status-dot-ping"</span><span class="tok-k">&gt;&lt;/span&gt;</span>
+
+<span class="tok-c">&lt;!-- Com Etiqueta Textual --&gt;</span>
+<span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"status-badge"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"status-dot status-dot-online status-dot-ping"</span><span class="tok-k">&gt;&lt;/span&gt;</span>
+  <span class="tok-k">&lt;span&gt;</span>Serviço Operacional<span class="tok-k">&lt;/span&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+      <!-- Atalhos de Teclado KBD (v2.25) -->
+      <section id="sec-kbd" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Atalhos de Teclado (KBD)</h2>
+          <span class="badge badge-purple badge-sm">v2.25</span>
+        </div>
+        <p class="lead">Teclas táteis em 3D para representação visual elegante de atalhos e combinações do teclado, com profundidade de sombra, estado ativo de pressionamento e agrupadores flexíveis (<code>.kbd-combo</code>).</p>
+
+        <div class="preview stack gap-4">
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Combinações Populares de Teclas:</span>
+            <div class="cluster gap-3 align-items-center flex-wrap">
+              <div class="kbd-combo">
+                <kbd>Ctrl</kbd>
+                <span>+</span>
+                <kbd>K</kbd>
+              </div>
+
+              <div class="kbd-combo">
+                <kbd>⌘ Cmd</kbd>
+                <span>+</span>
+                <kbd>Shift</kbd>
+                <span>+</span>
+                <kbd>P</kbd>
+              </div>
+
+              <div class="kbd-combo">
+                <kbd>Alt</kbd>
+                <span>+</span>
+                <kbd>F4</kbd>
+              </div>
+
+              <div class="kbd-combo">
+                <kbd>Esc</kbd>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Tamanhos e Variantes:</span>
+            <div class="cluster gap-3 align-items-center flex-wrap">
+              <div><kbd class="kbd-xs">XS</kbd> <span class="f-s-1 text-muted">Extra Pequeno</span></div>
+              <div><kbd class="kbd-sm">SM</kbd> <span class="f-s-1 text-muted">Pequeno</span></div>
+              <div><kbd>Normal</kbd> <span class="f-s-1 text-muted">Padrão</span></div>
+              <div><kbd class="kbd-lg">LG</kbd> <span class="f-s-1 text-muted">Grande</span></div>
+              <div><kbd class="kbd-ghost">Ghost</kbd> <span class="f-s-1 text-muted">Sem Sombra</span></div>
+            </div>
+          </div>
+        </div>
+
+        <pre><code><span class="tok-c">&lt;!-- Tecla Individual --&gt;</span>
+<span class="tok-k">&lt;kbd&gt;</span>Ctrl<span class="tok-k">&lt;/kbd&gt;</span>
+
+<span class="tok-c">&lt;!-- Combinação Completa de Atalho --&gt;</span>
+<span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"kbd-combo"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;kbd&gt;</span>Ctrl<span class="tok-k">&lt;/kbd&gt;</span>
+  <span class="tok-k">&lt;span&gt;</span>+<span class="tok-k">&lt;/span&gt;</span>
+  <span class="tok-k">&lt;kbd&gt;</span>K<span class="tok-k">&lt;/kbd&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+
 
       <!-- Tour Guiado Interativo (v2.20) -->
       <section id="sec-tour" class="docs-section">
@@ -1592,6 +1950,20 @@ tour.<span class="tok-f">start</span>();</code></pre>
 
   <script src="../dist/framePER.min.js"></script>
   <script src="demo.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ratingEl = document.getElementById('demo-user-rating');
+      if (ratingEl) {
+        ratingEl.addEventListener('change', (e) => {
+          if (window.FramePER && window.FramePER.Notify) {
+            window.FramePER.Notify.success('Nota Registrada', 'Você avaliou com ' + e.detail.rating + ' estrela(s)!', 2500);
+          }
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>
 

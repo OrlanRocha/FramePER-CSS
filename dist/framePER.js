@@ -7639,8 +7639,94 @@
         if (FramePER.Timeline && FramePER.Timeline.init) {
             FramePER.Timeline.init();
         }
+    // ==========================================
+    // SEGMENTED CONTROL COMPONENT
+    // ==========================================
+    const SegmentedControl = {
+        init() {
+            document.querySelectorAll('[data-segmented-control]').forEach(el => {
+                if (el._segmentedControlInitialized) return;
+                el._segmentedControlInitialized = true;
+                
+                const items = el.querySelectorAll('.segmented-item');
+                items.forEach((item, index) => {
+                    item.addEventListener('click', (e) => {
+                        if (item.classList.contains('disabled') || item.disabled) return;
+                        items.forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                        
+                        const value = item.getAttribute('data-value') || item.innerText.trim();
+                        const event = new CustomEvent('change', {
+                            detail: { value, index, item },
+                            bubbles: true
+                        });
+                        el.dispatchEvent(event);
+                    });
+                });
+            });
+        }
+    };
+    FramePER.SegmentedControl = SegmentedControl;
+
+    // ==========================================
+    // RATING COMPONENT
+    // ==========================================
+    const Rating = {
+        init() {
+            document.querySelectorAll('[data-rating]').forEach(el => {
+                if (el._ratingInitialized) return;
+                el._ratingInitialized = true;
+                
+                const isInteractive = el.classList.contains('rating-interactive') || el.hasAttribute('data-interactive');
+                if (!isInteractive) return;
+                
+                const stars = el.querySelectorAll('.rating-star');
+                const scoreDisplay = el.querySelector('.rating-score');
+                let currentVal = parseInt(el.getAttribute('data-value') || '0', 10);
+                
+                const updateStars = (val) => {
+                    stars.forEach((star, idx) => {
+                        if (idx < val) {
+                            star.classList.add('active', 'is-filled');
+                        } else {
+                            star.classList.remove('active', 'is-filled');
+                        }
+                    });
+                    if (scoreDisplay) scoreDisplay.textContent = val > 0 ? val.toFixed(1) : '';
+                };
+
+                updateStars(currentVal);
+
+                stars.forEach((star, idx) => {
+                    star.addEventListener('mouseenter', () => {
+                        updateStars(idx + 1);
+                    });
+                    star.addEventListener('mouseleave', () => {
+                        updateStars(currentVal);
+                    });
+                    star.addEventListener('click', () => {
+                        currentVal = idx + 1;
+                        el.setAttribute('data-value', currentVal);
+                        updateStars(currentVal);
+                        el.dispatchEvent(new CustomEvent('change', {
+                            detail: { rating: currentVal },
+                            bubbles: true
+                        }));
+                    });
+                });
+            });
+        }
+    };
+    FramePER.Rating = Rating;
+
         if (FramePER.Tour && FramePER.Tour.init) {
             FramePER.Tour.init();
+        }
+        if (FramePER.SegmentedControl && FramePER.SegmentedControl.init) {
+            FramePER.SegmentedControl.init();
+        }
+        if (FramePER.Rating && FramePER.Rating.init) {
+            FramePER.Rating.init();
         }
         
         // Hide global page loader if exists
@@ -7667,6 +7753,8 @@
     window.FramePERKanban = FramePER.Kanban;
     window.FramePERTimeline = FramePER.Timeline;
     window.FramePERTour = FramePER.Tour;
+    window.FramePERSegmentedControl = FramePER.SegmentedControl;
+    window.FramePERRating = FramePER.Rating;
 
 })(window, document);
 

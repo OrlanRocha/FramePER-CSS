@@ -1,0 +1,91 @@
+@use '../variables' as *;
+
+/* ==========================================================================
+   Keyboard Shortcut (KBD) Component - Frame PER
+   Teclas físicas de atalho com relevo, sombras táteis e combinações
+   ========================================================================== */
+
+kbd,
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1875rem 0.4375rem;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-main);
+  background-color: var(--bg-surface-2, var(--bg-surface));
+  border: 1px solid var(--border-color);
+  border-bottom: 2px solid var(--border-strong, #cbd5e1);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  user-select: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  min-width: 1.5rem;
+  text-align: center;
+  transition: transform 0.1s var(--ease), border-bottom-width 0.1s var(--ease);
+
+  &:active {
+    transform: translateY(1px);
+    border-bottom-width: 1px;
+    box-shadow: none;
+  }
+
+  /* Modificadores de Tamanho */
+  &.kbd-xs {
+    font-size: 0.65rem;
+    padding: 0.125rem 0.3125rem;
+    min-width: 1.25rem;
+  }
+
+  &.kbd-sm {
+    font-size: 0.75rem;
+    padding: 0.1875rem 0.4375rem;
+    min-width: 1.5rem;
+  }
+
+  &.kbd-md {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5625rem;
+    min-width: 1.875rem;
+  }
+
+  &.kbd-lg {
+    font-size: 1rem;
+    padding: 0.375rem 0.75rem;
+    min-width: 2.25rem;
+  }
+
+  /* Variações de Estilo */
+  &.kbd-subtle {
+    border-bottom-width: 1px;
+    background-color: var(--bg-subtle);
+  }
+
+  &.kbd-primary {
+    border-color: var(--primary);
+    border-bottom-color: rgba(37, 99, 235, 0.8);
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+  }
+}
+
+/* Agrupador de Combinações de Teclas (ex: Ctrl + Shift + P) */
+.kbd-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1;
+
+  .kbd-plus {
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    user-select: none;
+  }
+}

@@ -58,6 +58,11 @@
 @use 'components/kanban';
 @use 'components/timeline';
 @use 'components/tour';
+@use 'components/segmented-control';
+@use 'components/stat-cards';
+@use 'components/rating';
+@use 'components/status-dot';
+@use 'components/kbd';
 
 // Utilities
 @use 'utilities/icons';
