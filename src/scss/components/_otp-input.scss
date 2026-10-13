@@ -1,0 +1,99 @@
+@use '../variables' as *;
+
+/* ==========================================================================
+   OTP / PIN Code Input Component - Frame PER
+   Entrada de verificação de autenticação (2FA, Pix, SMS, Código PIN)
+   ========================================================================== */
+
+.otp-input-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  user-select: none;
+
+  .otp-digit {
+    width: 3.125rem;
+    height: 3.625rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-main);
+    background-color: var(--bg-surface);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    outline: none;
+    caret-color: var(--primary);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
+
+    /* Remove as setinhas padrão de número nos navegadores */
+    -moz-appearance: textfield;
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    &:hover {
+      border-color: var(--border-strong);
+    }
+
+    &:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+      transform: translateY(-2px);
+      background-color: var(--bg-surface);
+    }
+
+    &.is-filled {
+      border-color: var(--border-strong);
+      background-color: var(--bg-subtle);
+    }
+  }
+
+  /* Divisor Central (ex: 3 - 3) */
+  .otp-divider {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding-inline: 0.25rem;
+  }
+
+  /* Estados de Sucesso e Erro */
+  &.has-error {
+    animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+
+    .otp-digit {
+      border-color: var(--danger, #ef4444);
+      color: var(--danger, #ef4444);
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    }
+  }
+
+  &.is-success {
+    .otp-digit {
+      border-color: var(--success, #10b981);
+      color: var(--success, #10b981);
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+  }
+
+  /* Tamanhos */
+  &.otp-sm {
+    gap: 0.375rem;
+    .otp-digit {
+      width: 2.375rem;
+      height: 2.875rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  &.otp-lg {
+    gap: 0.75rem;
+    .otp-digit {
+      width: 3.75rem;
+      height: 4.25rem;
+      font-size: 1.75rem;
+    }
+  }
+}

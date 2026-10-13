@@ -1,32 +1,214 @@
 @use '../variables' as *;
 
-// Entrance animations. fill-mode "both" keeps delayed elements hidden until
-// their turn, so staggering with .delay-N works without a flash.
-.fade-in    { animation: fadeIn 0.4s var(--ease) both; }
-.fade-out   { animation: fadeOut 0.3s var(--ease) both; }
-.slide-up   { animation: slideUp 0.5s var(--ease) both; }
-.slide-down { animation: slideDown 0.5s var(--ease) both; }
-.scale-in   { animation: scaleIn 0.35s var(--ease) both; }
-.bounce     { animation: bounce 2s infinite; }
-.pulse      { animation: pulse 2s var(--ease) infinite; }
-.animacao   { animation: float 2.5s ease-in-out infinite alternate; }
+/* ==========================================================================
+   Frame PER - Animações, Micro-interações e Scroll Reveal Utilities
+   ========================================================================== */
 
-// Stagger
-.delay-1 { animation-delay: 0.08s; }
-.delay-2 { animation-delay: 0.16s; }
-.delay-3 { animation-delay: 0.24s; }
-.delay-4 { animation-delay: 0.32s; }
-.delay-5 { animation-delay: 0.4s; }
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-back: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
 
+// Entrance / Exit Animations
+.fade-in      { animation: fadeIn 0.4s var(--ease) both; }
+.fade-out     { animation: fadeOut 0.3s var(--ease) both; }
+.slide-up     { animation: slideUp 0.5s var(--ease) both; }
+.slide-down   { animation: slideDown 0.5s var(--ease) both; }
+.slide-left   { animation: slideLeft 0.5s var(--ease) both; }
+.slide-right  { animation: slideRight 0.5s var(--ease) both; }
+.scale-in     { animation: scaleIn 0.35s var(--ease-spring) both; }
+.zoom-in      { animation: zoomIn 0.35s var(--ease-spring) both; }
+.zoom-out     { animation: zoomOut 0.35s var(--ease) both; }
+.flip-in-x    { animation: flipInX 0.6s var(--ease) both; backface-visibility: visible; }
+.flip-in-y    { animation: flipInY 0.6s var(--ease) both; backface-visibility: visible; }
+
+// Attention & Continuous Motion
+.bounce       { animation: bounce 2s infinite; }
+.pulse        { animation: pulse 2s var(--ease) infinite; }
+.heartbeat    { animation: heartbeat 1.5s ease-in-out infinite; }
+.glow-pulse   { animation: glowPulse 2s infinite; }
+.animacao     { animation: float 2.5s ease-in-out infinite alternate; }
+.float-gentle { animation: floatGentle 3s ease-in-out infinite alternate; }
+.spin         { animation: spin 1s linear infinite; }
+.spin-slow    { animation: spin 8s linear infinite; }
+.shake        { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.wiggle       { animation: wiggle 0.6s ease-in-out infinite; }
+.shimmer      {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 1.8s infinite;
+  }
+}
+
+// Hover Micro-interactions (3D & Smooth Elevation)
+.hover-lift {
+  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s var(--ease);
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.12), 0 8px 12px -4px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.hover-scale {
+  transition: transform 0.25s var(--ease-spring);
+  &:hover {
+    transform: scale(1.04);
+  }
+}
+
+.hover-glow {
+  transition: box-shadow 0.25s var(--ease);
+  &:hover {
+    box-shadow: 0 0 24px rgba(37, 99, 235, 0.35);
+  }
+}
+
+.hover-tilt {
+  transition: transform 0.25s var(--ease);
+  &:hover {
+    transform: rotate(2deg) scale(1.02);
+  }
+}
+
+// Durations
+.duration-fast    { animation-duration: 0.15s !important; transition-duration: 0.15s !important; }
+.duration-normal  { animation-duration: 0.35s !important; transition-duration: 0.35s !important; }
+.duration-slow    { animation-duration: 0.7s !important; transition-duration: 0.7s !important; }
+.duration-slower  { animation-duration: 1.2s !important; transition-duration: 1.2s !important; }
+
+// Stagger Delays
+.delay-1 { animation-delay: 0.08s; transition-delay: 0.08s; }
+.delay-2 { animation-delay: 0.16s; transition-delay: 0.16s; }
+.delay-3 { animation-delay: 0.24s; transition-delay: 0.24s; }
+.delay-4 { animation-delay: 0.32s; transition-delay: 0.32s; }
+.delay-5 { animation-delay: 0.4s; transition-delay: 0.4s; }
+.delay-6 { animation-delay: 0.48s; transition-delay: 0.48s; }
+.delay-7 { animation-delay: 0.56s; transition-delay: 0.56s; }
+.delay-8 { animation-delay: 0.64s; transition-delay: 0.64s; }
+
+// Scroll Reveal Engine Styles
+[data-reveal] {
+  opacity: 0;
+  will-change: opacity, transform;
+  transition-property: opacity, transform;
+  transition-duration: 0.6s;
+  transition-timing-function: var(--ease-out-back);
+
+  &.is-revealed {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+[data-reveal="fade-up"],
+[data-reveal=""] {
+  transform: translateY(28px);
+}
+
+[data-reveal="fade-down"] {
+  transform: translateY(-28px);
+}
+
+[data-reveal="fade-left"] {
+  transform: translateX(32px);
+}
+
+[data-reveal="fade-right"] {
+  transform: translateX(-32px);
+}
+
+[data-reveal="zoom-in"] {
+  transform: scale(0.88);
+}
+
+[data-reveal="zoom-out"] {
+  transform: scale(1.1);
+}
+
+// Keyframe Definitions
 @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeOut   { from { opacity: 1; } to { opacity: 0; } }
-@keyframes slideUp   { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes slideDown { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes scaleIn   { from { transform: scale(0.96); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideUp   { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideLeft { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideRight{ from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes scaleIn   { from { transform: scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes zoomIn    { from { transform: scale(0.85); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes zoomOut   { from { transform: scale(1.12); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@keyframes flipInX {
+  from { transform: perspective(400px) rotateX(90deg); opacity: 0; }
+  40%  { transform: perspective(400px) rotateX(-15deg); }
+  70%  { transform: perspective(400px) rotateX(10deg); }
+  to   { transform: perspective(400px) rotateX(0deg); opacity: 1; }
+}
+
+@keyframes flipInY {
+  from { transform: perspective(400px) rotateY(90deg); opacity: 0; }
+  40%  { transform: perspective(400px) rotateY(-15deg); }
+  70%  { transform: perspective(400px) rotateY(10deg); }
+  to   { transform: perspective(400px) rotateY(0deg); opacity: 1; }
+}
+
 @keyframes pulse     { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-@keyframes float     { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.14); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.1); }
+  70% { transform: scale(1); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(37, 99, 235, 0.3); }
+  50% { box-shadow: 0 0 22px rgba(37, 99, 235, 0.7); }
+}
+
+@keyframes float       { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+@keyframes floatGentle { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+@keyframes spin        { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
 @keyframes bounce {
   0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-14px); }
   60% { transform: translateY(-7px); }
+}
+
+// Reduced Motion Accessibility
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

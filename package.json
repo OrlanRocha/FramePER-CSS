@@ -1,6 +1,6 @@
 {
   "name": "frame-per",
-  "version": "2.25.0",
+  "version": "2.26.0",
   "description": "Frame PER - Modern UI Framework (CSS & JS)",
   "main": "index.js",
   "scripts": {

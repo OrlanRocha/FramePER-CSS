@@ -7,14 +7,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../dist/framePER.min.css?v=2.25.0">
+  <link rel="stylesheet" href="../dist/framePER.min.css?v=2.26.0">
   <link rel="stylesheet" href="demo.css">
 </head>
 <body>
 
   <!-- Navigation -->
   <header class="navbar navbar-sticky navbar-glass">
-    <div class="container d-flex justify-content-between align-items-center">
+    <div class="container-fluid d-flex justify-content-between align-items-center" style="padding-inline: clamp(1rem, 3vw, 2.5rem);">
       <a class="navbar-brand" href="index.html">
         <span class="icon-box"><i class="icon icon-star"></i></span>
         <span>Frame PER</span>
@@ -55,17 +55,24 @@
     </div>
   </header>
 
-  <!-- Docs Layout Container -->
-  <div class="container docs">
+  <!-- Docs Layout Container (Fluid Full Width) -->
+  <div class="container-fluid docs" style="padding-inline: clamp(1rem, 3vw, 2.5rem); max-width: 100%;">
 
     <!-- Sticky Table of Contents -->
     <aside class="docs-nav stack gap-1">
+      <span class="sidebar-label">Novidades v2.26</span>
+      <a href="#sec-animations" class="active"><span class="badge badge-primary badge-xs">v2.26</span> Animações & Micro</a>
+      <a href="#sec-scroll-reveal"><span class="badge badge-info badge-xs">v2.26</span> Scroll Reveal</a>
+      <a href="#sec-bottom-sheet"><span class="badge badge-success badge-xs">v2.26</span> Bottom Sheet Mobile</a>
+      <a href="#sec-otp-input"><span class="badge badge-warning badge-xs">v2.26</span> OTP / PIN Input</a>
+      <a href="#sec-confetti"><span class="badge badge-purple badge-xs">v2.26</span> Confetti Celebration</a>
+      <div class="divider m-y-1"></div>
       <span class="sidebar-label">Novidades v2.25</span>
-      <a href="#sec-segmented-control" class="active"><span class="badge badge-primary badge-xs">v2.25</span> Segmented Control</a>
-      <a href="#sec-stat-cards"><span class="badge badge-success badge-xs">v2.25</span> Stat Cards & KPI</a>
-      <a href="#sec-rating"><span class="badge badge-warning badge-xs">v2.25</span> Star Rating & Review</a>
-      <a href="#sec-status-dot"><span class="badge badge-danger badge-xs">v2.25</span> Status Dot & Ping</a>
-      <a href="#sec-kbd"><span class="badge badge-purple badge-xs">v2.25</span> Atalhos Teclado (KBD)</a>
+      <a href="#sec-segmented-control"><span class="badge badge-subtle badge-xs">v2.25</span> Segmented Control</a>
+      <a href="#sec-stat-cards"><span class="badge badge-subtle badge-xs">v2.25</span> Stat Cards & KPI</a>
+      <a href="#sec-rating"><span class="badge badge-subtle badge-xs">v2.25</span> Star Rating</a>
+      <a href="#sec-status-dot"><span class="badge badge-subtle badge-xs">v2.25</span> Status Dot & Ping</a>
+      <a href="#sec-kbd"><span class="badge badge-subtle badge-xs">v2.25</span> Atalhos (KBD)</a>
       <div class="divider m-y-1"></div>
       <span class="sidebar-label">Navegação Rápida</span>
       <a href="#sec-tour"><span class="badge badge-primary badge-xs">v2.20</span> Tour Guiado</a>
@@ -99,6 +106,196 @@
 
     <!-- Content Sections -->
     <main class="stack gap-6">
+
+            <!-- Animações & Micro-interações CSS (v2.26) -->
+      <section id="sec-animations" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Animações & Micro-interações CSS</h2>
+          <span class="badge badge-primary badge-sm">v2.26</span>
+        </div>
+        <p class="lead">Biblioteca abrangente de keyframes para entradas/saídas fluidas, efeitos de atenção (shake, pulse, heartbeat, shimmer) e classes de elevação 3D ao passar o mouse com suporte nativo a <code>prefers-reduced-motion</code>.</p>
+
+        <div class="preview stack gap-4">
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Micro-interações de Hover 3D (Passe o mouse):</span>
+            <div class="cluster gap-3">
+              <div class="card p-3 hover-lift text-center" style="cursor: pointer; min-width: 140px;">
+                <span class="badge badge-primary m-b-1">.hover-lift</span>
+                <small class="d-block text-muted">Elevação + Sombra</small>
+              </div>
+              <div class="card p-3 hover-scale text-center" style="cursor: pointer; min-width: 140px;">
+                <span class="badge badge-success m-b-1">.hover-scale</span>
+                <small class="d-block text-muted">Zoom Suave 104%</small>
+              </div>
+              <div class="card p-3 hover-glow text-center" style="cursor: pointer; min-width: 140px;">
+                <span class="badge badge-purple m-b-1">.hover-glow</span>
+                <small class="d-block text-muted">Brilho Neon</small>
+              </div>
+              <div class="card p-3 hover-tilt text-center" style="cursor: pointer; min-width: 140px;">
+                <span class="badge badge-warning m-b-1">.hover-tilt</span>
+                <small class="d-block text-muted">Inclinação 2deg</small>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Efeitos de Atenção & Keyframes Contínuos:</span>
+            <div class="cluster gap-3 align-items-center">
+              <button type="button" class="btn btn-danger shake" id="demo-btn-shake">
+                <i class="icon icon-alert-triangle"></i> .shake (Erro)
+              </button>
+              <button type="button" class="btn btn-primary heartbeat">
+                <i class="icon icon-heart"></i> .heartbeat
+              </button>
+              <button type="button" class="btn btn-outline glow-pulse">
+                <i class="icon icon-zap"></i> .glow-pulse
+              </button>
+              <div class="card p-2 shimmer text-center" style="min-width: 130px; background: var(--bg-surface-2);">
+                <span class="f-s-1 font-semibold text-muted">.shimmer</span>
+              </div>
+              <span class="badge badge-pill badge-primary float-gentle">.float-gentle</span>
+              <span class="icon icon-refresh spin-slow f-s-4 text-primary" title=".spin-slow"></span>
+            </div>
+          </div>
+        </div>
+
+        <pre><code><span class="tok-c">&lt;!-- Hover 3D e Elevação --&gt;</span>
+<span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"card p-3 hover-lift"</span><span class="tok-k">&gt;</span>Card com elevação suave<span class="tok-k">&lt;/div&gt;</span>
+
+<span class="tok-c">&lt;!-- Feedback de Atenção / Erro em Formulários --&gt;</span>
+<span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"btn btn-danger shake"</span><span class="tok-k">&gt;</span>Senha Inválida<span class="tok-k">&lt;/button&gt;</span></code></pre>
+      </section>
+
+      <!-- Scroll Reveal (v2.26) -->
+      <section id="sec-scroll-reveal" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Scroll Reveal Nativo (IntersectionObserver)</h2>
+          <span class="badge badge-info badge-sm">v2.26</span>
+        </div>
+        <p class="lead">Animação suave de revelação disparada automaticamente quando elementos entram na janela de visualização do usuário. 100% puro, sem bibliotecas pesadas de terceiros.</p>
+
+        <div class="preview stack gap-3">
+          <div class="stat-grid stat-grid-3">
+            <div class="card p-4 text-center" data-reveal="fade-up" data-reveal-delay="100">
+              <span class="icon-box bg-primary text-white m-x-auto m-b-2"><i class="icon icon-arrow-up"></i></span>
+              <h4 class="h5 m-b-1">data-reveal="fade-up"</h4>
+              <p class="f-s-1 text-muted m-0">Revela subindo suavemente com delay de 100ms.</p>
+            </div>
+            <div class="card p-4 text-center" data-reveal="zoom-in" data-reveal-delay="200">
+              <span class="icon-box bg-success text-white m-x-auto m-b-2"><i class="icon icon-maximize"></i></span>
+              <h4 class="h5 m-b-1">data-reveal="zoom-in"</h4>
+              <p class="f-s-1 text-muted m-0">Expande com escala suave ao atingir o viewport.</p>
+            </div>
+            <div class="card p-4 text-center" data-reveal="fade-left" data-reveal-delay="300">
+              <span class="icon-box bg-purple text-white m-x-auto m-b-2"><i class="icon icon-arrow-right"></i></span>
+              <h4 class="h5 m-b-1">data-reveal="fade-left"</h4>
+              <p class="f-s-1 text-muted m-0">Desliza a partir da lateral com amortecimento.</p>
+            </div>
+          </div>
+        </div>
+
+        <pre><code><span class="tok-k">&lt;div</span> <span class="tok-f">data-reveal</span>=<span class="tok-s">"fade-up"</span> <span class="tok-f">data-reveal-delay</span>=<span class="tok-s">"150"</span><span class="tok-k">&gt;</span>
+  Conteúdo que surge com transição suave ao rolar a página
+<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+      <!-- Bottom Sheet Mobile (v2.26) -->
+      <section id="sec-bottom-sheet" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Bottom Sheet Mobile (Drawer Inferior)</h2>
+          <span class="badge badge-success badge-sm">v2.26</span>
+        </div>
+        <p class="lead">Painel modal deslizante inferior ideal para interfaces móveis e ações contextuais. Inclui puxador tátil superior, suporte a gesto de arrastar para baixo para fechar e backdrop com efeito blur.</p>
+
+        <div class="preview cluster gap-3">
+          <button type="button" class="btn btn-primary" data-open-sheet="#demoBottomSheet">
+            <i class="icon icon-sliders"></i> Abrir Bottom Sheet
+          </button>
+        </div>
+
+        <pre><code><span class="tok-c">&lt;!-- Gatilho HTML --&gt;</span>
+<span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"btn btn-primary"</span> <span class="tok-f">data-open-sheet</span>=<span class="tok-s">"#meuSheet"</span><span class="tok-k">&gt;</span>Abrir Painel<span class="tok-k">&lt;/button&gt;</span>
+
+<span class="tok-c">&lt;!-- Estrutura do Bottom Sheet --&gt;</span>
+<span class="tok-k">&lt;div</span> <span class="tok-f">id</span>=<span class="tok-s">"meuSheet"</span> <span class="tok-f">class</span>=<span class="tok-s">"bottom-sheet"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"bottom-sheet-drag-area"</span><span class="tok-k">&gt;&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"bottom-sheet-handle"</span><span class="tok-k">&gt;&lt;/div&gt;&lt;/div&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"bottom-sheet-header"</span><span class="tok-k">&gt;</span>
+    <span class="tok-k">&lt;h3</span> <span class="tok-f">class</span>=<span class="tok-s">"bottom-sheet-title"</span><span class="tok-k">&gt;</span>Configurações<span class="tok-k">&lt;/h3&gt;</span>
+    <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"bottom-sheet-close"</span> <span class="tok-f">data-dismiss</span>=<span class="tok-s">"sheet"</span><span class="tok-k">&gt;</span>&amp;times;<span class="tok-k">&lt;/button&gt;</span>
+  <span class="tok-k">&lt;/div&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"bottom-sheet-body"</span><span class="tok-k">&gt;</span>...conteúdo...<span class="tok-k">&lt;/div&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
+      <!-- OTP / PIN Input (v2.26) -->
+      <section id="sec-otp-input" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">OTP / PIN Code Input (Código de Verificação)</h2>
+          <span class="badge badge-warning badge-sm">v2.26</span>
+        </div>
+        <p class="lead">Entrada para códigos de autenticação (2FA, Pix, SMS). Avanço automático do foco ao digitar, recuo no backspace, suporte a colar código completo (Ctrl+V) e evento customizado <code>complete</code>.</p>
+
+        <div class="preview stack gap-4">
+          <div>
+            <span class="d-block f-s-2 text-muted m-b-2 font-medium">Código de 6 Dígitos com Divisor Central:</span>
+            <div class="otp-input-group" data-otp-input id="demo-otp-6">
+              <input type="text" class="otp-digit">
+              <input type="text" class="otp-digit">
+              <input type="text" class="otp-digit">
+              <span class="otp-divider">-</span>
+              <input type="text" class="otp-digit">
+              <input type="text" class="otp-digit">
+              <input type="text" class="otp-digit">
+            </div>
+          </div>
+
+          <div class="cluster gap-3 align-items-center">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-otp-clear">
+              <i class="icon icon-refresh"></i> Limpar Dígitos
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm text-danger" id="btn-otp-error">
+              Simular Erro (.shake)
+            </button>
+            <span id="otp-status-feedback" class="f-s-2 text-muted"></span>
+          </div>
+        </div>
+
+        <pre><code><span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"otp-input-group"</span> <span class="tok-f">data-otp-input</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;input</span> <span class="tok-f">type</span>=<span class="tok-s">"text"</span> <span class="tok-f">class</span>=<span class="tok-s">"otp-digit"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;input</span> <span class="tok-f">type</span>=<span class="tok-s">"text"</span> <span class="tok-f">class</span>=<span class="tok-s">"otp-digit"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;input</span> <span class="tok-f">type</span>=<span class="tok-s">"text"</span> <span class="tok-f">class</span>=<span class="tok-s">"otp-digit"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;input</span> <span class="tok-f">type</span>=<span class="tok-s">"text"</span> <span class="tok-f">class</span>=<span class="tok-s">"otp-digit"</span><span class="tok-k">&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span>
+
+<span class="tok-c">&lt;!-- Escutar quando o usuário completar todos os dígitos --&gt;</span>
+<span class="tok-k">document</span>.<span class="tok-f">querySelector</span>(<span class="tok-s">'[data-otp-input]'</span>).<span class="tok-f">addEventListener</span>(<span class="tok-s">'complete'</span>, <span class="tok-f">e</span> =&gt; {
+  <span class="tok-k">console</span>.<span class="tok-f">log</span>(<span class="tok-s">'Código final:'</span>, <span class="tok-f">e</span>.<span class="tok-f">detail</span>.<span class="tok-f">code</span>);
+});</code></pre>
+      </section>
+
+      <!-- Confetti Celebration (v2.26) -->
+      <section id="sec-confetti" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Confetti Celebration Engine (Efeito de Celebração)</h2>
+          <span class="badge badge-purple badge-sm">v2.26</span>
+        </div>
+        <p class="lead">Explosão e chuva de confetes festivos coloridos em Canvas dinâmico ultra-leve, sem nenhuma dependência externa. Perfeito para celebrações de metas, vitórias em jogos ou cadastros concluídos.</p>
+
+        <div class="preview cluster gap-3">
+          <button type="button" class="btn btn-primary" id="btn-confetti-burst">
+            <i class="icon icon-sparkles"></i> Disparar Confetti Burst
+          </button>
+          <button type="button" class="btn btn-purple" id="btn-confetti-rain">
+            <i class="icon icon-award"></i> Chuva Contínua (3s)
+          </button>
+        </div>
+
+        <pre><code><span class="tok-c">&lt;!-- Explosão Rápida --&gt;</span>
+<span class="tok-k">FramePER</span>.<span class="tok-k">Confetti</span>.<span class="tok-f">burst</span>({ count: 70, spread: 80 });
+
+<span class="tok-c">&lt;!-- Chuva Contínua de 3 segundos --&gt;</span>
+<span class="tok-k">FramePER</span>.<span class="tok-k">Confetti</span>.<span class="tok-f">rain</span>({ duration: 3000 });</code></pre>
+      </section>
 
       <!-- Segmented Control (v2.25) -->
       <section id="sec-segmented-control" class="docs-section">
@@ -163,60 +360,52 @@
         <p class="lead">Cartões de métricas e indicadores de desempenho (KPIs) para dashboards corporativos, com borda superior temática, tendências percentuais com setas vetoriais e caixas de ícones contextuais.</p>
 
         <div class="preview">
-          <div class="row g-3">
-            <div class="col-12 col-sm-6 col-lg-3">
-              <div class="stat-card stat-primary">
-                <div class="stat-header">
-                  <span class="stat-title">Faturamento Mensal</span>
-                  <span class="stat-icon"><i class="icon icon-coins"></i></span>
-                </div>
-                <div class="stat-value">R$ 148.920</div>
-                <div class="stat-footer">
-                  <span class="stat-trend stat-trend-up"><i class="icon icon-trend-up"></i> +14.2%</span>
-                  <span class="stat-desc">vs mês anterior</span>
-                </div>
+          <div class="stat-grid stat-grid-4">
+            <div class="stat-card stat-primary">
+              <div class="stat-header">
+                <span class="stat-title">Faturamento Mensal</span>
+                <span class="stat-icon"><i class="icon icon-coins"></i></span>
+              </div>
+              <div class="stat-value">R$ 148.920</div>
+              <div class="stat-footer">
+                <span class="stat-trend stat-trend-up"><i class="icon icon-trend-up"></i> +14.2%</span>
+                <span class="stat-desc">vs mês anterior</span>
               </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-lg-3">
-              <div class="stat-card stat-success">
-                <div class="stat-header">
-                  <span class="stat-title">Novos Assinantes</span>
-                  <span class="stat-icon"><i class="icon icon-user-plus"></i></span>
-                </div>
-                <div class="stat-value">1.842</div>
-                <div class="stat-footer">
-                  <span class="stat-trend stat-trend-up"><i class="icon icon-trend-up"></i> +8.6%</span>
-                  <span class="stat-desc">metas batidas</span>
-                </div>
+            <div class="stat-card stat-success">
+              <div class="stat-header">
+                <span class="stat-title">Novos Assinantes</span>
+                <span class="stat-icon"><i class="icon icon-user-plus"></i></span>
+              </div>
+              <div class="stat-value">1.842</div>
+              <div class="stat-footer">
+                <span class="stat-trend stat-trend-up"><i class="icon icon-trend-up"></i> +8.6%</span>
+                <span class="stat-desc">metas batidas</span>
               </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-lg-3">
-              <div class="stat-card stat-danger">
-                <div class="stat-header">
-                  <span class="stat-title">Taxa de Churn</span>
-                  <span class="stat-icon"><i class="icon icon-user-x"></i></span>
-                </div>
-                <div class="stat-value">2.14%</div>
-                <div class="stat-footer">
-                  <span class="stat-trend stat-trend-down"><i class="icon icon-trend-down"></i> -0.8%</span>
-                  <span class="stat-desc">redução contínua</span>
-                </div>
+            <div class="stat-card stat-danger">
+              <div class="stat-header">
+                <span class="stat-title">Taxa de Churn</span>
+                <span class="stat-icon"><i class="icon icon-user-x"></i></span>
+              </div>
+              <div class="stat-value">2.14%</div>
+              <div class="stat-footer">
+                <span class="stat-trend stat-trend-down"><i class="icon icon-trend-down"></i> -0.8%</span>
+                <span class="stat-desc">redução contínua</span>
               </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-lg-3">
-              <div class="stat-card stat-purple">
-                <div class="stat-header">
-                  <span class="stat-title">Tempo de Resposta</span>
-                  <span class="stat-icon"><i class="icon icon-zap"></i></span>
-                </div>
-                <div class="stat-value">180 ms</div>
-                <div class="stat-footer">
-                  <span class="stat-trend stat-trend-neutral"><i class="icon icon-check"></i> 99.98%</span>
-                  <span class="stat-desc">uptime de SLA</span>
-                </div>
+            <div class="stat-card stat-purple">
+              <div class="stat-header">
+                <span class="stat-title">Tempo de Resposta</span>
+                <span class="stat-icon"><i class="icon icon-zap"></i></span>
+              </div>
+              <div class="stat-value">180 ms</div>
+              <div class="stat-footer">
+                <span class="stat-trend stat-trend-neutral"><i class="icon icon-check"></i> 99.98%</span>
+                <span class="stat-desc">uptime de SLA</span>
               </div>
             </div>
           </div>
@@ -1940,6 +2129,41 @@ tour.<span class="tok-f">start</span>();</code></pre>
     <div class="offcanvas-body stack gap-3">
       <p class="text-muted m-0">Você pode colocar filtros de busca, histórico ou carrinhos de compra dentro deste painel retrátil.</p>
       <button class="btn btn-primary w-100 m-t-auto" data-dismiss="offcanvas">Fechar Painel</button>
+    </div>
+  </div>
+
+  
+  <!-- Demo Bottom Sheet Target (v2.26) -->
+  <div id="demoBottomSheet" class="bottom-sheet">
+    <div class="bottom-sheet-drag-area">
+      <div class="bottom-sheet-handle"></div>
+    </div>
+    <div class="bottom-sheet-header">
+      <h3 class="bottom-sheet-title">Configurações Rápidas da Conta</h3>
+      <button class="bottom-sheet-close" data-dismiss="sheet" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="bottom-sheet-body stack gap-3">
+      <p class="text-muted m-0">Este é o Bottom Sheet nativo do FramePER. No celular, você pode arrastar para baixo para fechar com o dedo, ou clicar no X e no backdrop.</p>
+      <div class="card p-3 bg-subtle">
+        <strong class="d-block f-s-2 text-primary">Pronto para PWA & Mobile:</strong>
+        <p class="text-muted f-s-1 m-0">Ideal para carrinhos rápidos, confirmações de segurança Pix, filtros avançados e opções de compartilhamento.</p>
+      </div>
+      <div class="d-flex align-items-center justify-content-between p-2 border rounded-md">
+        <span>Notificações Instantâneas</span>
+        <input type="checkbox" checked class="form-check-input">
+      </div>
+      <div class="d-flex align-items-center justify-content-between p-2 border rounded-md">
+        <span>Autenticação em Duas Etapas (2FA)</span>
+        <input type="checkbox" checked class="form-check-input">
+      </div>
+      <div class="d-flex align-items-center justify-content-between p-2 border rounded-md">
+        <span>Tema de Alto Contraste</span>
+        <input type="checkbox" class="form-check-input">
+      </div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <button class="btn btn-secondary" data-dismiss="sheet">Cancelar</button>
+      <button class="btn btn-primary" data-dismiss="sheet">Salvar Alterações</button>
     </div>
   </div>
 

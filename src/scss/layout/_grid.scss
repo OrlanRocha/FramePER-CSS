@@ -1,4 +1,5 @@
 @use 'sass:list';
+@use 'sass:math';
 @use '../variables' as *;
 
 // Containers
@@ -81,4 +82,63 @@ $splits: (
   flex-wrap: wrap;
   align-items: center;
   gap: var(--cluster-gap, 0.75rem);
+}
+
+// Flexbox Grid Interoperability (.row / .col-*)
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-inline: calc(var(--grid-gutter, 1rem) * -0.5);
+  margin-top: calc(var(--grid-gutter, 1rem) * -1);
+
+  > * {
+    box-sizing: border-box;
+    flex-shrink: 0;
+    width: 100%;
+    max-width: 100%;
+    padding-inline: calc(var(--grid-gutter, 1rem) * 0.5);
+    margin-top: var(--grid-gutter, 1rem);
+  }
+}
+
+// Gap helpers for rows
+.g-0 { --grid-gutter: 0; }
+.g-1 { --grid-gutter: 0.5rem; }
+.g-2 { --grid-gutter: 0.75rem; }
+.g-3 { --grid-gutter: 1rem; }
+.g-4 { --grid-gutter: 1.5rem; }
+.g-5 { --grid-gutter: 2rem; }
+
+.col {
+  flex: 1 0 0%;
+}
+
+.col-auto {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+@for $i from 1 through 12 {
+  .col-#{$i} {
+    flex: 0 0 auto;
+    width: math.percentage(math.div($i, 12));
+  }
+}
+
+@each $bp, $value in $breakpoints {
+  @media (min-width: #{$value}) {
+    .col-#{$bp} {
+      flex: 1 0 0%;
+    }
+    .col-#{$bp}-auto {
+      flex: 0 0 auto;
+      width: auto;
+    }
+    @for $i from 1 through 12 {
+      .col-#{$bp}-#{$i} {
+        flex: 0 0 auto;
+        width: math.percentage(math.div($i, 12));
+      }
+    }
+  }
 }

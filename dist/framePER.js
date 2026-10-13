@@ -7719,6 +7719,333 @@
     };
     FramePER.Rating = Rating;
 
+    // ==========================================
+    // SCROLL REVEAL ENGINE
+    // ==========================================
+    const ScrollReveal = {
+        init() {
+            const elements = document.querySelectorAll('[data-reveal]');
+            if (!elements.length) return;
+            if (!('IntersectionObserver' in window)) {
+                elements.forEach(el => el.classList.add('is-revealed'));
+                return;
+            }
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const el = entry.target;
+                    const delay = el.getAttribute('data-reveal-delay');
+                    const once = el.getAttribute('data-reveal-once') !== 'false';
+                    if (entry.isIntersecting) {
+                        if (delay) el.style.transitionDelay = `${delay}ms`;
+                        el.classList.add('is-revealed');
+                        if (once) observer.unobserve(el);
+                    } else {
+                        if (!once) el.classList.remove('is-revealed');
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+            elements.forEach(el => observer.observe(el));
+        }
+    };
+    FramePER.ScrollReveal = ScrollReveal;
+
+    // ==========================================
+    // BOTTOM SHEET COMPONENT
+    // ==========================================
+    const BottomSheet = {
+        init() {
+            document.addEventListener('click', (e) => {
+                const trigger = e.target.closest('[data-bottom-sheet-target], [data-open-sheet]');
+                if (trigger) {
+                    const targetSelector = trigger.getAttribute('data-bottom-sheet-target') || trigger.getAttribute('data-open-sheet') || trigger.getAttribute('href');
+                    if (targetSelector && targetSelector.startsWith('#')) {
+                        e.preventDefault();
+                        BottomSheet.open(targetSelector);
+                    }
+                }
+                const dismiss = e.target.closest('[data-dismiss="sheet"], .bottom-sheet-close');
+                if (dismiss) {
+                    const sheet = dismiss.closest('.bottom-sheet');
+                    if (sheet) BottomSheet.close(sheet);
+                }
+                if (e.target.classList.contains('bottom-sheet-backdrop')) {
+                    const openSheet = document.querySelector('.bottom-sheet.is-open');
+                    if (openSheet) BottomSheet.close(openSheet);
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const openSheet = document.querySelector('.bottom-sheet.is-open');
+                    if (openSheet) BottomSheet.close(openSheet);
+                }
+            });
+
+            // Touch swipe to dismiss
+            document.querySelectorAll('.bottom-sheet').forEach(sheet => {
+                const handle = sheet.querySelector('.bottom-sheet-drag-area') || sheet.querySelector('.bottom-sheet-handle');
+                if (!handle) return;
+                let startY = 0;
+                let currentY = 0;
+                handle.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+                handle.addEventListener('touchmove', (e) => {
+                    currentY = e.touches[0].clientY;
+                    const diff = currentY - startY;
+                    if (diff > 0) sheet.style.transform = `translateY(${diff}px)`;
+                }, { passive: true });
+                handle.addEventListener('touchend', () => {
+                    const diff = currentY - startY;
+                    sheet.style.transform = '';
+                    if (diff > 90) BottomSheet.close(sheet);
+                    startY = 0;
+                    currentY = 0;
+                });
+            });
+        },
+        open(target) {
+            const sheet = typeof target === 'string' ? document.querySelector(target) : target;
+            if (!sheet) return;
+            let backdrop = document.querySelector('.bottom-sheet-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.className = 'bottom-sheet-backdrop';
+                document.body.appendChild(backdrop);
+                backdrop.addEventListener('click', () => BottomSheet.close(sheet));
+            }
+            backdrop.classList.add('is-open');
+            sheet.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            sheet.dispatchEvent(new CustomEvent('sheet:open', { bubbles: true }));
+        },
+        close(target) {
+            const sheet = typeof target === 'string' ? document.querySelector(target) : target;
+            if (!sheet) return;
+            sheet.classList.remove('is-open');
+            const backdrop = document.querySelector('.bottom-sheet-backdrop');
+            if (backdrop) backdrop.classList.remove('is-open');
+            document.body.style.overflow = '';
+            sheet.dispatchEvent(new CustomEvent('sheet:close', { bubbles: true }));
+        }
+    };
+    FramePER.BottomSheet = BottomSheet;
+
+    // ==========================================
+    // OTP / PIN INPUT COMPONENT
+    // ==========================================
+    const OtpInput = {
+        init() {
+            document.querySelectorAll('[data-otp-input], .otp-input-group').forEach(group => {
+                if (group._otpInitialized) return;
+                group._otpInitialized = true;
+                const inputs = Array.from(group.querySelectorAll('.otp-digit'));
+                if (!inputs.length) return;
+
+                inputs.forEach((input, index) => {
+                    input.setAttribute('maxlength', '1');
+                    input.setAttribute('inputmode', 'numeric');
+                    input.setAttribute('autocomplete', 'one-time-code');
+
+                    input.addEventListener('input', () => {
+                        const val = input.value.replace(/[^0-9a-zA-Z]/g, '');
+                        input.value = val ? val[0] : '';
+                        if (val) {
+                            input.classList.add('is-filled');
+                            if (index < inputs.length - 1) {
+                                inputs[index + 1].focus();
+                            }
+                        } else {
+                            input.classList.remove('is-filled');
+                        }
+                        OtpInput._checkComplete(group, inputs);
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Backspace') {
+                            if (!input.value && index > 0) {
+                                inputs[index - 1].focus();
+                                inputs[index - 1].value = '';
+                                inputs[index - 1].classList.remove('is-filled');
+                            } else {
+                                input.value = '';
+                                input.classList.remove('is-filled');
+                            }
+                            OtpInput._checkComplete(group, inputs);
+                        } else if (e.key === 'ArrowLeft' && index > 0) {
+                            inputs[index - 1].focus();
+                        } else if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        }
+                    });
+
+                    input.addEventListener('paste', (e) => {
+                        e.preventDefault();
+                        const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+                        const cleanChars = pasteData.replace(/[^0-9a-zA-Z]/g, '').slice(0, inputs.length);
+                        cleanChars.split('').forEach((char, i) => {
+                            if (inputs[i]) {
+                                inputs[i].value = char;
+                                inputs[i].classList.add('is-filled');
+                            }
+                        });
+                        const nextIdx = Math.min(cleanChars.length, inputs.length - 1);
+                        inputs[nextIdx].focus();
+                        OtpInput._checkComplete(group, inputs);
+                    });
+                });
+            });
+        },
+        _checkComplete(group, inputs) {
+            const code = inputs.map(i => i.value).join('');
+            if (code.length === inputs.length) {
+                group.classList.remove('has-error');
+                group.dispatchEvent(new CustomEvent('complete', {
+                    detail: { code, length: code.length },
+                    bubbles: true
+                }));
+            }
+        },
+        getValue(groupSelector) {
+            const group = typeof groupSelector === 'string' ? document.querySelector(groupSelector) : groupSelector;
+            if (!group) return '';
+            return Array.from(group.querySelectorAll('.otp-digit')).map(i => i.value).join('');
+        },
+        clear(groupSelector) {
+            const group = typeof groupSelector === 'string' ? document.querySelector(groupSelector) : groupSelector;
+            if (!group) return;
+            group.querySelectorAll('.otp-digit').forEach(i => {
+                i.value = '';
+                i.classList.remove('is-filled');
+            });
+            group.classList.remove('has-error', 'is-success');
+            const first = group.querySelector('.otp-digit');
+            if (first) first.focus();
+        }
+    };
+    FramePER.OtpInput = OtpInput;
+
+    // ==========================================
+    // CONFETTI CELEBRATION ENGINE
+    // ==========================================
+    const Confetti = {
+        canvas: null,
+        ctx: null,
+        particles: [],
+        animationId: null,
+
+        _getCanvas() {
+            if (!this.canvas) {
+                this.canvas = document.createElement('canvas');
+                this.canvas.id = 'frame-confetti-canvas';
+                this.canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;';
+                document.body.appendChild(this.canvas);
+                this.ctx = this.canvas.getContext('2d');
+                const resize = () => {
+                    if (!this.canvas) return;
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                };
+                resize();
+                window.addEventListener('resize', resize);
+            }
+            return { canvas: this.canvas, ctx: this.ctx };
+        },
+
+        burst(options = {}) {
+            const { canvas } = this._getCanvas();
+            const count = options.count || 60;
+            const spread = (options.spread || 75) * (Math.PI / 180);
+            const originX = (options.origin && options.origin.x !== undefined) ? options.origin.x * canvas.width : canvas.width * 0.5;
+            const originY = (options.origin && options.origin.y !== undefined) ? options.origin.y * canvas.height : canvas.height * 0.6;
+            const colors = options.colors || ['#2563eb', '#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899'];
+
+            for (let i = 0; i < count; i++) {
+                const angle = -Math.PI / 2 + (Math.random() - 0.5) * spread;
+                const velocity = 8 + Math.random() * 14;
+                this.particles.push({
+                    x: originX,
+                    y: originY,
+                    vx: Math.cos(angle) * velocity,
+                    vy: Math.sin(angle) * velocity,
+                    size: 6 + Math.random() * 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 14,
+                    gravity: 0.38,
+                    drag: 0.96,
+                    opacity: 1,
+                    shape: Math.random() > 0.4 ? 'rect' : 'circle'
+                });
+            }
+
+            if (!this.animationId) {
+                this._loop();
+            }
+        },
+
+        rain(options = {}) {
+            const duration = options.duration || 3000;
+            const interval = setInterval(() => {
+                this.burst({
+                    count: 18,
+                    spread: 90,
+                    origin: { x: Math.random(), y: -0.05 }
+                });
+            }, 180);
+            setTimeout(() => clearInterval(interval), duration);
+        },
+
+        _loop() {
+            const { canvas, ctx } = this._getCanvas();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                const p = this.particles[i];
+                p.vx *= p.drag;
+                p.vy *= p.drag;
+                p.vy += p.gravity;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.rotation += p.rotationSpeed;
+                p.opacity -= 0.01;
+
+                if (p.opacity <= 0 || p.y > canvas.height + 25) {
+                    this.particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.globalAlpha = Math.max(0, p.opacity);
+                ctx.fillStyle = p.color;
+
+                if (p.shape === 'rect') {
+                    ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size / 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            if (this.particles.length > 0) {
+                this.animationId = requestAnimationFrame(() => this._loop());
+            } else {
+                cancelAnimationFrame(this.animationId);
+                this.animationId = null;
+                if (this.canvas) {
+                    this.canvas.remove();
+                    this.canvas = null;
+                    this.ctx = null;
+                }
+            }
+        }
+    };
+    FramePER.Confetti = Confetti;
+
         if (FramePER.Tour && FramePER.Tour.init) {
             FramePER.Tour.init();
         }
@@ -7727,6 +8054,15 @@
         }
         if (FramePER.Rating && FramePER.Rating.init) {
             FramePER.Rating.init();
+        }
+        if (FramePER.ScrollReveal && FramePER.ScrollReveal.init) {
+            FramePER.ScrollReveal.init();
+        }
+        if (FramePER.BottomSheet && FramePER.BottomSheet.init) {
+            FramePER.BottomSheet.init();
+        }
+        if (FramePER.OtpInput && FramePER.OtpInput.init) {
+            FramePER.OtpInput.init();
         }
         
         // Hide global page loader if exists
@@ -7755,6 +8091,10 @@
     window.FramePERTour = FramePER.Tour;
     window.FramePERSegmentedControl = FramePER.SegmentedControl;
     window.FramePERRating = FramePER.Rating;
+    window.FramePERScrollReveal = FramePER.ScrollReveal;
+    window.FramePERBottomSheet = FramePER.BottomSheet;
+    window.FramePEROtpInput = FramePER.OtpInput;
+    window.FramePERConfetti = FramePER.Confetti;
 
 })(window, document);
 
