@@ -282,19 +282,31 @@
         <p class="lead">Explosão e chuva de confetes festivos coloridos em Canvas dinâmico ultra-leve, sem nenhuma dependência externa. Perfeito para celebrações de metas, vitórias em jogos ou cadastros concluídos.</p>
 
         <div class="preview cluster gap-3">
-          <button type="button" class="btn btn-primary" id="btn-confetti-burst">
+          <button type="button" class="btn btn-primary" id="btn-confetti-burst" data-confetti="burst">
             <i class="icon icon-sparkles"></i> Disparar Confetti Burst
           </button>
-          <button type="button" class="btn btn-purple" id="btn-confetti-rain">
+          <button type="button" class="btn btn-purple" id="btn-confetti-rain" data-confetti="rain">
             <i class="icon icon-award"></i> Chuva Contínua (3s)
+          </button>
+          <button type="button" class="btn btn-success" id="btn-confetti-cannons" data-confetti="cannons">
+            <i class="icon icon-zap"></i> Canhões Laterais
+          </button>
+          <button type="button" class="btn btn-warning" id="btn-confetti-fireworks" data-confetti="fireworks">
+            <i class="icon icon-star"></i> Fogos de Artifício
           </button>
         </div>
 
-        <pre><code><span class="tok-c">&lt;!-- Explosão Rápida --&gt;</span>
-<span class="tok-k">FramePER</span>.<span class="tok-k">Confetti</span>.<span class="tok-f">burst</span>({ count: 70, spread: 80 });
+        <pre><code><span class="tok-c">&lt;!-- 1. Uso Declarativo HTML5 (Zero JS) --&gt;</span>
+<span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"btn btn-primary"</span> <span class="tok-f">data-confetti</span>=<span class="tok-s">"burst"</span><span class="tok-k">&gt;</span>Celebrar Meta!<span class="tok-k">&lt;/button&gt;</span>
+<span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"btn btn-purple"</span> <span class="tok-f">data-confetti</span>=<span class="tok-s">"rain"</span><span class="tok-k">&gt;</span>Chuva de Confetes<span class="tok-k">&lt;/button&gt;</span>
+<span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"btn btn-success"</span> <span class="tok-f">data-confetti</span>=<span class="tok-s">"cannons"</span><span class="tok-k">&gt;</span>Canhões Laterais<span class="tok-k">&lt;/button&gt;</span>
+<span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"btn btn-warning"</span> <span class="tok-f">data-confetti</span>=<span class="tok-s">"fireworks"</span><span class="tok-k">&gt;</span>Fogos de Artifício<span class="tok-k">&lt;/button&gt;</span>
 
-<span class="tok-c">&lt;!-- Chuva Contínua de 3 segundos --&gt;</span>
-<span class="tok-k">FramePER</span>.<span class="tok-k">Confetti</span>.<span class="tok-f">rain</span>({ duration: 3000 });</code></pre>
+<span class="tok-c">&lt;!-- 2. Via JavaScript Programático --&gt;</span>
+<span class="tok-k">FramePER</span>.<span class="tok-k">Confetti</span>.<span class="tok-f">burst</span>({ count: 70, spread: 80 });
+<span class="tok-k">FramePER</span>.<span class="tok-k">Confetti</span>.<span class="tok-f">rain</span>({ duration: 3000 });
+<span class="tok-k">FramePER</span>.<span class="tok-k">Confetti</span>.<span class="tok-f">cannons</span>();
+<span class="tok-k">FramePER</span>.<span class="tok-k">Confetti</span>.<span class="tok-f">fireworks</span>();</code></pre>
       </section>
 
       <!-- Segmented Control (v2.25) -->
@@ -2177,11 +2189,92 @@ tour.<span class="tok-f">start</span>();</code></pre>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Confetti Buttons Handlers
+      const btnBurst = document.getElementById('btn-confetti-burst');
+      if (btnBurst) {
+        btnBurst.addEventListener('click', () => {
+          if (window.FramePER && window.FramePER.Confetti) {
+            window.FramePER.Confetti.burst({ count: 80, spread: 85 });
+          }
+        });
+      }
+
+      const btnRain = document.getElementById('btn-confetti-rain');
+      if (btnRain) {
+        btnRain.addEventListener('click', () => {
+          if (window.FramePER && window.FramePER.Confetti) {
+            window.FramePER.Confetti.rain({ duration: 3000 });
+          }
+        });
+      }
+
+      const btnCannons = document.getElementById('btn-confetti-cannons');
+      if (btnCannons) {
+        btnCannons.addEventListener('click', () => {
+          if (window.FramePER && window.FramePER.Confetti) {
+            window.FramePER.Confetti.cannons({ duration: 2500 });
+          }
+        });
+      }
+
+      const btnFireworks = document.getElementById('btn-confetti-fireworks');
+      if (btnFireworks) {
+        btnFireworks.addEventListener('click', () => {
+          if (window.FramePER && window.FramePER.Confetti) {
+            window.FramePER.Confetti.fireworks({ bursts: 6 });
+          }
+        });
+      }
+
+      // OTP Verification with Confetti Celebration
+      const otpGroup = document.getElementById('demo-otp-6');
+      const otpFeedback = document.getElementById('otp-status-feedback');
+      if (otpGroup) {
+        otpGroup.addEventListener('complete', (e) => {
+          if (otpFeedback) {
+            otpFeedback.innerHTML = '<span class="text-success font-semibold">✓ Código ' + e.detail.code + ' confirmado com sucesso!</span>';
+          }
+          if (window.FramePER && window.FramePER.Confetti) {
+            window.FramePER.Confetti.burst({ count: 90, spread: 90 });
+          }
+          if (window.FramePER && window.FramePER.Notify) {
+            window.FramePER.Notify.success('Autenticado com Sucesso!', 'O código ' + e.detail.code + ' foi validado.');
+          }
+        });
+      }
+
+      const btnOtpClear = document.getElementById('btn-otp-clear');
+      if (btnOtpClear) {
+        btnOtpClear.addEventListener('click', () => {
+          if (window.FramePER && window.FramePER.OtpInput) {
+            window.FramePER.OtpInput.clear('#demo-otp-6');
+          }
+          if (otpFeedback) otpFeedback.textContent = '';
+        });
+      }
+
+      const btnOtpError = document.getElementById('btn-otp-error');
+      if (btnOtpError) {
+        btnOtpError.addEventListener('click', () => {
+          if (otpGroup) {
+            otpGroup.classList.add('has-error', 'shake');
+            setTimeout(() => otpGroup.classList.remove('shake'), 600);
+          }
+          if (otpFeedback) {
+            otpFeedback.innerHTML = '<span class="text-danger font-medium">✗ Código inválido ou expirado</span>';
+          }
+        });
+      }
+
+      // Rating with 5-Star Confetti Surprise
       const ratingEl = document.getElementById('demo-user-rating');
       if (ratingEl) {
         ratingEl.addEventListener('change', (e) => {
           if (window.FramePER && window.FramePER.Notify) {
             window.FramePER.Notify.success('Nota Registrada', 'Você avaliou com ' + e.detail.rating + ' estrela(s)!', 2500);
+          }
+          if (e.detail.rating === 5 && window.FramePER && window.FramePER.Confetti) {
+            window.FramePER.Confetti.burst({ count: 70, spread: 80 });
           }
         });
       }

@@ -66,17 +66,15 @@ try {
   run('git config user.email "orlanrocha@users.noreply.github.com"', TMP_DIR);
   run('git add .', TMP_DIR);
   
-  try {
+  const status = run('git status --porcelain', TMP_DIR);
+  if (!status) {
+    console.log('\n✨ A wiki já está 100% atualizada com os arquivos locais!');
+    console.log('🔗 Veja sua wiki online em: https://github.com/OrlanRocha/FramePER/wiki\n');
+  } else {
     run('git commit -m "docs(wiki): sync complete documentation v2.26.0"', TMP_DIR);
     run('git push origin HEAD', TMP_DIR);
     console.log('\n🎉 SUCESSO! O GitHub Wiki foi atualizado e publicado com sucesso!');
     console.log('🔗 Veja sua wiki online em: https://github.com/OrlanRocha/FramePER/wiki\n');
-  } catch (commitErr) {
-    if (commitErr.message && commitErr.message.includes('nothing to commit')) {
-      console.log('✨ A wiki já está 100% atualizada com a versão local.');
-    } else {
-      throw commitErr;
-    }
   }
 } catch (error) {
   console.error('❌ Erro durante a sincronização:', error.message);

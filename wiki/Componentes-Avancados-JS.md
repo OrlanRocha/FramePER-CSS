@@ -81,20 +81,41 @@ const valor = FramePER.OtpInput.getValue('#verificacao-pix');
 
 ### 3. Confetti Celebration Engine
 
-Efeito dinâmico de partículas em HTML5 Canvas para celebrações de metas, vitórias ou formulários concluídos:
+Efeito dinâmico de partículas em HTML5 Canvas de altíssima performance para celebrações de metas, vitórias em jogos ou cadastros concluídos:
 
+#### A. Uso Declarativo HTML5 (Zero JS)
+Basta adicionar o atributo `data-confetti` a qualquer botão ou elemento interativo:
+```html
+<!-- Explosão rápida partindo do botão -->
+<button class="btn btn-primary" data-confetti="burst">Celebrar Meta!</button>
+
+<!-- Chuva contínua de confetes caindo da tela (3s) -->
+<button class="btn btn-purple" data-confetti="rain" data-confetti-duration="3000">Chuva Festiva</button>
+
+<!-- Canhões disparando dos dois cantos inferiores -->
+<button class="btn btn-success" data-confetti="cannons">Canhões Laterais</button>
+
+<!-- Sequência de fogos de artifício no céu -->
+<button class="btn btn-warning" data-confetti="fireworks">Fogos de Artifício</button>
+```
+
+#### B. API JavaScript Programática
 ```javascript
-// Explosão rápida (Burst)
+// 1. Explosão rápida (Burst)
 FramePER.Confetti.burst({
   count: 70,       // Quantidade de partículas
-  spread: 80,      // Ângulo de dispersão (graus)
-  origin: { x: 0.5, y: 0.6 } // Origem na tela (0 a 1)
+  spread: 80,      // Ângulo de dispersão em graus
+  origin: { x: 0.5, y: 0.6 } // Origem relativa na tela (0 a 1)
 });
 
-// Chuva contínua de 3 segundos (Rain)
-FramePER.Confetti.rain({
-  duration: 3000
-});
+// 2. Chuva contínua de confetes (Rain)
+FramePER.Confetti.rain({ duration: 3000 });
+
+// 3. Canhões laterais sincronizados (Cannons)
+FramePER.Confetti.cannons({ duration: 2500 });
+
+// 4. Fogos de artifício multicores (Fireworks)
+FramePER.Confetti.fireworks({ bursts: 6 });
 ```
 
 ---

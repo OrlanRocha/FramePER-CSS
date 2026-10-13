@@ -587,6 +587,32 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // Confetti Celebration Handlers in demo
+  var btnBurst = document.getElementById('btn-confetti-burst');
+  if (btnBurst) {
+    btnBurst.addEventListener('click', function () {
+      if (F && F.Confetti) F.Confetti.burst({ count: 80, spread: 85 });
+    });
+  }
+  var btnRain = document.getElementById('btn-confetti-rain');
+  if (btnRain) {
+    btnRain.addEventListener('click', function () {
+      if (F && F.Confetti) F.Confetti.rain({ duration: 3000 });
+    });
+  }
+  var btnCannons = document.getElementById('btn-confetti-cannons');
+  if (btnCannons) {
+    btnCannons.addEventListener('click', function () {
+      if (F && F.Confetti) F.Confetti.cannons({ duration: 2500 });
+    });
+  }
+  var btnFireworks = document.getElementById('btn-confetti-fireworks');
+  if (btnFireworks) {
+    btnFireworks.addEventListener('click', function () {
+      if (F && F.Confetti) F.Confetti.fireworks({ bursts: 6 });
+    });
+  }
 });
 
 

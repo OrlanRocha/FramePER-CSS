@@ -7938,7 +7938,7 @@
             if (!this.canvas) {
                 this.canvas = document.createElement('canvas');
                 this.canvas.id = 'frame-confetti-canvas';
-                this.canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;';
+                this.canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:999999;';
                 document.body.appendChild(this.canvas);
                 this.ctx = this.canvas.getContext('2d');
                 const resize = () => {
@@ -7947,22 +7947,27 @@
                     this.canvas.height = window.innerHeight;
                 };
                 resize();
-                window.addEventListener('resize', resize);
+                window.addEventListener('resize', resize, { passive: true });
             }
             return { canvas: this.canvas, ctx: this.ctx };
         },
 
         burst(options = {}) {
             const { canvas } = this._getCanvas();
-            const count = options.count || 60;
+            const count = options.count || 70;
             const spread = (options.spread || 75) * (Math.PI / 180);
+            const baseAngle = options.angle !== undefined ? options.angle : -Math.PI / 2;
             const originX = (options.origin && options.origin.x !== undefined) ? options.origin.x * canvas.width : canvas.width * 0.5;
             const originY = (options.origin && options.origin.y !== undefined) ? options.origin.y * canvas.height : canvas.height * 0.6;
-            const colors = options.colors || ['#2563eb', '#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899'];
+            const colors = options.colors || ['#2563eb', '#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#f43f5e', '#8b5cf6'];
+            const minVelocity = options.velocityMin || 8;
+            const maxVelocity = options.velocityMax || 22;
+            const gravity = options.gravity !== undefined ? options.gravity : 0.38;
+            const decay = options.decay !== undefined ? options.decay : 0.01;
 
             for (let i = 0; i < count; i++) {
-                const angle = -Math.PI / 2 + (Math.random() - 0.5) * spread;
-                const velocity = 8 + Math.random() * 14;
+                const angle = baseAngle + (Math.random() - 0.5) * spread;
+                const velocity = minVelocity + Math.random() * (maxVelocity - minVelocity);
                 this.particles.push({
                     x: originX,
                     y: originY,
@@ -7972,9 +7977,10 @@
                     color: colors[Math.floor(Math.random() * colors.length)],
                     rotation: Math.random() * 360,
                     rotationSpeed: (Math.random() - 0.5) * 14,
-                    gravity: 0.38,
-                    drag: 0.96,
+                    gravity: gravity,
+                    drag: options.drag || 0.96,
                     opacity: 1,
+                    decay: decay,
                     shape: Math.random() > 0.4 ? 'rect' : 'circle'
                 });
             }
@@ -7986,14 +7992,73 @@
 
         rain(options = {}) {
             const duration = options.duration || 3000;
+            const startTime = Date.now();
             const interval = setInterval(() => {
+                if (Date.now() - startTime >= duration) {
+                    clearInterval(interval);
+                    return;
+                }
                 this.burst({
-                    count: 18,
-                    spread: 90,
-                    origin: { x: Math.random(), y: -0.05 }
+                    count: 14,
+                    spread: 50,
+                    angle: Math.PI / 2,
+                    velocityMin: 2,
+                    velocityMax: 6,
+                    gravity: 0.16,
+                    drag: 0.98,
+                    decay: 0.005,
+                    origin: { x: Math.random(), y: 0 }
                 });
-            }, 180);
-            setTimeout(() => clearInterval(interval), duration);
+            }, 120);
+        },
+
+        cannons(options = {}) {
+            const duration = options.duration || 2500;
+            const startTime = Date.now();
+            const interval = setInterval(() => {
+                if (Date.now() - startTime >= duration) {
+                    clearInterval(interval);
+                    return;
+                }
+                this.burst({
+                    count: 7,
+                    angle: -Math.PI / 4,
+                    spread: 45,
+                    origin: { x: 0, y: 0.85 },
+                    velocityMin: 14,
+                    velocityMax: 24,
+                    gravity: 0.45
+                });
+                this.burst({
+                    count: 7,
+                    angle: -3 * Math.PI / 4,
+                    spread: 45,
+                    origin: { x: 1, y: 0.85 },
+                    velocityMin: 14,
+                    velocityMax: 24,
+                    gravity: 0.45
+                });
+            }, 100);
+        },
+
+        fireworks(options = {}) {
+            const bursts = options.bursts || 6;
+            for (let i = 0; i < bursts; i++) {
+                setTimeout(() => {
+                    this.burst({
+                        count: 65,
+                        spread: 360 * (Math.PI / 180),
+                        velocityMin: 4,
+                        velocityMax: 16,
+                        gravity: 0.22,
+                        decay: 0.015,
+                        origin: {
+                            x: 0.2 + Math.random() * 0.6,
+                            y: 0.15 + Math.random() * 0.4
+                        }
+                    });
+                }, i * 350);
+            }
         },
 
         _loop() {
@@ -8008,9 +8073,9 @@
                 p.x += p.vx;
                 p.y += p.vy;
                 p.rotation += p.rotationSpeed;
-                p.opacity -= 0.01;
+                p.opacity -= (p.decay || 0.01);
 
-                if (p.opacity <= 0 || p.y > canvas.height + 25) {
+                if (p.opacity <= 0 || p.y > canvas.height + 30) {
                     this.particles.splice(i, 1);
                     continue;
                 }
@@ -8042,12 +8107,37 @@
                     this.ctx = null;
                 }
             }
+        },
+
+        init() {
+            document.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-confetti]');
+                if (!target) return;
+                const type = target.getAttribute('data-confetti') || 'burst';
+                if (type === 'rain') {
+                    const dur = parseInt(target.getAttribute('data-confetti-duration'), 10) || 3000;
+                    this.rain({ duration: dur });
+                } else if (type === 'cannons') {
+                    this.cannons();
+                } else if (type === 'fireworks') {
+                    this.fireworks();
+                } else {
+                    const count = parseInt(target.getAttribute('data-confetti-count'), 10) || undefined;
+                    const rect = target.getBoundingClientRect();
+                    const originX = (rect.left + rect.width / 2) / (window.innerWidth || 1);
+                    const originY = (rect.top + rect.height / 2) / (window.innerHeight || 1);
+                    this.burst({ count, origin: { x: originX, y: originY } });
+                }
+            });
         }
     };
     FramePER.Confetti = Confetti;
 
         if (FramePER.Tour && FramePER.Tour.init) {
             FramePER.Tour.init();
+        }
+        if (FramePER.Confetti && FramePER.Confetti.init) {
+            FramePER.Confetti.init();
         }
         if (FramePER.SegmentedControl && FramePER.SegmentedControl.init) {
             FramePER.SegmentedControl.init();
