@@ -9,7 +9,8 @@
     "build:postcss": "postcss dist/framePER.css -o dist/framePER.min.css --config postcss.config.js",
     "build": "npm run build:sass && npm run build:postcss && npm run build:js-copy && npm run build:js",
     "build:js": "terser src/js/framePER.js -o dist/framePER.min.js -c -m --source-map \"url='framePER.min.js.map'\"",
-    "build:js-copy": "node -e \"require('fs').copyFileSync('src/js/framePER.js', 'dist/framePER.js')\""
+    "build:js-copy": "node -e \"require('fs').copyFileSync('src/js/framePER.js', 'dist/framePER.js')\"",
+    "wiki:sync": "node scripts/sync-wiki.js"
   },
   "repository": {
     "type": "git",
