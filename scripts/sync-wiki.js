@@ -62,11 +62,13 @@ try {
 
   // 5. Commit e Push
   console.log('🚀 Enviando atualizações para o GitHub Wiki...');
+  run('git config user.name "OrlanRocha"', TMP_DIR);
+  run('git config user.email "orlanrocha@users.noreply.github.com"', TMP_DIR);
   run('git add .', TMP_DIR);
   
   try {
     run('git commit -m "docs(wiki): sync complete documentation v2.26.0"', TMP_DIR);
-    run('git push origin master', TMP_DIR);
+    run('git push origin HEAD', TMP_DIR);
     console.log('\n🎉 SUCESSO! O GitHub Wiki foi atualizado e publicado com sucesso!');
     console.log('🔗 Veja sua wiki online em: https://github.com/OrlanRocha/FramePER/wiki\n');
   } catch (commitErr) {
