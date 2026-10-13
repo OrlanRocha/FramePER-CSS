@@ -5,6 +5,12 @@
   --primary: var(--blue);
   --primary-hover: color-mix(in srgb, var(--primary) 86%, #000);
   --primary-soft: color-mix(in srgb, var(--primary) 10%, transparent);
+  --secondary: var(--grey);
+  --success: var(--green);
+  --warning: var(--yellow);
+  --danger: var(--red);
+  --info: #0284c7;
+  --purple: #9333ea;
   --ring: color-mix(in srgb, var(--primary) 32%, transparent);
 
   --radius-sm: 0.375rem;
