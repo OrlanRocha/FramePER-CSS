@@ -224,6 +224,85 @@
     tr:hover .btn-row-delete {
       opacity: 1;
     }
+
+    /* Worksheet Tabs Bar (Multi-Sheet) */
+    .worksheet-tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      background: var(--bg-surface, #1e1e24);
+      border: 1px solid var(--border, #333);
+      border-radius: var(--radius-md, 8px);
+      overflow-x: auto;
+    }
+    .worksheet-tabs-scroll {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .worksheet-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      background: var(--bg-subtle, rgba(255, 255, 255, 0.04));
+      border: 1px solid var(--border, #333);
+      border-radius: 6px;
+      color: var(--text-muted, #999);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .worksheet-tab:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main, #eee);
+    }
+    .worksheet-tab.active {
+      background: rgba(37, 99, 235, 0.15);
+      border-color: var(--primary, #2563eb);
+      color: var(--primary, #3b82f6);
+      font-weight: 600;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.2);
+    }
+    .worksheet-tab .tab-icon {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+    .worksheet-tab .tab-badge {
+      font-size: 0.7rem;
+      padding: 1px 5px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: inherit;
+    }
+    .worksheet-tab .tab-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: inherit;
+      opacity: 0.6;
+      cursor: pointer;
+      font-size: 0.75rem;
+      margin-left: 2px;
+      transition: all 0.15s ease;
+    }
+    .worksheet-tab .tab-close:hover {
+      opacity: 1;
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
   </style>
 </head>
 <body>
@@ -536,6 +615,16 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             </table>
           </div>
 
+          <!-- Worksheet Tabs Bar (Multi-Sheet) -->
+          <div class="worksheet-tabs-bar m-b-3" id="worksheet-tabs-bar" style="display: none;">
+            <div class="worksheet-tabs-scroll" id="worksheet-tabs-list">
+              <!-- Abas serão geradas dinamicamente -->
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-xs" id="btn-add-sheet" title="Adicionar nova planilha à pasta de trabalho">
+              <i class="icon icon-plus m-r-1"></i> Nova Aba
+            </button>
+          </div>
+
           <!-- Pagination Bar -->
           <div class="d-flex align-items-center justify-content-between f-s-2 text-muted" id="table-pagination-bar" style="display: none;">
             <span id="pagination-info">Mostrando 0 de 0</span>
@@ -741,6 +830,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       const Converter = window.FramePER ? window.FramePER.Converter : window.FramePERConverter;
       const Confetti = window.FramePER ? window.FramePER.Confetti : null;
       const Notify = window.FramePER ? window.FramePER.Notify : null;
+      const Dialog = window.FramePER ? window.FramePER.Dialog : null;
 
       // Presets Data
       const PRESETS = {
@@ -754,7 +844,33 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             ['#10824', '2026-10-04', 'Diego Rocha', 'Mouse Sem Fio Master', 2, 350.00, 700.00, 'Entregue'],
             ['#10825', '2026-10-05', 'Elena Martins', 'Headset Noise-Cancelling', 1, 1200.00, 1200.00, 'Aguardando Pagamento'],
             ['#10826', '2026-10-06', 'Fabio Alencar', 'Cadeira Ergonômica Pro', 1, 2400.00, 2400.00, 'Entregue']
-          ]
+          ],
+          sheets: {
+            'Vendas': {
+              title: 'Vendas',
+              headers: ['Pedido', 'Data', 'Cliente', 'Produto', 'Qtd', 'Preço Unitário', 'Total', 'Status'],
+              rows: [
+                ['#10821', '2026-10-01', 'Ana Costa', 'Notebook Dell XPS', 1, 8500.00, 8500.00, 'Entregue'],
+                ['#10822', '2026-10-02', 'Bruno Lima', 'Monitor Ultrawide 34', 2, 2800.00, 5600.00, 'Enviado'],
+                ['#10823', '2026-10-03', 'Carla Dias', 'Teclado Mecânico RGB', 3, 450.00, 1350.00, 'Processando'],
+                ['#10824', '2026-10-04', 'Diego Rocha', 'Mouse Sem Fio Master', 2, 350.00, 700.00, 'Entregue'],
+                ['#10825', '2026-10-05', 'Elena Martins', 'Headset Noise-Cancelling', 1, 1200.00, 1200.00, 'Aguardando Pagamento'],
+                ['#10826', '2026-10-06', 'Fabio Alencar', 'Cadeira Ergonômica Pro', 1, 2400.00, 2400.00, 'Entregue']
+              ]
+            },
+            'Metas Regionais': {
+              title: 'Metas Regionais',
+              headers: ['Região', 'Meta Trimestral (R$)', 'Alcançado (R$)', 'Atingimento (%)'],
+              rows: [
+                ['Sudeste', 150000.00, 168400.00, 112.3],
+                ['Sul', 90000.00, 84200.00, 93.5],
+                ['Nordeste', 80000.00, 81500.00, 101.8],
+                ['Centro-Oeste', 60000.00, 63800.00, 106.3]
+              ]
+            }
+          },
+          sheetNames: ['Vendas', 'Metas Regionais'],
+          activeSheet: 'Vendas'
         },
         team: {
           title: 'Quadro de Colaboradores RH',
@@ -819,6 +935,11 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       const btnPagePrev = document.getElementById('btn-page-prev');
       const btnPageNext = document.getElementById('btn-page-next');
       const exportButtons = document.querySelectorAll('.btn-export');
+
+      // Worksheet Elements (Multi-Sheet)
+      const worksheetTabsBar = document.getElementById('worksheet-tabs-bar');
+      const worksheetTabsList = document.getElementById('worksheet-tabs-list');
+      const btnAddSheet = document.getElementById('btn-add-sheet');
 
       // Chart Elements
       const chartVisualizationCard = document.getElementById('chart-visualization-card');
@@ -995,6 +1116,31 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         }
       }
 
+      function renderWorksheetTabs() {
+        if (!worksheetTabsBar || !worksheetTabsList || !currentDataset) return;
+        const sheetNames = currentDataset.sheetNames || (currentDataset.sheets ? Object.keys(currentDataset.sheets) : [currentDataset.title || 'Planilha1']);
+        const activeSheet = currentDataset.activeSheet || sheetNames[0];
+
+        worksheetTabsBar.style.display = 'flex';
+        let tabsHtml = '';
+        sheetNames.forEach(name => {
+          const isActive = name === activeSheet;
+          const sDs = currentDataset.sheets ? currentDataset.sheets[name] : currentDataset;
+          const rowCount = sDs ? (sDs.rows ? sDs.rows.length : 0) : 0;
+          const showClose = sheetNames.length > 1;
+
+          tabsHtml += `
+            <div class="worksheet-tab ${isActive ? 'active' : ''}" data-sheet="${escapeHTML(name)}" title="Clique para alternar para '${escapeHTML(name)}' · Duplo clique para renomear">
+              <i class="icon icon-file-text tab-icon"></i>
+              <span class="tab-title">${escapeHTML(name)}</span>
+              <span class="tab-badge">${rowCount}</span>
+              ${showClose ? `<button type="button" class="tab-close" data-sheet="${escapeHTML(name)}" title="Excluir aba '${escapeHTML(name)}'">✕</button>` : ''}
+            </div>
+          `;
+        });
+        worksheetTabsList.innerHTML = tabsHtml;
+      }
+
       function updateMetrics() {
         if (!currentDataset) return;
         metricRows.textContent = currentDataset.rows.length.toLocaleString();
@@ -1002,6 +1148,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         const estBytes = JSON.stringify(currentDataset).length;
         metricSize.textContent = formatBytes(estBytes);
         previewSubtitle.textContent = (currentDataset.title || 'Dados Carregados') + ' · ' + currentDataset.rows.length + ' linha(s) e ' + currentDataset.headers.length + ' coluna(s)';
+        renderWorksheetTabs();
         renderConverterChart();
       }
 
@@ -1023,6 +1170,9 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         if (btnAddRow) btnAddRow.style.display = 'inline-flex';
         if (btnAddCol) btnAddCol.style.display = 'inline-flex';
         if (editModeHint) editModeHint.style.display = 'inline-flex';
+
+        // Render Worksheet Tabs
+        renderWorksheetTabs();
 
         // Show and Render Chart
         if (chartVisualizationCard) {
@@ -1062,6 +1212,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         if (btnAddRow) btnAddRow.style.display = 'none';
         if (btnAddCol) btnAddCol.style.display = 'none';
         if (editModeHint) editModeHint.style.display = 'none';
+        if (worksheetTabsBar) worksheetTabsBar.style.display = 'none';
 
         if (chartVisualizationCard) {
           chartVisualizationCard.style.display = 'none';
@@ -1219,8 +1370,8 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         }
       });
 
-      // Column Rename and Deletion Listeners
-      previewThead.addEventListener('click', (e) => {
+      // Column Rename and Deletion Listeners (Sem input nativo, 100% interativo)
+      previewThead.addEventListener('click', async (e) => {
         if (!currentDataset) return;
 
         // Renomear coluna
@@ -1229,7 +1380,18 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           const colIdx = parseInt(titleBtn.getAttribute('data-col'), 10);
           if (isNaN(colIdx)) return;
           const currentName = currentDataset.headers[colIdx];
-          const newName = prompt('Novo nome para a coluna:', currentName);
+
+          let newName = null;
+          if (Dialog) {
+            newName = await Dialog.prompt({
+              title: 'Renomear Coluna',
+              label: `Digite o novo nome para a coluna "${currentName}":`,
+              defaultValue: currentName,
+              placeholder: 'Nome da coluna...',
+              confirmText: 'Salvar Alteração'
+            });
+          }
+
           if (newName && newName.trim() && newName.trim() !== currentName) {
             Converter.renameColumn(currentDataset, colIdx, newName.trim());
             applyFilter();
@@ -1247,11 +1409,27 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           const colIdx = parseInt(removeBtn.getAttribute('data-col'), 10);
           if (isNaN(colIdx)) return;
           if (currentDataset.headers.length <= 1) {
-            alert('O dataset precisa ter pelo menos 1 coluna.');
+            if (Notify) {
+              Notify.warning('Atenção', 'O dataset precisa ter pelo menos 1 coluna.');
+            } else if (Dialog) {
+              Dialog.alert({ title: 'Atenção', message: 'O dataset precisa ter pelo menos 1 coluna.' });
+            }
             return;
           }
           const colName = currentDataset.headers[colIdx];
-          if (confirm(`Deseja realmente excluir a coluna "${colName}" e todos os seus dados?`)) {
+
+          let confirmed = false;
+          if (Dialog) {
+            confirmed = await Dialog.confirm({
+              title: 'Excluir Coluna',
+              message: `Deseja realmente excluir a coluna "<strong>${escapeHTML(colName)}</strong>" e todos os seus dados? Esta ação não pode ser desfeita.`,
+              confirmText: 'Sim, Excluir Coluna',
+              cancelText: 'Cancelar',
+              danger: true
+            });
+          }
+
+          if (confirmed) {
             Converter.removeColumn(currentDataset, colIdx);
             applyFilter();
             updateMetrics();
@@ -1286,18 +1464,148 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         });
       }
 
-      // Add Column Button
+      // Add Column Button (Sem input nativo, modal 100% interativo)
       if (btnAddCol) {
-        btnAddCol.addEventListener('click', () => {
+        btnAddCol.addEventListener('click', async () => {
           if (!currentDataset) return;
           const defaultName = `Coluna_${currentDataset.headers.length + 1}`;
-          const colName = prompt('Digite o nome da nova coluna:', defaultName);
+
+          let colName = null;
+          if (Dialog) {
+            colName = await Dialog.prompt({
+              title: 'Adicionar Nova Coluna',
+              label: 'Digite o título da nova coluna para a tabela:',
+              defaultValue: defaultName,
+              placeholder: 'Ex: Preço, Quantidade, Status...',
+              confirmText: 'Adicionar Coluna'
+            });
+          }
+
           if (colName && colName.trim()) {
             Converter.addColumn(currentDataset, colName.trim(), '');
             applyFilter();
             updateMetrics();
             if (Notify) {
               Notify.success('Coluna Adicionada', `Coluna "${colName.trim()}" criada com sucesso.`);
+            }
+          }
+        });
+      }
+
+      // Worksheet Tabs Event Listeners (Alternar, Renomear, Excluir, Adicionar)
+      if (worksheetTabsList) {
+        worksheetTabsList.addEventListener('click', async (e) => {
+          if (!currentDataset) return;
+
+          // Excluir aba
+          const closeBtn = e.target.closest('.tab-close');
+          if (closeBtn) {
+            e.stopPropagation();
+            const sheetName = closeBtn.getAttribute('data-sheet');
+            if (!sheetName) return;
+
+            let confirmed = false;
+            if (Dialog) {
+              confirmed = await Dialog.confirm({
+                title: 'Excluir Planilha',
+                message: `Deseja realmente excluir a planilha "<strong>${escapeHTML(sheetName)}</strong>" e todos os seus dados?`,
+                confirmText: 'Sim, Excluir',
+                cancelText: 'Cancelar',
+                danger: true
+              });
+            }
+
+            if (confirmed) {
+              try {
+                Converter.removeSheet(currentDataset, sheetName);
+                applyFilter();
+                updateMetrics();
+                renderWorksheetTabs();
+                if (Notify) Notify.info('Planilha Removida', `A aba "${sheetName}" foi excluída.`);
+              } catch (err) {
+                if (Notify) Notify.warning('Aviso', err.message);
+              }
+            }
+            return;
+          }
+
+          // Alternar aba
+          const tabEl = e.target.closest('.worksheet-tab');
+          if (tabEl) {
+            const sheetName = tabEl.getAttribute('data-sheet');
+            if (sheetName && sheetName !== currentDataset.activeSheet) {
+              Converter.selectSheet(currentDataset, sheetName);
+              applyFilter();
+              updateMetrics();
+              renderWorksheetTabs();
+              populateChartSelects();
+              renderConverterChart();
+              if (Notify) Notify.info('Planilha Ativa', `Alternado para a aba "${sheetName}".`);
+            }
+          }
+        });
+
+        // Duplo clique para renomear aba
+        worksheetTabsList.addEventListener('dblclick', async (e) => {
+          if (!currentDataset) return;
+          const tabEl = e.target.closest('.worksheet-tab');
+          if (!tabEl) return;
+          const oldName = tabEl.getAttribute('data-sheet');
+          if (!oldName) return;
+
+          let newName = null;
+          if (Dialog) {
+            newName = await Dialog.prompt({
+              title: 'Renomear Planilha',
+              label: `Novo nome para a aba "${oldName}":`,
+              defaultValue: oldName,
+              placeholder: 'Nome da planilha...',
+              confirmText: 'Renomear'
+            });
+          }
+
+          if (newName && newName.trim() && newName.trim() !== oldName) {
+            try {
+              Converter.renameSheet(currentDataset, oldName, newName.trim());
+              renderWorksheetTabs();
+              updateMetrics();
+              if (Notify) Notify.success('Planilha Renomeada', `Nome alterado para "${newName.trim()}".`);
+            } catch (err) {
+              if (Notify) Notify.warning('Aviso', err.message);
+            }
+          }
+        });
+      }
+
+      // Botão Nova Aba
+      if (btnAddSheet) {
+        btnAddSheet.addEventListener('click', async () => {
+          if (!currentDataset) return;
+          const sheetCount = (currentDataset.sheetNames ? currentDataset.sheetNames.length : 1) + 1;
+          const defaultName = `Planilha${sheetCount}`;
+
+          let name = null;
+          if (Dialog) {
+            name = await Dialog.prompt({
+              title: 'Adicionar Nova Planilha',
+              label: 'Digite o nome da nova aba para a pasta de trabalho:',
+              defaultValue: defaultName,
+              placeholder: 'Ex: Resumo, Vendas, Custos...',
+              confirmText: 'Criar Aba'
+            });
+          }
+
+          if (name && name.trim()) {
+            try {
+              const baseHeaders = currentDataset.headers.length > 0 ? [...currentDataset.headers] : ['Coluna_1', 'Coluna_2'];
+              Converter.addSheet(currentDataset, name.trim(), { headers: baseHeaders, rows: [] });
+              Converter.selectSheet(currentDataset, name.trim());
+              applyFilter();
+              updateMetrics();
+              renderWorksheetTabs();
+              if (Notify) Notify.success('Nova Planilha Criada', `Aba "${name.trim()}" pronta para inserção de dados.`);
+            } catch (err) {
+              if (Notify) Notify.warning('Aviso', err.message);
             }
           }
         });
@@ -1359,8 +1667,8 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           console.error(err);
           if (Notify) {
             Notify.error('Falha ao Ler Arquivo', err.message || 'Formato não suportado ou arquivo corrompido.');
-          } else {
-            alert('Falha ao ler arquivo: ' + err.message);
+          } else if (window.FramePER && window.FramePER.Dialog) {
+            window.FramePER.Dialog.alert({ title: 'Falha ao Ler Arquivo', message: err.message || 'Formato não suportado ou arquivo corrompido.' });
           }
         }
       }

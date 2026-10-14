@@ -484,6 +484,198 @@
             info: function(title, msg, time) { this.show(title, msg, 'info', time); }
         },
 
+        // --- 2.1 Dynamic Interactive Dialogs (Prompt, Confirm, Alert) ---
+        Dialog: {
+            prompt: function(options = {}) {
+                if (typeof document === 'undefined' || !document.createElement) return Promise.resolve(null);
+                return new Promise((resolve) => {
+                    const title = options.title || 'Informação';
+                    const message = options.message || options.label || '';
+                    const defaultValue = options.defaultValue !== undefined ? options.defaultValue : '';
+                    const placeholder = options.placeholder || '';
+                    const confirmText = options.confirmText || 'Confirmar';
+                    const cancelText = options.cancelText || 'Cancelar';
+
+                    const modal = document.createElement('div');
+                    modal.className = 'modal show';
+                    modal.setAttribute('role', 'dialog');
+                    modal.setAttribute('aria-modal', 'true');
+                    modal.style.zIndex = '9999';
+
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 440px; box-shadow: var(--shadow-lg, 0 10px 30px rgba(0,0,0,0.5)); border: 1px solid var(--border-color, #333);">
+                            <div class="modal-header">
+                                <h3 class="modal-title">${title}</h3>
+                                <button type="button" class="modal-close" aria-label="Fechar"><i class="icon icon-close"></i></button>
+                            </div>
+                            <div class="modal-body">
+                                ${message ? `<p class="m-b-2" style="color: var(--text-main, #eee); font-size: 0.95rem;">${message}</p>` : ''}
+                                <div class="form-group m-0">
+                                    <input type="text" class="form-control form-control-md dialog-input" value="${String(defaultValue).replace(/"/g, '&quot;')}" placeholder="${placeholder}" />
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-ghost btn-sm dialog-cancel">${cancelText}</button>
+                                <button type="button" class="btn btn-primary btn-sm dialog-confirm">${confirmText}</button>
+                            </div>
+                        </div>
+                    `;
+
+                    document.body.appendChild(modal);
+                    const input = modal.querySelector('.dialog-input');
+                    const confirmBtn = modal.querySelector('.dialog-confirm');
+                    const cancelBtn = modal.querySelector('.dialog-cancel');
+                    const closeBtn = modal.querySelector('.modal-close');
+
+                    let closed = false;
+                    const cleanup = (val) => {
+                        if (closed) return;
+                        closed = true;
+                        modal.classList.remove('show');
+                        setTimeout(() => modal.remove(), 200);
+                        resolve(val);
+                    };
+
+                    if (confirmBtn) confirmBtn.addEventListener('click', () => cleanup(input ? input.value : null));
+                    if (cancelBtn) cancelBtn.addEventListener('click', () => cleanup(null));
+                    if (closeBtn) closeBtn.addEventListener('click', () => cleanup(null));
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) cleanup(null);
+                    });
+
+                    if (input) {
+                        input.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                cleanup(input.value);
+                            } else if (e.key === 'Escape') {
+                                e.preventDefault();
+                                cleanup(null);
+                            }
+                        });
+                        setTimeout(() => {
+                            if (input.focus) input.focus();
+                            if (input.select) input.select();
+                        }, 50);
+                    }
+                });
+            },
+
+            confirm: function(options = {}) {
+                if (typeof document === 'undefined' || !document.createElement) return Promise.resolve(false);
+                return new Promise((resolve) => {
+                    const title = options.title || 'Confirmação';
+                    const message = options.message || 'Tem certeza que deseja prosseguir?';
+                    const confirmText = options.confirmText || 'Confirmar';
+                    const cancelText = options.cancelText || 'Cancelar';
+                    const isDanger = options.danger !== false;
+
+                    const modal = document.createElement('div');
+                    modal.className = 'modal show';
+                    modal.setAttribute('role', 'dialog');
+                    modal.setAttribute('aria-modal', 'true');
+                    modal.style.zIndex = '9999';
+
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 440px; box-shadow: var(--shadow-lg, 0 10px 30px rgba(0,0,0,0.5)); border: 1px solid var(--border-color, #333);">
+                            <div class="modal-header">
+                                <h3 class="modal-title">${title}</h3>
+                                <button type="button" class="modal-close" aria-label="Fechar"><i class="icon icon-close"></i></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="m-0" style="color: var(--text-main, #eee); font-size: 0.95rem; line-height: 1.5;">${message}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-ghost btn-sm dialog-cancel">${cancelText}</button>
+                                <button type="button" class="btn ${isDanger ? 'btn-danger' : 'btn-primary'} btn-sm dialog-confirm">${confirmText}</button>
+                            </div>
+                        </div>
+                    `;
+
+                    document.body.appendChild(modal);
+                    const confirmBtn = modal.querySelector('.dialog-confirm');
+                    const cancelBtn = modal.querySelector('.dialog-cancel');
+                    const closeBtn = modal.querySelector('.modal-close');
+
+                    let closed = false;
+                    const cleanup = (val) => {
+                        if (closed) return;
+                        closed = true;
+                        modal.classList.remove('show');
+                        setTimeout(() => modal.remove(), 200);
+                        resolve(val);
+                    };
+
+                    if (confirmBtn) confirmBtn.addEventListener('click', () => cleanup(true));
+                    if (cancelBtn) cancelBtn.addEventListener('click', () => cleanup(false));
+                    if (closeBtn) closeBtn.addEventListener('click', () => cleanup(false));
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) cleanup(false);
+                    });
+
+                    const handleKey = (e) => {
+                        if (e.key === 'Escape') {
+                            e.preventDefault();
+                            if (document.removeEventListener) document.removeEventListener('keydown', handleKey);
+                            cleanup(false);
+                        }
+                    };
+                    if (document.addEventListener) document.addEventListener('keydown', handleKey);
+                    setTimeout(() => { if (confirmBtn && confirmBtn.focus) confirmBtn.focus(); }, 50);
+                });
+            },
+
+            alert: function(options = {}) {
+                if (typeof document === 'undefined' || !document.createElement) return Promise.resolve();
+                return new Promise((resolve) => {
+                    const title = typeof options === 'string' ? 'Aviso' : (options.title || 'Aviso');
+                    const message = typeof options === 'string' ? options : (options.message || '');
+                    const confirmText = options.confirmText || 'OK';
+
+                    const modal = document.createElement('div');
+                    modal.className = 'modal show';
+                    modal.setAttribute('role', 'dialog');
+                    modal.setAttribute('aria-modal', 'true');
+                    modal.style.zIndex = '9999';
+
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 420px; box-shadow: var(--shadow-lg, 0 10px 30px rgba(0,0,0,0.5)); border: 1px solid var(--border-color, #333);">
+                            <div class="modal-header">
+                                <h3 class="modal-title">${title}</h3>
+                                <button type="button" class="modal-close" aria-label="Fechar"><i class="icon icon-close"></i></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="m-0" style="color: var(--text-main, #eee); font-size: 0.95rem; line-height: 1.5;">${message}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary btn-sm dialog-confirm">${confirmText}</button>
+                            </div>
+                        </div>
+                    `;
+
+                    document.body.appendChild(modal);
+                    const confirmBtn = modal.querySelector('.dialog-confirm');
+                    const closeBtn = modal.querySelector('.modal-close');
+
+                    let closed = false;
+                    const cleanup = () => {
+                        if (closed) return;
+                        closed = true;
+                        modal.classList.remove('show');
+                        setTimeout(() => modal.remove(), 200);
+                        resolve();
+                    };
+
+                    if (confirmBtn) confirmBtn.addEventListener('click', cleanup);
+                    if (closeBtn) closeBtn.addEventListener('click', cleanup);
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) cleanup();
+                    });
+                    setTimeout(() => { if (confirmBtn && confirmBtn.focus) confirmBtn.focus(); }, 50);
+                });
+            }
+        },
+
         // --- 3. Page & Element Loaders ---
         Loader: {
             pageOverlay: null,
@@ -8463,16 +8655,23 @@
             }
             if (typeof input === 'object' && input !== null) {
                 if (input.headers && Array.isArray(input.rows)) {
-                    return {
+                    const parsed = {
                         title: input.title || options.title || 'Dataset',
                         headers: [...input.headers],
                         rows: input.rows.map(r => Array.isArray(r) ? [...r] : Object.values(r)),
                         metadata: {
                             totalRows: input.rows.length,
                             totalCols: input.headers.length,
-                            detectedType: 'dataset'
+                            detectedType: 'dataset',
+                            ...(input.metadata || {})
                         }
                     };
+                    if (input.sheets && typeof input.sheets === 'object') {
+                        parsed.sheets = { ...input.sheets };
+                        parsed.sheetNames = input.sheetNames ? [...input.sheetNames] : Object.keys(input.sheets);
+                        parsed.activeSheet = input.activeSheet || parsed.sheetNames[0];
+                    }
+                    return parsed;
                 }
                 return this._fromArrayOfObjects([input], options);
             }
@@ -8485,6 +8684,175 @@
 
         fromArray(arr, options = {}) {
             return this.parse(arr, options);
+        },
+
+        createWorkbook(sheetsInput, options = {}) {
+            const sheets = {};
+            const sheetNames = [];
+
+            if (Array.isArray(sheetsInput)) {
+                sheetsInput.forEach((s, idx) => {
+                    const name = s.name || s.title || `Planilha${idx + 1}`;
+                    const ds = this.parse(s.dataset || s, { title: name });
+                    sheets[name] = ds;
+                    sheetNames.push(name);
+                });
+            } else if (typeof sheetsInput === 'object' && sheetsInput !== null) {
+                Object.keys(sheetsInput).forEach(name => {
+                    const ds = this.parse(sheetsInput[name], { title: name });
+                    sheets[name] = ds;
+                    sheetNames.push(name);
+                });
+            } else {
+                throw new Error('createWorkbook espera um objeto de abas ou array de planilhas.');
+            }
+
+            if (sheetNames.length === 0) {
+                const defaultName = 'Planilha1';
+                sheets[defaultName] = this.parse({ headers: [], rows: [] }, { title: defaultName });
+                sheetNames.push(defaultName);
+            }
+
+            const activeSheet = options.activeSheet || sheetNames[0];
+            const activeDs = sheets[activeSheet] || sheets[sheetNames[0]];
+
+            const workbook = {
+                title: options.title || activeDs.title || 'Workbook',
+                headers: [...activeDs.headers],
+                rows: activeDs.rows.map(r => [...r]),
+                metadata: { ...(activeDs.metadata || {}), isWorkbook: true },
+                sheets,
+                sheetNames,
+                activeSheet
+            };
+            return workbook;
+        },
+
+        getSheets(dataset) {
+            if (!dataset) return {};
+            if (dataset.sheets && typeof dataset.sheets === 'object') {
+                return dataset.sheets;
+            }
+            const name = dataset.title || 'Planilha1';
+            return { [name]: dataset };
+        },
+
+        getSheetNames(dataset) {
+            if (!dataset) return [];
+            if (dataset.sheetNames && Array.isArray(dataset.sheetNames)) {
+                return [...dataset.sheetNames];
+            }
+            if (dataset.sheets && typeof dataset.sheets === 'object') {
+                return Object.keys(dataset.sheets);
+            }
+            return [dataset.title || 'Planilha1'];
+        },
+
+        selectSheet(dataset, sheetNameOrIndex) {
+            if (!dataset) return dataset;
+            if (!dataset.sheets) {
+                const name = dataset.title || 'Planilha1';
+                dataset.sheets = { [name]: { ...dataset } };
+                dataset.sheetNames = [name];
+                dataset.activeSheet = name;
+            }
+
+            let targetName;
+            if (typeof sheetNameOrIndex === 'number') {
+                targetName = dataset.sheetNames[sheetNameOrIndex];
+            } else {
+                targetName = String(sheetNameOrIndex);
+            }
+
+            if (!targetName || !dataset.sheets[targetName]) {
+                throw new Error(`Planilha "${sheetNameOrIndex}" não encontrada.`);
+            }
+
+            // Sincroniza dados da aba anterior antes de alternar
+            if (dataset.activeSheet && dataset.sheets[dataset.activeSheet]) {
+                dataset.sheets[dataset.activeSheet].headers = [...dataset.headers];
+                dataset.sheets[dataset.activeSheet].rows = dataset.rows.map(r => [...r]);
+            }
+
+            dataset.activeSheet = targetName;
+            const targetDs = dataset.sheets[targetName];
+            dataset.headers = [...targetDs.headers];
+            dataset.rows = targetDs.rows.map(r => [...r]);
+            dataset.title = targetDs.title || targetName;
+            if (dataset.metadata) {
+                dataset.metadata.totalRows = dataset.rows.length;
+                dataset.metadata.totalCols = dataset.headers.length;
+            }
+            return dataset;
+        },
+
+        addSheet(dataset, name, data = { headers: [], rows: [] }) {
+            if (!dataset) throw new Error('Dataset não informado.');
+            if (!dataset.sheets) {
+                const currentName = dataset.title || 'Planilha1';
+                dataset.sheets = { [currentName]: { ...dataset } };
+                dataset.sheetNames = [currentName];
+                dataset.activeSheet = currentName;
+            }
+
+            const cleanName = String(name || `Planilha${dataset.sheetNames.length + 1}`).trim();
+            if (dataset.sheets[cleanName]) {
+                throw new Error(`Já existe uma planilha com o nome "${cleanName}".`);
+            }
+
+            const newDs = this.parse(data, { title: cleanName });
+            dataset.sheets[cleanName] = newDs;
+            dataset.sheetNames.push(cleanName);
+            return dataset;
+        },
+
+        removeSheet(dataset, name) {
+            if (!dataset || !dataset.sheets) throw new Error('Dataset ou sheets não informado.');
+            const sheetName = String(name).trim();
+            if (!dataset.sheets[sheetName]) {
+                throw new Error(`Planilha "${sheetName}" não encontrada.`);
+            }
+            if (dataset.sheetNames.length <= 1) {
+                throw new Error('Não é possível remover a única planilha restante.');
+            }
+
+            delete dataset.sheets[sheetName];
+            dataset.sheetNames = dataset.sheetNames.filter(n => n !== sheetName);
+
+            if (dataset.activeSheet === sheetName) {
+                this.selectSheet(dataset, dataset.sheetNames[0]);
+            }
+            return dataset;
+        },
+
+        renameSheet(dataset, oldName, newName) {
+            if (!dataset || !dataset.sheets) throw new Error('Dataset ou sheets não informado.');
+            const from = String(oldName).trim();
+            const to = String(newName).trim();
+            if (!to) throw new Error('O novo nome da planilha não pode ser vazio.');
+            if (from === to) return dataset;
+            if (!dataset.sheets[from]) {
+                throw new Error(`Planilha "${from}" não encontrada.`);
+            }
+            if (dataset.sheets[to]) {
+                throw new Error(`Já existe uma planilha com o nome "${to}".`);
+            }
+
+            const sheetData = dataset.sheets[from];
+            sheetData.title = to;
+            delete dataset.sheets[from];
+            dataset.sheets[to] = sheetData;
+
+            const idx = dataset.sheetNames.indexOf(from);
+            if (idx !== -1) {
+                dataset.sheetNames[idx] = to;
+            }
+
+            if (dataset.activeSheet === from) {
+                dataset.activeSheet = to;
+                dataset.title = to;
+            }
+            return dataset;
         },
 
         _fromArrayOfObjects(arr, options = {}) {
@@ -8764,8 +9132,26 @@
         },
 
         toXLS(dataset, options = {}) {
-            const ds = this.parse(dataset, options);
-            const sheetName = options.sheetName || ds.title || 'Sheet1';
+            let sheetsMap = {};
+            let sheetNamesList = [];
+
+            if (dataset && dataset.sheets && typeof dataset.sheets === 'object') {
+                sheetsMap = dataset.sheets;
+                sheetNamesList = dataset.sheetNames || Object.keys(sheetsMap);
+            } else if (options.sheets && typeof options.sheets === 'object') {
+                sheetsMap = options.sheets;
+                sheetNamesList = Object.keys(sheetsMap);
+            } else {
+                const ds = this.parse(dataset, options);
+                const sName = options.sheetName || ds.title || 'Planilha1';
+                sheetsMap = { [sName]: ds };
+                sheetNamesList = [sName];
+            }
+
+            if (sheetNamesList.length === 0) {
+                sheetNamesList = ['Planilha1'];
+                sheetsMap['Planilha1'] = this.parse({ headers: [], rows: [] });
+            }
 
             const escapeXML = (val) => {
                 if (val === null || val === undefined) return '';
@@ -8777,26 +9163,38 @@
                     .replace(/'/g, '&apos;');
             };
 
-            const headerCells = ds.headers.map(h => {
-                return `<Cell ss:StyleID="HeaderStyle"><Data ss:Type="String">${escapeXML(h)}</Data></Cell>`;
-            }).join('');
-
-            const dataRows = ds.rows.map((r, rIdx) => {
-                const styleAttr = rIdx % 2 === 1 ? ' ss:StyleID="Zebra"' : '';
-                const cells = r.map(val => {
-                    if (val === null || val === undefined || val === '') {
-                        return '<Cell><Data ss:Type="String"></Data></Cell>';
-                    }
-                    const num = Number(val);
-                    if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
-                        return `<Cell${styleAttr}><Data ss:Type="Number">${num}</Data></Cell>`;
-                    }
-                    return `<Cell${styleAttr}><Data ss:Type="String">${escapeXML(val)}</Data></Cell>`;
+            const worksheetsXML = sheetNamesList.map(name => {
+                const sDs = this.parse(sheetsMap[name]);
+                const headerCells = sDs.headers.map(h => {
+                    return `<Cell ss:StyleID="HeaderStyle"><Data ss:Type="String">${escapeXML(h)}</Data></Cell>`;
                 }).join('');
-                return `   <Row ss:Height="20">\n    ${cells}\n   </Row>`;
+
+                const dataRows = sDs.rows.map((r, rIdx) => {
+                    const styleAttr = rIdx % 2 === 1 ? ' ss:StyleID="Zebra"' : '';
+                    const cells = r.map(val => {
+                        if (val === null || val === undefined || val === '') {
+                            return '<Cell><Data ss:Type="String"></Data></Cell>';
+                        }
+                        const num = Number(val);
+                        if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
+                            return `<Cell${styleAttr}><Data ss:Type="Number">${num}</Data></Cell>`;
+                        }
+                        return `<Cell${styleAttr}><Data ss:Type="String">${escapeXML(val)}</Data></Cell>`;
+                    }).join('');
+                    return `   <Row ss:Height="20">\n    ${cells}\n   </Row>`;
+                }).join('\n');
+
+                return ` <Worksheet ss:Name="${escapeXML(name)}">
+  <Table ss:DefaultColumnWidth="100">
+   <Row ss:Height="26">
+    ${headerCells}
+   </Row>
+${dataRows}
+  </Table>
+ </Worksheet>`;
             }).join('\n');
 
-            return `<?xml version="1.0"?>
+            const xml = `<?xml version="1.0"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -8821,15 +9219,13 @@
    <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
   </Style>
  </Styles>
- <Worksheet ss:Name="${escapeXML(sheetName)}">
-  <Table ss:DefaultColumnWidth="100">
-   <Row ss:Height="26">
-    ${headerCells}
-   </Row>
-${dataRows}
-  </Table>
- </Worksheet>
+${worksheetsXML}
 </Workbook>`;
+
+            if (options.asBlob && typeof Blob !== 'undefined') {
+                return new Blob([xml], { type: 'application/vnd.ms-excel' });
+            }
+            return xml;
         },
 
         _crc32(bytes) {
@@ -9097,107 +9493,207 @@ ${dataRows}
                 });
             }
 
-            // 2. Sheet XML
-            let sheetKey = Object.keys(files).find(k => k.toLowerCase() === 'xl/worksheets/sheet1.xml');
-            if (!sheetKey) {
-                sheetKey = Object.keys(files).find(k => k.toLowerCase().startsWith('xl/worksheets/') && k.toLowerCase().endsWith('.xml'));
+            // 2. Discover worksheets from xl/workbook.xml and xl/_rels/workbook.xml.rels
+            const sheetsInfo = [];
+            const wbKey = Object.keys(files).find(k => k.toLowerCase() === 'xl/workbook.xml');
+            const wbRelsKey = Object.keys(files).find(k => k.toLowerCase() === 'xl/_rels/workbook.xml.rels');
+
+            if (wbKey && files[wbKey]) {
+                const wbXML = files[wbKey];
+                const relsMap = {};
+                if (wbRelsKey && files[wbRelsKey]) {
+                    const relMatches = files[wbRelsKey].match(/<Relationship[\s\S]*?\/>/gi) || [];
+                    relMatches.forEach(relTag => {
+                        const idMatch = relTag.match(/Id="([^"]+)"/i);
+                        const targetMatch = relTag.match(/Target="([^"]+)"/i);
+                        if (idMatch && targetMatch) {
+                            let target = targetMatch[1].replace(/\\/g, '/');
+                            if (!target.toLowerCase().startsWith('xl/')) {
+                                target = 'xl/' + target.replace(/^\.\//, '');
+                            }
+                            relsMap[idMatch[1]] = target;
+                        }
+                    });
+                }
+
+                const sheetTags = wbXML.match(/<sheet[\s\S]*?\/>/gi) || [];
+                sheetTags.forEach((sTag, idx) => {
+                    const nameMatch = sTag.match(/name="([^"]+)"/i);
+                    const sheetIdMatch = sTag.match(/sheetId="([^"]+)"/i);
+                    const rIdMatch = sTag.match(/r:id="([^"]+)"/i);
+
+                    const sName = nameMatch ? this._unescapeXML(nameMatch[1]) : `Planilha${idx + 1}`;
+                    const sheetId = sheetIdMatch ? sheetIdMatch[1] : String(idx + 1);
+                    const rId = rIdMatch ? rIdMatch[1] : null;
+
+                    let filePath = rId && relsMap[rId] ? relsMap[rId] : null;
+                    if (!filePath) {
+                        filePath = `xl/worksheets/sheet${sheetId}.xml`;
+                    }
+                    sheetsInfo.push({ name: sName, sheetId, rId, path: filePath });
+                });
             }
-            if (!sheetKey || !files[sheetKey]) {
+
+            // Fallback se workbook.xml não definiu as sheets
+            if (sheetsInfo.length === 0) {
+                const sheetKeys = Object.keys(files).filter(k => k.toLowerCase().startsWith('xl/worksheets/') && k.toLowerCase().endsWith('.xml'));
+                sheetKeys.sort().forEach((k, idx) => {
+                    sheetsInfo.push({ name: `Planilha${idx + 1}`, sheetId: String(idx + 1), path: k });
+                });
+            }
+
+            if (sheetsInfo.length === 0) {
                 throw new Error('Nenhuma planilha encontrada no arquivo .xlsx.');
             }
-            const sheetXML = files[sheetKey];
 
-            // 3. Parse grid rows and cells
-            const grid = [];
-            let maxCol = 0;
-            const rowMatches = sheetXML.match(/<row[\s\S]*?<\/row>/gi) || [];
+            const parsedSheets = {};
+            const sheetNames = [];
 
-            rowMatches.forEach((rowTag, autoRowIdx) => {
-                const rAttrMatch = rowTag.match(/<row[^>]*\sr="(\d+)"/i);
-                const rowIdx = rAttrMatch ? parseInt(rAttrMatch[1], 10) - 1 : autoRowIdx;
+            sheetsInfo.forEach(sInfo => {
+                const sheetKey = Object.keys(files).find(k => k.toLowerCase() === sInfo.path.toLowerCase()) ||
+                                 Object.keys(files).find(k => k.toLowerCase().endsWith('/' + sInfo.path.toLowerCase().split('/').pop()));
+                if (!sheetKey || !files[sheetKey]) return;
 
-                if (!grid[rowIdx]) grid[rowIdx] = [];
+                const sheetXML = files[sheetKey];
+                const grid = [];
+                let maxCol = 0;
+                const rowMatches = sheetXML.match(/<row[\s\S]*?<\/row>/gi) || [];
 
-                const cellMatches = rowTag.match(/<c[\s\S]*?(?:<\/c>|\/>)/gi) || [];
-                let autoColIdx = 0;
+                rowMatches.forEach((rowTag, autoRowIdx) => {
+                    const rAttrMatch = rowTag.match(/<row[^>]*\sr="(\d+)"/i);
+                    const rowIdx = rAttrMatch ? parseInt(rAttrMatch[1], 10) - 1 : autoRowIdx;
 
-                cellMatches.forEach(cTag => {
-                    const rRefMatch = cTag.match(/r="([A-Z]+[0-9]+)"/i);
-                    let colIdx;
-                    if (rRefMatch) {
-                        const coords = this._parseCellRef(rRefMatch[1]);
-                        colIdx = coords.col;
-                    } else {
-                        colIdx = autoColIdx;
-                    }
-                    autoColIdx = colIdx + 1;
-                    if (colIdx > maxCol) maxCol = colIdx;
+                    if (!grid[rowIdx]) grid[rowIdx] = [];
 
-                    const tMatch = cTag.match(/\st="([^"]+)"/i);
-                    const cellType = tMatch ? tMatch[1] : '';
+                    const cellMatches = rowTag.match(/<c[\s\S]*?(?:<\/c>|\/>)/gi) || [];
+                    let autoColIdx = 0;
 
-                    let val = '';
-                    if (cellType === 'inlineStr') {
-                        const isMatch = cTag.match(/<is>[\s\S]*?<t[\s\S]*?>([\s\S]*?)<\/t>/i);
-                        if (isMatch) val = this._unescapeXML(isMatch[1]);
-                    } else if (cellType === 's') {
-                        const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
-                        if (vMatch) {
-                            const idx = parseInt(vMatch[1].trim(), 10);
-                            val = (sharedStrings[idx] !== undefined) ? sharedStrings[idx] : '';
+                    cellMatches.forEach(cTag => {
+                        const rRefMatch = cTag.match(/r="([A-Z]+[0-9]+)"/i);
+                        let colIdx;
+                        if (rRefMatch) {
+                            const coords = this._parseCellRef(rRefMatch[1]);
+                            colIdx = coords.col;
+                        } else {
+                            colIdx = autoColIdx;
                         }
-                    } else if (cellType === 'b') {
-                        const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
-                        val = vMatch && vMatch[1].trim() === '1';
-                    } else {
-                        const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
-                        if (vMatch) {
-                            const rawVal = vMatch[1].trim();
-                            const num = Number(rawVal);
-                            if (!isNaN(num) && rawVal !== '') {
-                                val = num;
-                            } else {
-                                val = this._unescapeXML(rawVal);
+                        autoColIdx = colIdx + 1;
+                        if (colIdx > maxCol) maxCol = colIdx;
+
+                        const tMatch = cTag.match(/\st="([^"]+)"/i);
+                        const cellType = tMatch ? tMatch[1] : '';
+
+                        let val = '';
+                        if (cellType === 'inlineStr') {
+                            const isMatch = cTag.match(/<is>[\s\S]*?<t[\s\S]*?>([\s\S]*?)<\/t>/i);
+                            if (isMatch) val = this._unescapeXML(isMatch[1]);
+                        } else if (cellType === 's') {
+                            const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
+                            if (vMatch) {
+                                const idx = parseInt(vMatch[1].trim(), 10);
+                                val = (sharedStrings[idx] !== undefined) ? sharedStrings[idx] : '';
+                            }
+                        } else if (cellType === 'b') {
+                            const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
+                            val = vMatch && vMatch[1].trim() === '1';
+                        } else {
+                            const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
+                            if (vMatch) {
+                                const rawVal = vMatch[1].trim();
+                                const num = Number(rawVal);
+                                if (!isNaN(num) && rawVal !== '') {
+                                    val = num;
+                                } else {
+                                    val = this._unescapeXML(rawVal);
+                                }
                             }
                         }
-                    }
 
-                    grid[rowIdx][colIdx] = val;
+                        grid[rowIdx][colIdx] = val;
+                    });
                 });
+
+                // Clean grid into rectangular 2D array
+                const cleanGrid = [];
+                const totalCols = maxCol + 1;
+                for (let r = 0; r < grid.length; r++) {
+                    if (!grid[r]) continue;
+                    const row = [];
+                    for (let c = 0; c < totalCols; c++) {
+                        const cellVal = grid[r][c];
+                        row.push(cellVal !== undefined ? cellVal : '');
+                    }
+                    cleanGrid.push(row);
+                }
+
+                let headers = [];
+                let rows = [];
+                if (cleanGrid.length > 0) {
+                    headers = cleanGrid[0].map(h => String(h != null ? h : ''));
+                    rows = cleanGrid.slice(1);
+                }
+
+                const sDs = this.parse({
+                    title: sInfo.name,
+                    headers,
+                    rows
+                }, options);
+                if (sDs.metadata) sDs.metadata.detectedType = 'xlsx';
+
+                parsedSheets[sInfo.name] = sDs;
+                sheetNames.push(sInfo.name);
             });
 
-            // Clean grid into rectangular 2D array
-            const cleanGrid = [];
-            const totalCols = maxCol + 1;
-            for (let r = 0; r < grid.length; r++) {
-                if (!grid[r]) continue;
-                const row = [];
-                for (let c = 0; c < totalCols; c++) {
-                    const cellVal = grid[r][c];
-                    row.push(cellVal !== undefined ? cellVal : '');
-                }
-                cleanGrid.push(row);
+            if (sheetNames.length === 0) {
+                const emptyDs = this.parse({ title: options.title || 'Planilha Vazia', headers: [], rows: [] }, options);
+                return emptyDs;
             }
 
-            if (cleanGrid.length === 0) {
-                return this.parse({ title: options.title || 'Planilha Vazia', headers: [], rows: [] }, options);
+            let activeName = sheetNames[0];
+            if (options.sheetName && parsedSheets[options.sheetName]) {
+                activeName = options.sheetName;
+            } else if (typeof options.sheetIndex === 'number' && sheetNames[options.sheetIndex]) {
+                activeName = sheetNames[options.sheetIndex];
             }
 
-            const headers = cleanGrid[0].map(h => String(h != null ? h : ''));
-            const rows = cleanGrid.slice(1);
-
-            const result = this.parse({
-                title: options.title || 'Planilha Importada',
-                headers,
-                rows
-            }, options);
-            if (result.metadata) result.metadata.detectedType = 'xlsx';
+            const activeDs = parsedSheets[activeName];
+            const result = {
+                title: options.title || activeDs.title || activeName,
+                headers: [...activeDs.headers],
+                rows: activeDs.rows.map(r => [...r]),
+                metadata: {
+                    ...(activeDs.metadata || {}),
+                    detectedType: 'xlsx',
+                    isWorkbook: sheetNames.length > 1
+                },
+                sheets: parsedSheets,
+                sheetNames: [...sheetNames],
+                activeSheet: activeName
+            };
             return result;
         },
 
         toXLSX(dataset, options = {}) {
-            const ds = this.parse(dataset, options);
-            const sheetName = options.sheetName || ds.title || 'Planilha1';
+            let sheetsMap = {};
+            let sheetNamesList = [];
+
+            if (dataset && dataset.sheets && typeof dataset.sheets === 'object') {
+                sheetsMap = dataset.sheets;
+                sheetNamesList = dataset.sheetNames || Object.keys(sheetsMap);
+            } else if (options.sheets && typeof options.sheets === 'object') {
+                sheetsMap = options.sheets;
+                sheetNamesList = Object.keys(sheetsMap);
+            } else {
+                const ds = this.parse(dataset, options);
+                const singleName = options.sheetName || ds.title || 'Planilha1';
+                sheetsMap = { [singleName]: ds };
+                sheetNamesList = [singleName];
+            }
+
+            if (sheetNamesList.length === 0) {
+                sheetNamesList = ['Planilha1'];
+                sheetsMap['Planilha1'] = this.parse({ headers: [], rows: [] });
+            }
 
             const colName = (index) => {
                 let name = '';
@@ -9219,43 +9715,63 @@ ${dataRows}
                     .replace(/'/g, '&apos;');
             };
 
-            const rowsXML = [];
-            const headerCells = ds.headers.map((h, idx) => {
-                const ref = colName(idx) + '1';
-                return `<c r="${ref}" t="inlineStr" s="1"><is><t>${escapeXML(h)}</t></is></c>`;
-            }).join('');
-            rowsXML.push(`<row r="1">${headerCells}</row>`);
+            const sheetFiles = [];
+            const sheetOverrides = [];
+            const workbookSheetTags = [];
+            const workbookRelTags = [];
 
-            ds.rows.forEach((r, rIdx) => {
-                const rowNum = rIdx + 2;
-                const styleId = (rIdx % 2 === 1) ? '2' : '0';
-                const cells = r.map((val, cIdx) => {
-                    const ref = colName(cIdx) + rowNum;
-                    if (val === null || val === undefined || val === '') {
-                        return `<c r="${ref}" s="${styleId}"/>`;
-                    }
-                    const num = Number(val);
-                    if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
-                        return `<c r="${ref}" t="n" s="${styleId}"><v>${num}</v></c>`;
-                    }
-                    return `<c r="${ref}" t="inlineStr" s="${styleId}"><is><t>${escapeXML(val)}</t></is></c>`;
+            sheetNamesList.forEach((sName, sIdx) => {
+                const sheetId = sIdx + 1;
+                const rId = `rId${sheetId}`;
+                const rawDs = sheetsMap[sName];
+                const sheetDs = this.parse(rawDs);
+
+                const rowsXML = [];
+                const headerCells = sheetDs.headers.map((h, idx) => {
+                    const ref = colName(idx) + '1';
+                    return `<c r="${ref}" t="inlineStr" s="1"><is><t>${escapeXML(h)}</t></is></c>`;
                 }).join('');
-                rowsXML.push(`<row r="${rowNum}">${cells}</row>`);
-            });
+                rowsXML.push(`<row r="1">${headerCells}</row>`);
 
-            const sheetXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                sheetDs.rows.forEach((r, rIdx) => {
+                    const rowNum = rIdx + 2;
+                    const styleId = (rIdx % 2 === 1) ? '2' : '0';
+                    const cells = r.map((val, cIdx) => {
+                        const ref = colName(cIdx) + rowNum;
+                        if (val === null || val === undefined || val === '') {
+                            return `<c r="${ref}" s="${styleId}"/>`;
+                        }
+                        const num = Number(val);
+                        if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
+                            return `<c r="${ref}" t="n" s="${styleId}"><v>${num}</v></c>`;
+                        }
+                        return `<c r="${ref}" t="inlineStr" s="${styleId}"><is><t>${escapeXML(val)}</t></is></c>`;
+                    }).join('');
+                    rowsXML.push(`<row r="${rowNum}">${cells}</row>`);
+                });
+
+                const sheetXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetData>
     ${rowsXML.join('\n    ')}
   </sheetData>
 </worksheet>`;
 
+                sheetFiles.push({ name: `xl/worksheets/sheet${sheetId}.xml`, data: sheetXML });
+                sheetOverrides.push(`<Override PartName="/xl/worksheets/sheet${sheetId}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`);
+                workbookSheetTags.push(`<sheet name="${escapeXML(sName)}" sheetId="${sheetId}" r:id="${rId}"/>`);
+                workbookRelTags.push(`<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${sheetId}.xml"/>`);
+            });
+
+            const stylesRelId = `rId${sheetNamesList.length + 1}`;
+            workbookRelTags.push(`<Relationship Id="${stylesRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>`);
+
             const contentTypesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  ${sheetOverrides.join('\n  ')}
   <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
 </Types>`;
 
@@ -9267,14 +9783,13 @@ ${dataRows}
             const workbookXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>
-    <sheet name="${escapeXML(sheetName)}" sheetId="1" r:id="rId1"/>
+    ${workbookSheetTags.join('\n    ')}
   </sheets>
 </workbook>`;
 
             const workbookRelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+  ${workbookRelTags.join('\n  ')}
 </Relationships>`;
 
             const stylesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -9304,7 +9819,7 @@ ${dataRows}
                 { name: 'xl/workbook.xml', data: workbookXML },
                 { name: 'xl/_rels/workbook.xml.rels', data: workbookRelsXML },
                 { name: 'xl/styles.xml', data: stylesXML },
-                { name: 'xl/worksheets/sheet1.xml', data: sheetXML }
+                ...sheetFiles
             ];
 
             const zipBytes = this._createZip(files);
