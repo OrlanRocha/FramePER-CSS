@@ -169,10 +169,102 @@ async function runTests() {
     assert.strictEqual(sampleData.rows[0][0], 1, 'Dataset original não deve ser modificado');
     console.log('  ✓ Passou');
 
-    console.log('\n🎉 TODOS OS TESTES DE ORDENAÇÃO PASSARAM COM SUCESSO!\n');
+    // ▶ Teste 7: Extração de Valores Distintos (getDistinctValues)
+    console.log('▶ Teste 7: Converter.getDistinctValues - Contagem e Listagem');
+    const deptDistinct = Converter.getDistinctValues(sampleData, 'Departamento');
+    assert.strictEqual(deptDistinct.length, 3, 'Deve haver 3 departamentos distintos (TI, Vendas, RH)');
+    const deptMap = Object.fromEntries(deptDistinct.map(d => [d.value, d.count]));
+    assert.strictEqual(deptMap['TI'], 3, 'TI tem 3 colaboradores');
+    assert.strictEqual(deptMap['Vendas'], 2, 'Vendas tem 2 colaboradores');
+    assert.strictEqual(deptMap['RH'], 2, 'RH tem 2 colaboradores');
+
+    const salaryDistinct = Converter.getDistinctValues(sampleData, 'Salario');
+    const emptySal = salaryDistinct.find(d => d.value === null || d.value === '');
+    assert.ok(emptySal, 'Deve capturar valores nulos ou vazios como valor distinto');
+    assert.strictEqual(emptySal.count, 1, 'Deve haver 1 salário vazio');
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 8: Converter.filter com operador 'in' (Checklist de Popover)
+    console.log('▶ Teste 8: Converter.filter - Operador "in" (Checklist)');
+    const filteredIn = Converter.filter(sampleData, {
+        column: 'Departamento',
+        operator: 'in',
+        values: ['TI', 'RH']
+    });
+    assert.strictEqual(filteredIn.rows.length, 5, 'Deve conter apenas colaboradores de TI (3) e RH (2)');
+    assert.ok(filteredIn.rows.every(r => r[2] === 'TI' || r[2] === 'RH'));
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 9: Converter.filter com operadores relacionais
+    console.log('▶ Teste 9: Converter.filter - Operadores Relacionais e Texto');
+    // contains
+    const filteredContains = Converter.filter(sampleData, {
+        column: 'Nome',
+        operator: 'contains',
+        value: 'silva'
+    });
+    assert.strictEqual(filteredContains.rows.length, 1);
+    assert.strictEqual(filteredContains.rows[0][1], 'Bruno Silva');
+
+    // greater_than
+    const filteredGt = Converter.filter(sampleData, {
+        column: 'Salario',
+        operator: 'greater_than',
+        value: 8000
+    });
+    assert.strictEqual(filteredGt.rows.length, 3, 'Deve filtrar salários > 8000 (12000, 8500, 12000)');
+
+    // less_than_or_equal
+    const filteredLte = Converter.filter(sampleData, {
+        column: 'Salario',
+        operator: 'less_than_or_equal',
+        value: 5200
+    });
+    assert.strictEqual(filteredLte.rows.length, 2, 'Deve filtrar salários <= 5200 (4300, 5200)');
+
+    // empty e not_empty
+    const filteredEmpty = Converter.filter(sampleData, {
+        column: 'Salario',
+        operator: 'empty'
+    });
+    assert.strictEqual(filteredEmpty.rows.length, 1);
+    assert.strictEqual(filteredEmpty.rows[0][1], 'Zilda Ferreira');
+
+    const filteredNotEmpty = Converter.filter(sampleData, {
+        column: 'Salario',
+        operator: 'not_empty'
+    });
+    assert.strictEqual(filteredNotEmpty.rows.length, 6);
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 10: Converter.filter Multi-Regra (Conjunção AND)
+    console.log('▶ Teste 10: Converter.filter - Múltiplas Regras (AND)');
+    const multiFiltered = Converter.filter(sampleData, [
+        { column: 'Departamento', operator: 'in', values: ['TI', 'Vendas'] },
+        { column: 'Salario', operator: 'greater_than', value: 8000 }
+    ]);
+    // TI ou Vendas COM salário > 8000:
+    // Ágata Souza (Vendas, 12000), Daniela Ramos (Vendas, 8500), Álvaro Pereira (TI, 12000)
+    assert.strictEqual(multiFiltered.rows.length, 3);
+    const names = multiFiltered.rows.map(r => r[1]);
+    assert.ok(names.includes('Ágata Souza'));
+    assert.ok(names.includes('Daniela Ramos'));
+    assert.ok(names.includes('Álvaro Pereira'));
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 11: Combinação Filter + Sort encadeados
+    console.log('▶ Teste 11: Combinação Encadeada Filter + Sort');
+    const filteredAndSorted = Converter.sort(multiFiltered, { column: 'Salario', order: 'asc' });
+    assert.strictEqual(filteredAndSorted.rows[0][1], 'Daniela Ramos', 'Daniela (8500) é a menor entre os filtrados');
+    assert.strictEqual(filteredAndSorted.rows[1][3], 12000);
+    assert.strictEqual(filteredAndSorted.rows[2][3], 12000);
+    console.log('  ✓ Passou');
+
+    console.log('\n🎉 TODOS OS TESTES DE ORDENAÇÃO E FILTROS PASSARAM COM SUCESSO!\n');
 }
 
 runTests().catch(err => {
     console.error('❌ Falha nos testes de ordenação e filtros:', err);
     process.exit(1);
 });
+

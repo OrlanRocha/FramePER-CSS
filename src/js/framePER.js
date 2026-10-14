@@ -10694,6 +10694,222 @@ ${worksheetsXML}
             }
 
             return result;
+        },
+
+        getDistinctValues(dataset, column) {
+            if (!dataset || !Array.isArray(dataset.rows)) return [];
+            const headers = dataset.headers || [];
+            let colIdx = -1;
+            if (typeof column === 'number') {
+                colIdx = column;
+            } else if (typeof column === 'string') {
+                const target = column.trim().toLowerCase();
+                colIdx = headers.findIndex(h => String(h).trim().toLowerCase() === target);
+            }
+            if (colIdx < 0 || colIdx >= headers.length) return [];
+
+            const map = new Map();
+            for (const row of dataset.rows) {
+                const cell = row[colIdx];
+                const isNull = (cell === null || cell === undefined || String(cell).trim() === '');
+                const key = isNull ? '__FRAMEPER_EMPTY__' : String(cell);
+                if (map.has(key)) {
+                    map.get(key).count++;
+                } else {
+                    map.set(key, {
+                        value: isNull ? null : cell,
+                        label: isNull ? '(Vazio)' : String(cell),
+                        count: 1,
+                        isNull
+                    });
+                }
+            }
+
+            const distinct = Array.from(map.values());
+            distinct.sort((a, b) => {
+                if (a.isNull && b.isNull) return 0;
+                if (a.isNull) return 1;
+                if (b.isNull) return -1;
+                const parsedA = this._parseSortValue(a.value);
+                const parsedB = this._parseSortValue(b.value);
+                if (parsedA.type === 'number' && parsedB.type === 'number') {
+                    return parsedA.val - parsedB.val;
+                }
+                return String(a.label).localeCompare(String(b.label), 'pt-BR', { numeric: true, sensitivity: 'base' });
+            });
+
+            return distinct.map(d => ({ value: d.value, label: d.label, count: d.count }));
+        },
+
+        filter(dataset, filterRules, options = {}) {
+            if (!dataset || !Array.isArray(dataset.rows)) return dataset;
+            const headers = dataset.headers || [];
+            const rawRules = Array.isArray(filterRules) ? filterRules : (filterRules ? [filterRules] : []);
+
+            const rules = rawRules.map(r => {
+                if (!r || typeof r !== 'object') return null;
+                let colIdx = -1;
+                if (typeof r.column === 'number') {
+                    colIdx = r.column;
+                } else if (typeof r.column === 'string') {
+                    const target = r.column.trim().toLowerCase();
+                    colIdx = headers.findIndex(h => String(h).trim().toLowerCase() === target);
+                }
+                if (colIdx < 0 || colIdx >= headers.length) return null;
+                return {
+                    colIdx,
+                    column: r.column,
+                    operator: String(r.operator || 'equals').toLowerCase(),
+                    value: r.value,
+                    values: Array.isArray(r.values) ? r.values : (r.values !== undefined ? [r.values] : null)
+                };
+            }).filter(Boolean);
+
+            if (rules.length === 0) {
+                return {
+                    ...dataset,
+                    headers: [...headers],
+                    rows: dataset.rows.map(r => [...r]),
+                    metadata: { ...(dataset.metadata || {}) }
+                };
+            }
+
+            const filteredRows = dataset.rows.filter(row => {
+                for (const rule of rules) {
+                    const cell = row[rule.colIdx];
+                    const isCellEmpty = (cell === null || cell === undefined || String(cell).trim() === '');
+
+                    switch (rule.operator) {
+                        case 'empty':
+                            if (!isCellEmpty) return false;
+                            break;
+                        case 'not_empty':
+                            if (isCellEmpty) return false;
+                            break;
+                        case 'in':
+                            if (!rule.values || rule.values.length === 0) return false;
+                            if (isCellEmpty) {
+                                const hasEmpty = rule.values.some(v => v === null || v === undefined || String(v).trim() === '' || v === '(Vazio)');
+                                if (!hasEmpty) return false;
+                            } else {
+                                const cellStr = String(cell).trim().toLowerCase();
+                                const match = rule.values.some(v => v !== null && v !== undefined && String(v).trim().toLowerCase() === cellStr);
+                                if (!match) return false;
+                            }
+                            break;
+                        case 'not_in':
+                            if (rule.values && rule.values.length > 0) {
+                                if (isCellEmpty) {
+                                    const hasEmpty = rule.values.some(v => v === null || v === undefined || String(v).trim() === '' || v === '(Vazio)');
+                                    if (hasEmpty) return false;
+                                } else {
+                                    const cellStr = String(cell).trim().toLowerCase();
+                                    const match = rule.values.some(v => v !== null && v !== undefined && String(v).trim().toLowerCase() === cellStr);
+                                    if (match) return false;
+                                }
+                            }
+                            break;
+                        case 'contains': {
+                            if (isCellEmpty) return false;
+                            const target = String(rule.value || '').trim().toLowerCase();
+                            if (!String(cell).toLowerCase().includes(target)) return false;
+                            break;
+                        }
+                        case 'not_contains': {
+                            if (isCellEmpty) return false;
+                            const target = String(rule.value || '').trim().toLowerCase();
+                            if (String(cell).toLowerCase().includes(target)) return false;
+                            break;
+                        }
+                        case 'starts_with': {
+                            if (isCellEmpty) return false;
+                            const target = String(rule.value || '').trim().toLowerCase();
+                            if (!String(cell).toLowerCase().startsWith(target)) return false;
+                            break;
+                        }
+                        case 'ends_with': {
+                            if (isCellEmpty) return false;
+                            const target = String(rule.value || '').trim().toLowerCase();
+                            if (!String(cell).toLowerCase().endsWith(target)) return false;
+                            break;
+                        }
+                        case 'equals':
+                        case '==': {
+                            if (isCellEmpty) {
+                                if (rule.value !== null && rule.value !== undefined && String(rule.value).trim() !== '') return false;
+                            } else {
+                                const cellStr = String(cell).trim().toLowerCase();
+                                const target = String(rule.value || '').trim().toLowerCase();
+                                if (cellStr !== target) return false;
+                            }
+                            break;
+                        }
+                        case 'not_equals':
+                        case '!=': {
+                            if (isCellEmpty) {
+                                if (rule.value === null || rule.value === undefined || String(rule.value).trim() === '') return false;
+                            } else {
+                                const cellStr = String(cell).trim().toLowerCase();
+                                const target = String(rule.value || '').trim().toLowerCase();
+                                if (cellStr === target) return false;
+                            }
+                            break;
+                        }
+                        case 'greater_than':
+                        case '>':
+                        case 'greater_than_or_equal':
+                        case '>=':
+                        case 'less_than':
+                        case '<':
+                        case 'less_than_or_equal':
+                        case '<=': {
+                            if (isCellEmpty) return false;
+                            const parsedCell = this._parseSortValue(cell);
+                            const parsedRule = this._parseSortValue(rule.value);
+                            if (parsedCell.isNull || parsedRule.isNull) return false;
+
+                            let valA = parsedCell.val;
+                            let valB = parsedRule.val;
+
+                            if (rule.operator === 'greater_than' || rule.operator === '>') {
+                                if (!(valA > valB)) return false;
+                            } else if (rule.operator === 'greater_than_or_equal' || rule.operator === '>=') {
+                                if (!(valA >= valB)) return false;
+                            } else if (rule.operator === 'less_than' || rule.operator === '<') {
+                                if (!(valA < valB)) return false;
+                            } else if (rule.operator === 'less_than_or_equal' || rule.operator === '<=') {
+                                if (!(valA <= valB)) return false;
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+                return true;
+            });
+
+            const result = {
+                ...dataset,
+                headers: [...headers],
+                rows: filteredRows.map(r => [...r]),
+                metadata: {
+                    ...(dataset.metadata || {}),
+                    totalRows: filteredRows.length,
+                    totalCols: headers.length,
+                    filteredBy: rules
+                }
+            };
+
+            if (result.sheets && result.activeSheet && result.sheets[result.activeSheet]) {
+                result.sheets[result.activeSheet] = {
+                    ...result.sheets[result.activeSheet],
+                    headers: [...headers],
+                    rows: result.rows
+                };
+            }
+
+            return result;
         }
     };
     FramePER.Converter = Converter;
