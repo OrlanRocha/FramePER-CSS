@@ -6154,30 +6154,69 @@
                             searchWrap.className = 'data-grid-search';
                             searchWrap.innerHTML = `${SEARCH_ICON_SVG}<input type="text" class="input input-sm" placeholder="Buscar registros...">`;
                             this.searchInput = searchWrap.querySelector('input');
-                            this.searchInput.addEventListener('input', () => {
-                                this.filter(this.searchInput.value);
-                            });
+                            if (this.searchInput) {
+                                this.searchInput.addEventListener('input', () => {
+                                    this.filter(this.searchInput.value);
+                                });
+                            }
                             this.toolbarEl.appendChild(searchWrap);
                         }
 
                         if (this.options.exportable) {
                             const actionsWrap = document.createElement('div');
-                            actionsWrap.className = 'data-grid-actions';
+                            actionsWrap.className = 'data-grid-actions dropdown';
 
-                            const csvBtn = document.createElement('button');
-                            csvBtn.type = 'button';
-                            csvBtn.className = 'btn btn-outline btn-sm';
-                            csvBtn.innerHTML = '<i class="icon icon-download m-r-1"></i> CSV';
-                            csvBtn.addEventListener('click', () => this.exportCSV());
+                            const exportBtn = document.createElement('button');
+                            exportBtn.type = 'button';
+                            exportBtn.className = 'btn btn-outline btn-sm dropdown-toggle';
+                            exportBtn.setAttribute('data-toggle', 'dropdown');
+                            exportBtn.setAttribute('aria-expanded', 'false');
+                            exportBtn.innerHTML = '<i class="icon icon-download m-r-1"></i> Exportar <i class="icon icon-chevron-down m-l-1 f-s-1"></i>';
 
-                            const jsonBtn = document.createElement('button');
-                            jsonBtn.type = 'button';
-                            jsonBtn.className = 'btn btn-ghost btn-sm';
-                            jsonBtn.innerHTML = 'JSON';
-                            jsonBtn.addEventListener('click', () => this.exportJSON());
+                            const menu = document.createElement('div');
+                            menu.className = 'dropdown-menu dropdown-menu-end shadow-md';
+                            menu.style.minWidth = '200px';
 
-                            actionsWrap.appendChild(csvBtn);
-                            actionsWrap.appendChild(jsonBtn);
+                            const formats = [
+                                { key: 'xlsx', label: 'Excel (.xlsx)', icon: 'icon-file-text text-success' },
+                                { key: 'pdf',  label: 'Documento PDF (.pdf)', icon: 'icon-file-text text-danger' },
+                                { key: 'csv',  label: 'Planilha CSV (.csv)', icon: 'icon-activity text-primary' },
+                                { key: 'json', label: 'JSON (.json)', icon: 'icon-code text-warning' },
+                                { key: 'xml',  label: 'XML (.xml)', icon: 'icon-layers text-purple' }
+                            ];
+
+                            formats.forEach(f => {
+                                const item = document.createElement('a');
+                                item.href = '#';
+                                item.className = 'dropdown-item d-flex align-items-center gap-2 py-2';
+                                item.innerHTML = `<i class="icon ${f.icon}"></i> <span>${f.label}</span>`;
+                                item.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    this.export(f.key, { onlySelected: false });
+                                    if (menu.classList) menu.classList.remove('show');
+                                });
+                                menu.appendChild(item);
+                            });
+
+                            if (this.options.selectable) {
+                                const divider = document.createElement('div');
+                                divider.className = 'dropdown-divider';
+                                menu.appendChild(divider);
+
+                                const selItem = document.createElement('a');
+                                selItem.href = '#';
+                                selItem.className = 'dropdown-item d-flex align-items-center gap-2 py-2 text-primary font-medium';
+                                selItem.innerHTML = '<i class="icon icon-check"></i> <span>Exportar Selecionados</span>';
+                                selItem.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    this.export('xlsx', { onlySelected: true });
+                                    if (menu.classList) menu.classList.remove('show');
+                                });
+                                menu.appendChild(selItem);
+                            }
+
+                            actionsWrap.appendChild(exportBtn);
+                            actionsWrap.appendChild(menu);
                             this.toolbarEl.appendChild(actionsWrap);
                         }
 
@@ -6580,52 +6619,122 @@
                     this.filter(this.searchQuery);
                 }
 
-                exportCSV(filename = 'exportacao.csv') {
-                    if (this.columns.length === 0 || this.filteredData.length === 0) return;
+                toDataset(onlySelected = false) {
+                    if (this.columns.length === 0) {
+                        return { title: 'Tabela', headers: [], rows: [], metadata: {} };
+                    }
+                    const sourceRows = (onlySelected && this.selectedIds && this.selectedIds.size > 0)
+                        ? this.filteredData.filter(r => this.selectedIds.has(r._gridId))
+                        : this.filteredData;
 
-                    const headers = this.columns.map(c => `"${(c.title || c.key).replace(/"/g, '""')}"`).join(',');
-                    const rows = this.filteredData.map(row => {
+                    const headers = this.columns.map(c => c.title || c.key);
+                    const rows = sourceRows.map(row => {
                         return this.columns.map(c => {
                             let val = row[`_${c.key}_raw`] !== undefined ? row[`_${c.key}_raw`] : row[c.key];
-                            if (val === undefined || val === null) val = '';
-                            val = String(val).replace(/<[^>]*>/g, '').replace(/"/g, '""');
-                            return `"${val}"`;
-                        }).join(',');
+                            if (val === undefined || val === null) return '';
+                            if (typeof val === 'string') {
+                                val = val.replace(/<[^>]*>/g, '').trim();
+                            }
+                            return val;
+                        });
                     });
 
-                    const csvContent = '\uFEFF' + [headers, ...rows].join('\r\n');
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', filename);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
+                    const title = (this.container && typeof this.container.getAttribute === 'function' && this.container.getAttribute('data-title')) ||
+                                  this.options.title ||
+                                  (typeof document !== 'undefined' ? document.title : 'Tabela de Dados') ||
+                                  'Tabela de Dados';
+
+                    return {
+                        title,
+                        headers,
+                        rows,
+                        metadata: {
+                            total: this.allData.length,
+                            filtered: this.filteredData.length,
+                            selected: this.selectedIds ? this.selectedIds.size : 0
+                        }
+                    };
                 }
 
-                exportJSON(filename = 'exportacao.json') {
-                    const cleanData = this.filteredData.map(row => {
-                        const obj = {};
-                        this.columns.forEach(c => {
-                            let val = row[`_${c.key}_raw`] !== undefined ? row[`_${c.key}_raw`] : row[c.key];
-                            if (typeof val === 'string') val = val.replace(/<[^>]*>/g, '');
-                            obj[c.key] = val;
-                        });
-                        return obj;
+                export(format = 'xlsx', options = {}) {
+                    const Converter = (typeof FramePER !== 'undefined' && FramePER.Converter)
+                        ? FramePER.Converter
+                        : ((typeof window !== 'undefined' && (window.FramePERConverter || (window.FramePER && window.FramePER.Converter)))
+                            || (typeof FramePERConverter !== 'undefined' ? FramePERConverter : null));
+
+                    if (!Converter) {
+                        console.error('FramePER.Converter não encontrado para exportação do DataGrid.');
+                        return null;
+                    }
+
+                    const onlySelected = Boolean(options.onlySelected);
+                    const dataset = this.toDataset(onlySelected);
+                    if (!dataset || dataset.rows.length === 0) {
+                        if (typeof FramePER !== 'undefined' && FramePER.Notify) {
+                            FramePER.Notify.warning('Exportação', 'Nenhum registro para exportar.');
+                        }
+                        return null;
+                    }
+
+                    const fmt = String(format).toLowerCase();
+                    const defaultFilename = `${(dataset.title || 'dados').toLowerCase().replace(/[^a-z0-9_-]/g, '_')}.${fmt}`;
+                    const filename = options.filename || defaultFilename;
+                    const shouldDownload = options.download !== false && options.autoDownload !== false;
+                    const exportOptions = Object.assign({}, options, {
+                        filename,
+                        title: dataset.title,
+                        download: shouldDownload,
+                        autoDownload: shouldDownload
                     });
 
-                    const jsonString = JSON.stringify(cleanData, null, 2);
-                    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', filename);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
+                    const result = Converter.convert(dataset, fmt, exportOptions);
+
+                    if (exportOptions.download && typeof window !== 'undefined') {
+                        if (typeof FramePER !== 'undefined' && FramePER.Confetti && options.confetti !== false) {
+                            FramePER.Confetti.burst({ count: 60, spread: 75 });
+                        }
+                        if (typeof FramePER !== 'undefined' && FramePER.Notify && options.notify !== false) {
+                            FramePER.Notify.success('Exportação Concluída', `Arquivo "${filename}" exportado com sucesso.`);
+                        }
+                    }
+
+                    if (this.container && typeof this.container.dispatchEvent === 'function') {
+                        this.container.dispatchEvent(new CustomEvent('frameper:datagrid:export', {
+                            bubbles: true,
+                            detail: {
+                                format: fmt,
+                                filename,
+                                count: dataset.rows.length,
+                                onlySelected
+                            }
+                        }));
+                    }
+
+                    return result;
+                }
+
+                exportXLSX(filename, options = {}) {
+                    return this.export('xlsx', Object.assign({ filename }, options));
+                }
+
+                exportXLS(filename, options = {}) {
+                    return this.export('xls', Object.assign({ filename }, options));
+                }
+
+                exportCSV(filename, options = {}) {
+                    return this.export('csv', Object.assign({ filename }, options));
+                }
+
+                exportPDF(filename, options = {}) {
+                    return this.export('pdf', Object.assign({ filename }, options));
+                }
+
+                exportJSON(filename, options = {}) {
+                    return this.export('json', Object.assign({ filename }, options));
+                }
+
+                exportXML(filename, options = {}) {
+                    return this.export('xml', Object.assign({ filename }, options));
                 }
 
                 _emitSelect() {
@@ -8980,7 +9089,7 @@ ${dataRows}
                 a.download = filename;
                 a.style.display = 'none';
                 (document.body || document.documentElement).appendChild(a);
-                a.click();
+                if (typeof a.click === 'function') a.click();
                 setTimeout(() => {
                     a.remove();
                     URL.revokeObjectURL(url);

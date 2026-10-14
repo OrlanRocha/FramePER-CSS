@@ -197,14 +197,46 @@ Quadro com colunas de tarefas, arraste nativo (*Drag & Drop*), contadores autom�
 
 ---
 
-### 7. Data Grid com Busca e Ordenação
+### 7. Data Grid com Busca, Ordenação & Exportação Multi-Formato
 
-Tabela avançada para grandes volumes de dados com ordenação por coluna, busca em tempo real e paginação client-side:
+Tabela avançada para grandes volumes de dados com ordenação multi-coluna, busca em tempo real, seleção de linhas, paginação client-side e **exportação direta em 1 clique para XLSX, PDF, CSV, JSON e XML** via integração com `FramePER.Converter`:
 
 ```html
-<div class="data-grid" data-grid id="tabela-clientes">
-  <!-- O FramePER gera os controles de filtro e paginação automaticamente -->
-</div>
+<!-- Declaração HTML com Exportação e Busca Ativas -->
+<table class="table" data-grid data-searchable="true" data-exportable="true" data-selectable="true" data-page-size="10" data-title="Relatório de Vendas">
+  <thead>
+    <tr>
+      <th data-field="id" class="sortable">ID</th>
+      <th data-field="cliente" class="sortable">Cliente</th>
+      <th data-field="valor" class="sortable">Valor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Linhas geradas estaticamente ou via API -->
+  </tbody>
+</table>
+```
+
+#### API JavaScript & Exportação Direta
+```javascript
+const grid = FramePER.DataGrid.get('#tabela-clientes');
+
+// 1. Exportar para qualquer formato suportado
+grid.export('xlsx'); // Gera e baixa Excel moderno
+grid.export('pdf', { title: 'Relatório Mensal' }); // Gera PDF 1.4 vetorial
+grid.export('csv', { delimiter: ';' }); // Gera CSV com BOM
+
+// 2. Exportar apenas as linhas selecionadas no checkbox
+grid.export('xlsx', { onlySelected: true, filename: 'selecionados.xlsx' });
+
+// 3. Obter Dataset padronizado intermediário
+const dataset = grid.toDataset();
+console.log(dataset.headers, dataset.rows);
+
+// 4. Ouvir evento de exportação
+grid.container.addEventListener('frameper:datagrid:export', (e) => {
+  console.log('Exportado:', e.detail.format, e.detail.count + ' linhas');
+});
 ```
 
 ---
