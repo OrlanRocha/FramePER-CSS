@@ -9241,17 +9241,48 @@
                     .replace(/'/g, '&apos;');
             };
 
+            const condStylesMap = {};
+            const getOrCreateXlsCondStyle = (style) => {
+                if (!style) return null;
+                const bg = (style.bg || '').trim();
+                const color = (style.color || '').trim();
+                const bold = !!style.bold;
+                const key = `Cond_${bg.replace(/[^a-zA-Z0-9]/g, '')}_${color.replace(/[^a-zA-Z0-9]/g, '')}_${bold ? 'b' : 'n'}`;
+                if (!condStylesMap[key]) {
+                    const interiorTag = bg ? `   <Interior ss:Color="${bg}" ss:Pattern="Solid"/>\n` : '';
+                    const colorAttr = color ? ` ss:Color="${color}"` : '';
+                    const boldAttr = bold ? ' ss:Bold="1"' : '';
+                    condStylesMap[key] = `  <Style ss:ID="${key}">
+   <Alignment ss:Vertical="Center"/>
+${interiorTag}   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"${colorAttr}${boldAttr}/>
+  </Style>`;
+                }
+                return key;
+            };
+
             const worksheetsXML = sheetNamesList.map(name => {
                 const sDs = this.parse(sheetsMap[name]);
+                let cellStyles = options.cellStyles || sDs.cellStyles;
+                if (!cellStyles && (options.formattingRules || sDs.formattingRules)) {
+                    cellStyles = this.evaluateConditionalFormatting(sDs, options.formattingRules || sDs.formattingRules);
+                }
+
                 const headerCells = sDs.headers.map(h => {
                     return `<Cell ss:StyleID="HeaderStyle"><Data ss:Type="String">${escapeXML(h)}</Data></Cell>`;
                 }).join('');
 
                 const dataRows = sDs.rows.map((r, rIdx) => {
-                    const styleAttr = rIdx % 2 === 1 ? ' ss:StyleID="Zebra"' : '';
-                    const cells = r.map(val => {
+                    const zebraAttr = rIdx % 2 === 1 ? ' ss:StyleID="Zebra"' : '';
+                    const cells = r.map((val, cIdx) => {
+                        let styleAttr = zebraAttr;
+                        const condStyle = (cellStyles && cellStyles[rIdx]) ? cellStyles[rIdx][cIdx] : null;
+                        if (condStyle) {
+                            const condKey = getOrCreateXlsCondStyle(condStyle);
+                            if (condKey) styleAttr = ` ss:StyleID="${condKey}"`;
+                        }
+
                         if (val === null || val === undefined || val === '') {
-                            return '<Cell><Data ss:Type="String"></Data></Cell>';
+                            return `<Cell${styleAttr}><Data ss:Type="String"></Data></Cell>`;
                         }
                         const num = Number(val);
                         if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
@@ -9288,6 +9319,7 @@ ${dataRows}${summaryXML}
  </Worksheet>`;
             }).join('\n');
 
+            const extraCondStyles = Object.values(condStylesMap).join('\n');
             const xml = `<?xml version="1.0"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
@@ -9321,6 +9353,7 @@ ${dataRows}${summaryXML}
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#0F172A" ss:Bold="1"/>
    <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
   </Style>
+${extraCondStyles}
  </Styles>
 ${worksheetsXML}
 </Workbook>`;
@@ -9823,11 +9856,52 @@ ${worksheetsXML}
             const workbookSheetTags = [];
             const workbookRelTags = [];
 
+            const extraFills = [];
+            const extraFonts = [];
+            const extraXfs = [];
+            const condStyleKeyToXfId = {};
+
+            const getOrCreateXlsxCondStyle = (style) => {
+                if (!style) return null;
+                const bg = (style.bg || '').trim().replace(/^#/, '').toUpperCase();
+                const color = (style.color || '').trim().replace(/^#/, '').toUpperCase();
+                const bold = !!style.bold;
+                const key = `${bg}_${color}_${bold ? '1' : '0'}`;
+
+                if (condStyleKeyToXfId[key] !== undefined) {
+                    return condStyleKeyToXfId[key];
+                }
+
+                let fontId = 0;
+                if (bold || color) {
+                    const fontColor = color ? `FF${color.length === 3 ? color.split('').map(c=>c+c).join('') : color}` : 'FF000000';
+                    extraFonts.push(`<font>${bold ? '<b/>' : ''}<name val="Calibri"/><sz val="11"/><color rgb="${fontColor}"/></font>`);
+                    fontId = 3 + extraFonts.length - 1;
+                }
+
+                let fillId = 0;
+                if (bg) {
+                    const fillRgb = `FF${bg.length === 3 ? bg.split('').map(c=>c+c).join('') : bg}`;
+                    extraFills.push(`<fill><patternFill patternType="solid"><fgColor rgb="${fillRgb}"/></fill>`);
+                    fillId = 4 + extraFills.length - 1;
+                }
+
+                extraXfs.push(`<xf numFmtId="0" fontId="${fontId}" fillId="${fillId}" borderId="0" applyFont="${fontId ? '1' : '0'}" applyFill="${fillId ? '1' : '0'}"/>`);
+                const xfId = 4 + extraXfs.length - 1;
+                condStyleKeyToXfId[key] = String(xfId);
+                return condStyleKeyToXfId[key];
+            };
+
             sheetNamesList.forEach((sName, sIdx) => {
                 const sheetId = sIdx + 1;
                 const rId = `rId${sheetId}`;
                 const rawDs = sheetsMap[sName];
                 const sheetDs = this.parse(rawDs);
+
+                let cellStyles = options.cellStyles || sheetDs.cellStyles;
+                if (!cellStyles && (options.formattingRules || sheetDs.formattingRules)) {
+                    cellStyles = this.evaluateConditionalFormatting(sheetDs, options.formattingRules || sheetDs.formattingRules);
+                }
 
                 const rowsXML = [];
                 const headerCells = sheetDs.headers.map((h, idx) => {
@@ -9838,17 +9912,24 @@ ${worksheetsXML}
 
                 sheetDs.rows.forEach((r, rIdx) => {
                     const rowNum = rIdx + 2;
-                    const styleId = (rIdx % 2 === 1) ? '2' : '0';
+                    const defaultStyleId = (rIdx % 2 === 1) ? '2' : '0';
                     const cells = r.map((val, cIdx) => {
                         const ref = colName(cIdx) + rowNum;
+                        let cellStyleId = defaultStyleId;
+                        const condStyle = (cellStyles && cellStyles[rIdx]) ? cellStyles[rIdx][cIdx] : null;
+                        if (condStyle) {
+                            const condXf = getOrCreateXlsxCondStyle(condStyle);
+                            if (condXf) cellStyleId = condXf;
+                        }
+
                         if (val === null || val === undefined || val === '') {
-                            return `<c r="${ref}" s="${styleId}"/>`;
+                            return `<c r="${ref}" s="${cellStyleId}"/>`;
                         }
                         const num = Number(val);
                         if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
-                            return `<c r="${ref}" t="n" s="${styleId}"><v>${num}</v></c>`;
+                            return `<c r="${ref}" t="n" s="${cellStyleId}"><v>${num}</v></c>`;
                         }
-                        return `<c r="${ref}" t="inlineStr" s="${styleId}"><is><t>${escapeXML(val)}</t></is></c>`;
+                        return `<c r="${ref}" t="inlineStr" s="${cellStyleId}"><is><t>${escapeXML(val)}</t></is></c>`;
                     }).join('');
                     rowsXML.push(`<row r="${rowNum}">${cells}</row>`);
                 });
@@ -9914,25 +9995,28 @@ ${worksheetsXML}
 
             const stylesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="3">
+  <fonts count="${3 + extraFonts.length}">
     <font><name val="Calibri"/><sz val="11"/><color rgb="000000"/></font>
     <font><b/><name val="Calibri"/><sz val="11"/><color rgb="FFFFFF"/></font>
     <font><b/><name val="Calibri"/><sz val="11"/><color rgb="0F172A"/></font>
+    ${extraFonts.join('\n    ')}
   </fonts>
-  <fills count="4">
+  <fills count="${4 + extraFills.length}">
     <fill><patternFill patternType="none"/></fill>
     <fill><patternFill patternType="gray125"/></fill>
     <fill><patternFill patternType="solid"><fgColor rgb="FF2563EB"/></patternFill></fill>
     <fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/></patternFill></fill>
+    ${extraFills.join('\n    ')}
   </fills>
   <borders count="1">
     <border><left/><right/><top/><bottom/><diagonal/></border>
   </borders>
-  <cellXfs count="4">
+  <cellXfs count="${4 + extraXfs.length}">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
     <xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFont="1" applyFill="1"/>
     <xf numFmtId="0" fontId="0" fillId="1" borderId="0"/>
     <xf numFmtId="0" fontId="2" fillId="3" borderId="0" applyFont="1" applyFill="1"/>
+    ${extraXfs.join('\n    ')}
   </cellXfs>
 </styleSheet>`;
 
@@ -10023,6 +10107,24 @@ ${worksheetsXML}
             const totalPages = pageChunks.length;
             const pageContents = [];
 
+            let cellStyles = options.cellStyles || ds.cellStyles;
+            if (!cellStyles && (options.formattingRules || ds.formattingRules)) {
+                cellStyles = this.evaluateConditionalFormatting(ds, options.formattingRules || ds.formattingRules);
+            }
+
+            const hexToPdfRgb = (hex) => {
+                if (!hex || typeof hex !== 'string') return null;
+                let clean = hex.replace('#', '').trim();
+                if (clean.length === 3) {
+                    clean = clean.split('').map(c => c + c).join('');
+                }
+                if (clean.length !== 6) return null;
+                const r = (parseInt(clean.slice(0, 2), 16) / 255).toFixed(3);
+                const g = (parseInt(clean.slice(2, 4), 16) / 255).toFixed(3);
+                const b = (parseInt(clean.slice(4, 6), 16) / 255).toFixed(3);
+                return `${r} ${g} ${b}`;
+            };
+
             let globalRowCounter = 0;
             pageChunks.forEach((chunk, pageIdx) => {
                 const pageNum = pageIdx + 1;
@@ -10063,6 +10165,21 @@ ${worksheetsXML}
                     if (globalRowCounter % 2 === 1) {
                         stream += `0.973 0.980 0.988 rg ${marginLeft} ${rowY} ${contentWidth} ${rowHeight} re f\n`;
                     }
+
+                    // Cell backgrounds (conditional formatting)
+                    curX = marginLeft;
+                    row.forEach((val, cIdx) => {
+                        const w = colWidths[cIdx];
+                        const condStyle = (cellStyles && cellStyles[globalRowCounter]) ? cellStyles[globalRowCounter][cIdx] : null;
+                        if (condStyle && condStyle.bg) {
+                            const bgRgb = hexToPdfRgb(condStyle.bg);
+                            if (bgRgb) {
+                                stream += `${bgRgb} rg ${curX} ${rowY} ${w} ${rowHeight} re f\n`;
+                            }
+                        }
+                        curX += w;
+                    });
+
                     // Bottom border
                     stream += `0.88 0.90 0.93 RG 0.5 w ${marginLeft} ${rowY} m ${pageWidth - marginRight} ${rowY} l S\n`;
 
@@ -10070,7 +10187,23 @@ ${worksheetsXML}
                     curX = marginLeft;
                     row.forEach((val, cIdx) => {
                         const w = colWidths[cIdx];
-                        stream += `BT /F1 7.5 Tf 0.15 0.15 0.15 rg ${curX + 4} ${rowY + 5.5} Td (${escapePDF(val)}) Tj ET\n`;
+                        const condStyle = (cellStyles && cellStyles[globalRowCounter]) ? cellStyles[globalRowCounter][cIdx] : null;
+                        let fontTag = '/F1';
+                        let fontColorRgb = '0.15 0.15 0.15';
+                        if (condStyle) {
+                            if (condStyle.bold) fontTag = '/F2';
+                            if (condStyle.color) {
+                                const cRgb = hexToPdfRgb(condStyle.color);
+                                if (cRgb) fontColorRgb = cRgb;
+                            }
+                        }
+
+                        let textVal = escapePDF(val);
+                        if (condStyle && condStyle.icon) {
+                            textVal = `${escapePDF(condStyle.icon)} ${textVal}`;
+                        }
+
+                        stream += `BT ${fontTag} 7.5 Tf ${fontColorRgb} rg ${curX + 4} ${rowY + 5.5} Td (${textVal}) Tj ET\n`;
                         curX += w;
                     });
 
@@ -11263,6 +11396,272 @@ ${worksheetsXML}
             });
 
             return results;
+        },
+
+        _interpolateColor(color1, color2, factor) {
+            const parseHex = (hex) => {
+                let clean = String(hex || '').trim().replace(/^#/, '');
+                if (clean.length === 3) {
+                    clean = clean.split('').map(c => c + c).join('');
+                }
+                if (clean.length !== 6) clean = '000000';
+                return {
+                    r: parseInt(clean.substring(0, 2), 16),
+                    g: parseInt(clean.substring(2, 4), 16),
+                    b: parseInt(clean.substring(4, 6), 16)
+                };
+            };
+            const c1 = parseHex(color1);
+            const c2 = parseHex(color2);
+            const f = Math.max(0, Math.min(1, factor));
+            const r = Math.round(c1.r + f * (c2.r - c1.r));
+            const g = Math.round(c1.g + f * (c2.g - c1.g));
+            const b = Math.round(c1.b + f * (c2.b - c1.b));
+            return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        },
+
+        evaluateConditionalFormatting(dataset, rules, options = {}) {
+            if (!dataset || !Array.isArray(dataset.rows)) return {};
+            const headers = dataset.headers || [];
+            const rows = dataset.rows || [];
+            const activeRules = (Array.isArray(rules) ? rules : []).filter(r => r && r.enabled !== false);
+            if (activeRules.length === 0 || rows.length === 0) return {};
+
+            // Pre-calculate column stats for rules that need it
+            const colStats = {};
+            const getColStats = (cIdx) => {
+                if (colStats[cIdx]) return colStats[cIdx];
+                let sum = 0;
+                let count = 0;
+                let min = null;
+                let max = null;
+                const numList = [];
+                const freqMap = {};
+
+                for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+                    const raw = rows[rIdx][cIdx];
+                    const key = (raw === null || raw === undefined) ? '__NULL__' : String(raw).trim().toLowerCase();
+                    freqMap[key] = (freqMap[key] || 0) + 1;
+
+                    if (raw !== null && raw !== undefined && raw !== '') {
+                        const parsed = this._parseSortValue(raw);
+                        if (parsed.type === 'number' && !parsed.isNull) {
+                            const val = parsed.val;
+                            sum += val;
+                            count++;
+                            numList.push({ rIdx, val });
+                            if (min === null || val < min) min = val;
+                            if (max === null || val > max) max = val;
+                        }
+                    }
+                }
+
+                const avg = count > 0 ? (sum / count) : 0;
+                const sortedDesc = [...numList].sort((a, b) => b.val - a.val);
+                const sortedAsc = [...numList].sort((a, b) => a.val - b.val);
+
+                colStats[cIdx] = {
+                    sum,
+                    count,
+                    min: min !== null ? min : 0,
+                    max: max !== null ? max : 0,
+                    avg,
+                    sortedDesc,
+                    sortedAsc,
+                    freqMap
+                };
+                return colStats[cIdx];
+            };
+
+            const stylesMap = {};
+
+            const resolveTargetColumns = (rule) => {
+                if (rule.column === '*' || rule.column === '__all__') {
+                    return headers.map((_, idx) => idx);
+                }
+                if (typeof rule.column === 'number') {
+                    return [rule.column];
+                }
+                if (typeof rule.column === 'string') {
+                    const norm = rule.column.trim().toLowerCase();
+                    const idx = headers.findIndex(h => String(h).trim().toLowerCase() === norm);
+                    if (idx !== -1) return [idx];
+                    if (!isNaN(Number(rule.column))) return [Number(rule.column)];
+                }
+                return [];
+            };
+
+            for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+                const row = rows[rIdx];
+                for (let cIdx = 0; cIdx < headers.length; cIdx++) {
+                    const cellVal = row[cIdx];
+                    const parsedCell = this._parseSortValue(cellVal);
+
+                    for (const rule of activeRules) {
+                        const targetCols = resolveTargetColumns(rule);
+                        if (!targetCols.includes(cIdx)) continue;
+
+                        let matches = false;
+                        let customStyle = null;
+
+                        const type = String(rule.type || '').toLowerCase();
+                        switch (type) {
+                            case 'greater_than': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    matches = parsedCell.val > Number(rule.value);
+                                }
+                                break;
+                            }
+                            case 'less_than': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    matches = parsedCell.val < Number(rule.value);
+                                }
+                                break;
+                            }
+                            case 'between': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull && Array.isArray(rule.value)) {
+                                    const minV = Number(rule.value[0]);
+                                    const maxV = Number(rule.value[1]);
+                                    matches = parsedCell.val >= minV && parsedCell.val <= maxV;
+                                }
+                                break;
+                            }
+                            case 'equal_to': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull && !isNaN(Number(rule.value))) {
+                                    matches = parsedCell.val === Number(rule.value);
+                                } else {
+                                    matches = String(cellVal || '').toLowerCase() === String(rule.value || '').toLowerCase();
+                                }
+                                break;
+                            }
+                            case 'not_equal': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull && !isNaN(Number(rule.value))) {
+                                    matches = parsedCell.val !== Number(rule.value);
+                                } else {
+                                    matches = String(cellVal || '').toLowerCase() !== String(rule.value || '').toLowerCase();
+                                }
+                                break;
+                            }
+                            case 'contains': {
+                                matches = String(cellVal || '').toLowerCase().includes(String(rule.value || '').toLowerCase());
+                                break;
+                            }
+                            case 'not_contains': {
+                                matches = !String(cellVal || '').toLowerCase().includes(String(rule.value || '').toLowerCase());
+                                break;
+                            }
+                            case 'starts_with': {
+                                matches = String(cellVal || '').toLowerCase().startsWith(String(rule.value || '').toLowerCase());
+                                break;
+                            }
+                            case 'ends_with': {
+                                matches = String(cellVal || '').toLowerCase().endsWith(String(rule.value || '').toLowerCase());
+                                break;
+                            }
+                            case 'empty': {
+                                matches = (cellVal === null || cellVal === undefined || String(cellVal).trim() === '');
+                                break;
+                            }
+                            case 'not_empty': {
+                                matches = (cellVal !== null && cellVal !== undefined && String(cellVal).trim() !== '');
+                                break;
+                            }
+                            case 'above_average': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    matches = parsedCell.val > stats.avg;
+                                }
+                                break;
+                            }
+                            case 'below_average': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    matches = parsedCell.val < stats.avg;
+                                }
+                                break;
+                            }
+                            case 'top_n': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    const n = Math.max(1, parseInt(rule.value, 10) || 10);
+                                    const topItems = stats.sortedDesc.slice(0, n);
+                                    matches = topItems.some(item => item.rIdx === rIdx);
+                                }
+                                break;
+                            }
+                            case 'bottom_n': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    const n = Math.max(1, parseInt(rule.value, 10) || 10);
+                                    const bottomItems = stats.sortedAsc.slice(0, n);
+                                    matches = bottomItems.some(item => item.rIdx === rIdx);
+                                }
+                                break;
+                            }
+                            case 'duplicates': {
+                                const stats = getColStats(cIdx);
+                                const key = (cellVal === null || cellVal === undefined) ? '__NULL__' : String(cellVal).trim().toLowerCase();
+                                matches = stats.freqMap[key] > 1;
+                                break;
+                            }
+                            case 'unique': {
+                                const stats = getColStats(cIdx);
+                                const key = (cellVal === null || cellVal === undefined) ? '__NULL__' : String(cellVal).trim().toLowerCase();
+                                matches = stats.freqMap[key] === 1;
+                                break;
+                            }
+                            case 'color_scale': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    matches = true;
+                                    let factor = 0.5;
+                                    if (stats.max > stats.min) {
+                                        factor = (parsedCell.val - stats.min) / (stats.max - stats.min);
+                                    }
+                                    const minCol = (rule.style && rule.style.minColor) ? rule.style.minColor : '#ef4444';
+                                    const maxCol = (rule.style && rule.style.maxColor) ? rule.style.maxColor : '#22c55e';
+                                    let bg;
+                                    if (rule.style && rule.style.midColor) {
+                                        const midCol = rule.style.midColor;
+                                        if (factor < 0.5) {
+                                            bg = this._interpolateColor(minCol, midCol, factor * 2);
+                                        } else {
+                                            bg = this._interpolateColor(midCol, maxCol, (factor - 0.5) * 2);
+                                        }
+                                    } else {
+                                        bg = this._interpolateColor(minCol, maxCol, factor);
+                                    }
+                                    customStyle = {
+                                        bg,
+                                        color: (factor < 0.2 || factor > 0.8) ? '#ffffff' : '#000000',
+                                        ruleId: rule.id
+                                    };
+                                }
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+
+                        if (matches) {
+                            if (!stylesMap[rIdx]) stylesMap[rIdx] = {};
+                            const baseStyle = customStyle || Object.assign({}, rule.style, { ruleId: rule.id });
+                            if (!stylesMap[rIdx][cIdx]) {
+                                stylesMap[rIdx][cIdx] = baseStyle;
+                            } else {
+                                for (const prop in baseStyle) {
+                                    if (stylesMap[rIdx][cIdx][prop] === undefined) {
+                                        stylesMap[rIdx][cIdx][prop] = baseStyle[prop];
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return stylesMap;
         }
     };
     FramePER.Converter = Converter;

@@ -126,10 +126,10 @@
   - `.cell-cond-formatted`: classe para células estilizadas na tabela com suporte a badges/ícones.
   - `.rule-icon-badge`: indicador visual dentro da célula.
 
-- [ ] **Step 1: Adicionar estilos CSS do modal e das células condicionais em `demo/converter.html`**
+- [x] **Step 1: Adicionar estilos CSS do modal e das células condicionais em `demo/converter.html`**
   Garantir suporte completo a modo escuro elegante, contraste visual nítido e responsividade.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
   `git add demo/converter.html`
   `git commit -m "style(demo): adicionar estilos para modal de formatacao condicional e celulas destacadas"`
 
@@ -150,23 +150,23 @@
   - Sincronização com `renderTable()` para aplicar estilos inline e ícones.
   - Sincronização com os botões de exportação para incluir `formattingRules`.
 
-- [ ] **Step 1: Adicionar botão "Formatação Condicional" na barra de ferramentas**
+- [x] **Step 1: Adicionar botão "Formatação Condicional" na barra de ferramentas**
   Incluir botão com ícone de filtros/ajustes e badge contador de regras ativas.
 
-- [ ] **Step 2: Implementar estrutura HTML e lógica do Modal Gerenciador**
+- [x] **Step 2: Implementar estrutura HTML e lógica do Modal Gerenciador**
   Permitir:
   - Selecionar coluna, tipo de regra, valores de corte e paleta ou cores personalizadas.
   - Visualizar prévia instantânea da regra antes de salvar.
   - Listar regras cadastradas com alternância (ligar/desligar), reordenação de prioridade e exclusão.
 
-- [ ] **Step 3: Conectar avaliação e aplicação reativa das regras na tabela**
+- [x] **Step 3: Conectar avaliação e aplicação reativa das regras na tabela**
   - Aplicar estilos de fundo, texto, negrito e ícones em `renderTable()`.
   - Recalcular estilos automaticamente ao editar células (`focusout`), aplicar filtros de coluna ou mudar de aba de planilha.
 
-- [ ] **Step 4: Repassar regras ativas para os manipuladores de exportação**
+- [x] **Step 4: Repassar regras ativas para os manipuladores de exportação**
   Garantir que as exportações gerem arquivos formatados respeitando as regras ativas na demo.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   `git add demo/converter.html`
   `git commit -m "feat(demo): integrar modal gerenciador e formatacao condicional reativa na tabela e exportacoes"`
 
@@ -178,16 +178,16 @@
 - Modify: `dist/*`
 - Test: Todas as 11 suítes em `tests/`
 
-- [ ] **Step 1: Executar todas as 11 suítes de testes**
+- [x] **Step 1: Executar todas as 11 suítes de testes**
   Executar:
   `node tests/test-converter.js; node tests/test-datagrid-export.js; node tests/test-xlsx-reader.js; node tests/test-converter-editing.js; node tests/test-converter-charts.js; node tests/test-datagrid-import.js; node tests/test-converter-batch.js; node tests/test-converter-multisheet.js; node tests/test-converter-filtersort.js; node tests/test-converter-summary.js; node tests/test-converter-formatting.js`
   Expected: Todos os testes passando com sucesso.
 
-- [ ] **Step 2: Executar build de produção**
+- [x] **Step 2: Executar build de produção**
   `npm run build`
   Expected: Arquivos minificados atualizados em `dist/`.
 
-- [ ] **Step 3: Commit e Push**
+- [x] **Step 3: Commit e Push**
   `git add .`
   `git commit -m "feat(converter): consolidar formatacao condicional e alertas visuais no ecossistema FramePER"`
   `git push origin main`
