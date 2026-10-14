@@ -10547,6 +10547,369 @@ ${worksheetsXML}
                 zip: zipResult,
                 download: () => zipResult.download()
             };
+        },
+
+        _parseSortValue(val) {
+            if (val === null || val === undefined) return { isNull: true, val: null, type: 'null' };
+            if (typeof val === 'number') {
+                if (isNaN(val)) return { isNull: true, val: null, type: 'null' };
+                return { isNull: false, val: val, type: 'number' };
+            }
+            if (typeof val === 'boolean') {
+                return { isNull: false, val: val ? 1 : 0, type: 'number' };
+            }
+            const s = String(val).trim();
+            if (s === '') return { isNull: true, val: null, type: 'null' };
+
+            // Check Brazilian/European date DD/MM/YYYY or DD/MM/YYYY HH:mm:ss
+            const brDateMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+            if (brDateMatch) {
+                const day = parseInt(brDateMatch[1], 10);
+                const month = parseInt(brDateMatch[2], 10) - 1;
+                const year = parseInt(brDateMatch[3], 10);
+                const hour = brDateMatch[4] ? parseInt(brDateMatch[4], 10) : 0;
+                const min = brDateMatch[5] ? parseInt(brDateMatch[5], 10) : 0;
+                const sec = brDateMatch[6] ? parseInt(brDateMatch[6], 10) : 0;
+                const d = new Date(year, month, day, hour, min, sec);
+                if (!isNaN(d.getTime())) {
+                    return { isNull: false, val: d.getTime(), type: 'date', raw: s };
+                }
+            }
+
+            // Check ISO date format YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss...
+            if (/^\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2}(?::\d{2})?)?/.test(s)) {
+                const timestamp = Date.parse(s);
+                if (!isNaN(timestamp)) {
+                    return { isNull: false, val: timestamp, type: 'date', raw: s };
+                }
+            }
+
+            // Check Currency or Formatted Number
+            // Clean common prefixes (R$, $, €, £, etc.) and suffixes (%)
+            const numCleaned = s.replace(/^[R$\s€£¥]+/, '').replace(/%$/, '').trim();
+            // European / Brazilian number format: 1.234,56 or 1234,56
+            if (/^-?\d{1,3}(?:\.\d{3})*,\d+$/.test(numCleaned) || /^-?\d+,\d+$/.test(numCleaned)) {
+                const num = parseFloat(numCleaned.replace(/\./g, '').replace(',', '.'));
+                if (!isNaN(num)) {
+                    return { isNull: false, val: num, type: 'number', raw: s };
+                }
+            }
+            // US format with thousand separator: 1,234.56
+            if (/^-?\d{1,3}(?:,\d{3})*\.\d+$/.test(numCleaned)) {
+                const num = parseFloat(numCleaned.replace(/,/g, ''));
+                if (!isNaN(num)) {
+                    return { isNull: false, val: num, type: 'number', raw: s };
+                }
+            }
+            // Standard number string: 1234 or 1234.56
+            if (/^-?\d+(?:\.\d+)?$/.test(numCleaned)) {
+                const num = parseFloat(numCleaned);
+                if (!isNaN(num)) {
+                    return { isNull: false, val: num, type: 'number', raw: s };
+                }
+            }
+
+            // Default to string / text
+            return { isNull: false, val: s, type: 'text', raw: s };
+        },
+
+        sort(dataset, sortRules, options = {}) {
+            if (!dataset || !Array.isArray(dataset.rows)) {
+                return dataset;
+            }
+            const headers = dataset.headers || [];
+            const rawRules = Array.isArray(sortRules) ? sortRules : (sortRules ? [sortRules] : []);
+            const rules = rawRules.map(r => {
+                let ruleObj = (typeof r === 'object' && r !== null) ? { ...r } : { column: r, order: 'asc' };
+                let colIdx = -1;
+                if (typeof ruleObj.column === 'number') {
+                    colIdx = ruleObj.column;
+                } else if (typeof ruleObj.column === 'string') {
+                    const targetName = ruleObj.column.trim().toLowerCase();
+                    colIdx = headers.findIndex(h => String(h).trim().toLowerCase() === targetName);
+                }
+                const order = (ruleObj.order || 'asc').toLowerCase() === 'desc' ? 'desc' : 'asc';
+                return { colIdx, order };
+            }).filter(r => r.colIdx >= 0 && r.colIdx < headers.length);
+
+            if (rules.length === 0) {
+                return {
+                    ...dataset,
+                    headers: [...headers],
+                    rows: dataset.rows.map(r => [...r]),
+                    metadata: { ...(dataset.metadata || {}) }
+                };
+            }
+
+            // Clone dataset
+            const clonedRows = dataset.rows.map(r => [...r]);
+
+            clonedRows.sort((rowA, rowB) => {
+                for (const rule of rules) {
+                    const parsedA = this._parseSortValue(rowA[rule.colIdx]);
+                    const parsedB = this._parseSortValue(rowB[rule.colIdx]);
+
+                    // Nulls/empty values are always sent to the bottom regardless of asc/desc
+                    if (parsedA.isNull && parsedB.isNull) continue;
+                    if (parsedA.isNull) return 1;
+                    if (parsedB.isNull) return -1;
+
+                    let cmp = 0;
+                    if (parsedA.type === 'number' && parsedB.type === 'number') {
+                        cmp = parsedA.val - parsedB.val;
+                    } else if (parsedA.type === 'date' && parsedB.type === 'date') {
+                        cmp = parsedA.val - parsedB.val;
+                    } else {
+                        // Compare strings with locale pt-BR
+                        const strA = parsedA.raw !== undefined ? String(parsedA.raw) : String(parsedA.val);
+                        const strB = parsedB.raw !== undefined ? String(parsedB.raw) : String(parsedB.val);
+                        cmp = strA.localeCompare(strB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+                    }
+
+                    if (cmp !== 0) {
+                        return rule.order === 'desc' ? -cmp : cmp;
+                    }
+                }
+                return 0;
+            });
+
+            const result = {
+                ...dataset,
+                headers: [...headers],
+                rows: clonedRows,
+                metadata: {
+                    ...(dataset.metadata || {}),
+                    totalRows: clonedRows.length,
+                    totalCols: headers.length,
+                    sortedBy: rules
+                }
+            };
+
+            if (result.sheets && result.activeSheet && result.sheets[result.activeSheet]) {
+                result.sheets[result.activeSheet] = {
+                    ...result.sheets[result.activeSheet],
+                    headers: [...headers],
+                    rows: clonedRows
+                };
+            }
+
+            return result;
+        },
+
+        getDistinctValues(dataset, column) {
+            if (!dataset || !Array.isArray(dataset.rows)) return [];
+            const headers = dataset.headers || [];
+            let colIdx = -1;
+            if (typeof column === 'number') {
+                colIdx = column;
+            } else if (typeof column === 'string') {
+                const target = column.trim().toLowerCase();
+                colIdx = headers.findIndex(h => String(h).trim().toLowerCase() === target);
+            }
+            if (colIdx < 0 || colIdx >= headers.length) return [];
+
+            const map = new Map();
+            for (const row of dataset.rows) {
+                const cell = row[colIdx];
+                const isNull = (cell === null || cell === undefined || String(cell).trim() === '');
+                const key = isNull ? '__FRAMEPER_EMPTY__' : String(cell);
+                if (map.has(key)) {
+                    map.get(key).count++;
+                } else {
+                    map.set(key, {
+                        value: isNull ? null : cell,
+                        label: isNull ? '(Vazio)' : String(cell),
+                        count: 1,
+                        isNull
+                    });
+                }
+            }
+
+            const distinct = Array.from(map.values());
+            distinct.sort((a, b) => {
+                if (a.isNull && b.isNull) return 0;
+                if (a.isNull) return 1;
+                if (b.isNull) return -1;
+                const parsedA = this._parseSortValue(a.value);
+                const parsedB = this._parseSortValue(b.value);
+                if (parsedA.type === 'number' && parsedB.type === 'number') {
+                    return parsedA.val - parsedB.val;
+                }
+                return String(a.label).localeCompare(String(b.label), 'pt-BR', { numeric: true, sensitivity: 'base' });
+            });
+
+            return distinct.map(d => ({ value: d.value, label: d.label, count: d.count }));
+        },
+
+        filter(dataset, filterRules, options = {}) {
+            if (!dataset || !Array.isArray(dataset.rows)) return dataset;
+            const headers = dataset.headers || [];
+            const rawRules = Array.isArray(filterRules) ? filterRules : (filterRules ? [filterRules] : []);
+
+            const rules = rawRules.map(r => {
+                if (!r || typeof r !== 'object') return null;
+                let colIdx = -1;
+                if (typeof r.column === 'number') {
+                    colIdx = r.column;
+                } else if (typeof r.column === 'string') {
+                    const target = r.column.trim().toLowerCase();
+                    colIdx = headers.findIndex(h => String(h).trim().toLowerCase() === target);
+                }
+                if (colIdx < 0 || colIdx >= headers.length) return null;
+                return {
+                    colIdx,
+                    column: r.column,
+                    operator: String(r.operator || 'equals').toLowerCase(),
+                    value: r.value,
+                    values: Array.isArray(r.values) ? r.values : (r.values !== undefined ? [r.values] : null)
+                };
+            }).filter(Boolean);
+
+            if (rules.length === 0) {
+                return {
+                    ...dataset,
+                    headers: [...headers],
+                    rows: dataset.rows.map(r => [...r]),
+                    metadata: { ...(dataset.metadata || {}) }
+                };
+            }
+
+            const filteredRows = dataset.rows.filter(row => {
+                for (const rule of rules) {
+                    const cell = row[rule.colIdx];
+                    const isCellEmpty = (cell === null || cell === undefined || String(cell).trim() === '');
+
+                    switch (rule.operator) {
+                        case 'empty':
+                            if (!isCellEmpty) return false;
+                            break;
+                        case 'not_empty':
+                            if (isCellEmpty) return false;
+                            break;
+                        case 'in':
+                            if (!rule.values || rule.values.length === 0) return false;
+                            if (isCellEmpty) {
+                                const hasEmpty = rule.values.some(v => v === null || v === undefined || String(v).trim() === '' || v === '(Vazio)');
+                                if (!hasEmpty) return false;
+                            } else {
+                                const cellStr = String(cell).trim().toLowerCase();
+                                const match = rule.values.some(v => v !== null && v !== undefined && String(v).trim().toLowerCase() === cellStr);
+                                if (!match) return false;
+                            }
+                            break;
+                        case 'not_in':
+                            if (rule.values && rule.values.length > 0) {
+                                if (isCellEmpty) {
+                                    const hasEmpty = rule.values.some(v => v === null || v === undefined || String(v).trim() === '' || v === '(Vazio)');
+                                    if (hasEmpty) return false;
+                                } else {
+                                    const cellStr = String(cell).trim().toLowerCase();
+                                    const match = rule.values.some(v => v !== null && v !== undefined && String(v).trim().toLowerCase() === cellStr);
+                                    if (match) return false;
+                                }
+                            }
+                            break;
+                        case 'contains': {
+                            if (isCellEmpty) return false;
+                            const target = String(rule.value || '').trim().toLowerCase();
+                            if (!String(cell).toLowerCase().includes(target)) return false;
+                            break;
+                        }
+                        case 'not_contains': {
+                            if (isCellEmpty) return false;
+                            const target = String(rule.value || '').trim().toLowerCase();
+                            if (String(cell).toLowerCase().includes(target)) return false;
+                            break;
+                        }
+                        case 'starts_with': {
+                            if (isCellEmpty) return false;
+                            const target = String(rule.value || '').trim().toLowerCase();
+                            if (!String(cell).toLowerCase().startsWith(target)) return false;
+                            break;
+                        }
+                        case 'ends_with': {
+                            if (isCellEmpty) return false;
+                            const target = String(rule.value || '').trim().toLowerCase();
+                            if (!String(cell).toLowerCase().endsWith(target)) return false;
+                            break;
+                        }
+                        case 'equals':
+                        case '==': {
+                            if (isCellEmpty) {
+                                if (rule.value !== null && rule.value !== undefined && String(rule.value).trim() !== '') return false;
+                            } else {
+                                const cellStr = String(cell).trim().toLowerCase();
+                                const target = String(rule.value || '').trim().toLowerCase();
+                                if (cellStr !== target) return false;
+                            }
+                            break;
+                        }
+                        case 'not_equals':
+                        case '!=': {
+                            if (isCellEmpty) {
+                                if (rule.value === null || rule.value === undefined || String(rule.value).trim() === '') return false;
+                            } else {
+                                const cellStr = String(cell).trim().toLowerCase();
+                                const target = String(rule.value || '').trim().toLowerCase();
+                                if (cellStr === target) return false;
+                            }
+                            break;
+                        }
+                        case 'greater_than':
+                        case '>':
+                        case 'greater_than_or_equal':
+                        case '>=':
+                        case 'less_than':
+                        case '<':
+                        case 'less_than_or_equal':
+                        case '<=': {
+                            if (isCellEmpty) return false;
+                            const parsedCell = this._parseSortValue(cell);
+                            const parsedRule = this._parseSortValue(rule.value);
+                            if (parsedCell.isNull || parsedRule.isNull) return false;
+
+                            let valA = parsedCell.val;
+                            let valB = parsedRule.val;
+
+                            if (rule.operator === 'greater_than' || rule.operator === '>') {
+                                if (!(valA > valB)) return false;
+                            } else if (rule.operator === 'greater_than_or_equal' || rule.operator === '>=') {
+                                if (!(valA >= valB)) return false;
+                            } else if (rule.operator === 'less_than' || rule.operator === '<') {
+                                if (!(valA < valB)) return false;
+                            } else if (rule.operator === 'less_than_or_equal' || rule.operator === '<=') {
+                                if (!(valA <= valB)) return false;
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+                return true;
+            });
+
+            const result = {
+                ...dataset,
+                headers: [...headers],
+                rows: filteredRows.map(r => [...r]),
+                metadata: {
+                    ...(dataset.metadata || {}),
+                    totalRows: filteredRows.length,
+                    totalCols: headers.length,
+                    filteredBy: rules
+                }
+            };
+
+            if (result.sheets && result.activeSheet && result.sheets[result.activeSheet]) {
+                result.sheets[result.activeSheet] = {
+                    ...result.sheets[result.activeSheet],
+                    headers: [...headers],
+                    rows: result.rows
+                };
+            }
+
+            return result;
         }
     };
     FramePER.Converter = Converter;
