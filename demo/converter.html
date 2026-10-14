@@ -824,6 +824,9 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             </div>
           </div>
 
+          <!-- Active Filter & Sort Pills Bar -->
+          <div class="filter-pills-bar" id="filter-pills-bar" style="display: none;"></div>
+
           <!-- Table Container -->
           <div class="table-preview-scroll m-b-3" id="table-scroll-container">
             <table class="table table-hover table-striped m-0" id="preview-table">
@@ -1124,6 +1127,10 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       let currentPage = 1;
       let pageSize = 10;
       let rawSourceBytes = 0;
+      let activeSortRules = [];
+      let activeColumnFilters = {};
+      let activePopover = null;
+      let activePopoverCol = null;
 
       // DOM Elements
       const dropzone = document.getElementById('converter-dropzone');
@@ -1150,6 +1157,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       const previewSubtitle = document.getElementById('preview-subtitle');
       const tableSearch = document.getElementById('table-search');
       const tablePageSize = document.getElementById('table-page-size');
+      const filterPillsBar = document.getElementById('filter-pills-bar');
       const previewThead = document.getElementById('preview-thead');
       const previewTbody = document.getElementById('preview-tbody');
       const paginationBar = document.getElementById('table-pagination-bar');
@@ -1295,7 +1303,11 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         const metricCol = chartMetricSelect ? chartMetricSelect.value : null;
         const agg = chartAggSelect ? chartAggSelect.value : 'none';
 
-        const chartData = Converter.toChartData(currentDataset, {
+        const datasetForChart = (filteredRows && filteredRows.length > 0 && filteredRows.length !== currentDataset.rows.length)
+          ? { headers: currentDataset.headers, rows: filteredRows, title: currentDataset.title }
+          : currentDataset;
+
+        const chartData = Converter.toChartData(datasetForChart, {
           labelColumn: labelCol,
           valueColumn: metricCol,
           aggregation: agg,
@@ -1406,6 +1418,11 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         // Enable Export Buttons
         exportButtons.forEach(btn => btn.disabled = false);
 
+        // Reset sort and filters for new dataset
+        activeSortRules = [];
+        activeColumnFilters = {};
+        closeFilterPopover();
+
         // Filter and Render
         applyFilter();
 
@@ -1419,6 +1436,13 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         currentDataset = null;
         filteredRows = [];
         currentPage = 1;
+        activeSortRules = [];
+        activeColumnFilters = {};
+        closeFilterPopover();
+        if (filterPillsBar) {
+          filterPillsBar.style.display = 'none';
+          filterPillsBar.innerHTML = '';
+        }
 
         badgeSourceType.textContent = 'Aguardando dados';
         badgeSourceType.className = 'badge badge-primary badge-sm';
@@ -1451,34 +1475,352 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         if (fileInput) fileInput.value = '';
       }
 
-      // Filter and Pagination
-      function applyFilter() {
+      // Filter and Sort Engine
+      function toggleColumnSort(colIdx, isShift = false) {
         if (!currentDataset) return;
-        const q = (tableSearch.value || '').toLowerCase().trim();
-        if (!q) {
-          filteredRows = currentDataset.rows.slice();
+        const existingIdx = activeSortRules.findIndex(r => r.column === colIdx);
+        if (existingIdx === -1) {
+          if (isShift) {
+            activeSortRules.push({ column: colIdx, order: 'asc' });
+          } else {
+            activeSortRules = [{ column: colIdx, order: 'asc' }];
+          }
         } else {
-          filteredRows = currentDataset.rows.filter(row => {
+          const currentOrder = activeSortRules[existingIdx].order;
+          if (currentOrder === 'asc') {
+            activeSortRules[existingIdx].order = 'desc';
+          } else {
+            activeSortRules.splice(existingIdx, 1);
+          }
+        }
+        applyActiveFiltersAndSort();
+      }
+
+      function closeFilterPopover() {
+        if (activePopover) {
+          activePopover.remove();
+          activePopover = null;
+          activePopoverCol = null;
+        }
+      }
+
+      function openFilterPopover(colIdx, anchorBtn) {
+        if (!currentDataset) return;
+        if (activePopover && activePopoverCol === colIdx) {
+          closeFilterPopover();
+          return;
+        }
+        closeFilterPopover();
+
+        const colName = currentDataset.headers[colIdx];
+        const distinctValues = (Converter && typeof Converter.getDistinctValues === 'function')
+          ? Converter.getDistinctValues(currentDataset, colIdx)
+          : [];
+        if (!distinctValues || distinctValues.length === 0) return;
+
+        const existingFilter = activeColumnFilters[colIdx];
+        let selectedSet = new Set();
+        if (existingFilter && Array.isArray(existingFilter.values)) {
+          existingFilter.values.forEach(v => selectedSet.add(v === null ? '__EMPTY__' : String(v)));
+        } else {
+          distinctValues.forEach(d => selectedSet.add(d.value === null ? '__EMPTY__' : String(d.value)));
+        }
+
+        const popover = document.createElement('div');
+        popover.className = 'filter-popover';
+        popover.setAttribute('role', 'dialog');
+        popover.setAttribute('aria-label', `Filtro da coluna ${colName}`);
+
+        popover.innerHTML = `
+          <div class="filter-popover-header">
+            <span class="filter-popover-title" title="Filtrar por ${escapeHTML(colName)}">
+              Filtrar: <strong>${escapeHTML(colName)}</strong>
+            </span>
+            <button type="button" class="filter-popover-close" id="filter-popover-close-btn" title="Fechar">✕</button>
+          </div>
+          <input type="text" class="filter-search-input" id="filter-search-input" placeholder="Pesquisar valor..." autocomplete="off">
+          <div class="filter-actions-bar">
+            <button type="button" class="filter-action-link" id="filter-select-all">Selecionar Todos</button>
+            <button type="button" class="filter-action-link" id="filter-clear-all">Limpar Seleção</button>
+          </div>
+          <div class="filter-items-list" id="filter-items-list"></div>
+          <div class="filter-popover-footer">
+            <button type="button" class="btn btn-ghost btn-xs text-danger" id="filter-btn-reset">Limpar Filtro</button>
+            <button type="button" class="btn btn-primary btn-xs" id="filter-btn-apply">Aplicar</button>
+          </div>
+        `;
+
+        document.body.appendChild(popover);
+        activePopover = popover;
+        activePopoverCol = colIdx;
+
+        const rect = anchorBtn.getBoundingClientRect();
+        const popoverWidth = 280;
+        let left = rect.left - (popoverWidth - rect.width);
+        if (left < 10) left = 10;
+        if (left + popoverWidth > window.innerWidth - 10) {
+          left = window.innerWidth - popoverWidth - 10;
+        }
+        let top = rect.bottom + 6;
+        if (top + 280 > window.innerHeight && rect.top > 290) {
+          top = rect.top - 280 - 6;
+        }
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+
+        const itemsList = popover.querySelector('#filter-items-list');
+        const searchInput = popover.querySelector('#filter-search-input');
+        const closeBtn = popover.querySelector('#filter-popover-close-btn');
+        const selectAllBtn = popover.querySelector('#filter-select-all');
+        const clearAllBtn = popover.querySelector('#filter-clear-all');
+        const resetBtn = popover.querySelector('#filter-btn-reset');
+        const applyBtn = popover.querySelector('#filter-btn-apply');
+
+        function renderChecklist(filterText = '') {
+          const q = filterText.toLowerCase().trim();
+          let listHtml = '';
+          distinctValues.forEach(item => {
+            const labelStr = item.label;
+            if (q && !labelStr.toLowerCase().includes(q)) return;
+            const key = item.value === null ? '__EMPTY__' : String(item.value);
+            const isChecked = selectedSet.has(key);
+
+            listHtml += `
+              <label class="filter-item-row" data-key="${escapeHTML(key)}" title="${escapeHTML(labelStr)}">
+                <input type="checkbox" class="filter-item-cb" data-key="${escapeHTML(key)}" ${isChecked ? 'checked' : ''}>
+                <span class="filter-item-text">${escapeHTML(labelStr)}</span>
+                <span class="filter-item-count">${item.count}</span>
+              </label>
+            `;
+          });
+
+          if (!listHtml) {
+            listHtml = '<div class="txt-center text-muted f-s-1 py-3">Nenhum valor correspondente.</div>';
+          }
+          itemsList.innerHTML = listHtml;
+        }
+
+        renderChecklist();
+        setTimeout(() => searchInput.focus(), 50);
+
+        searchInput.addEventListener('input', () => {
+          renderChecklist(searchInput.value);
+        });
+
+        itemsList.addEventListener('change', (e) => {
+          if (e.target.classList.contains('filter-item-cb')) {
+            const key = e.target.getAttribute('data-key');
+            if (e.target.checked) {
+              selectedSet.add(key);
+            } else {
+              selectedSet.delete(key);
+            }
+          }
+        });
+
+        selectAllBtn.addEventListener('click', () => {
+          const checkboxes = itemsList.querySelectorAll('.filter-item-cb');
+          checkboxes.forEach(cb => {
+            cb.checked = true;
+            selectedSet.add(cb.getAttribute('data-key'));
+          });
+        });
+
+        clearAllBtn.addEventListener('click', () => {
+          const checkboxes = itemsList.querySelectorAll('.filter-item-cb');
+          checkboxes.forEach(cb => {
+            cb.checked = false;
+            selectedSet.delete(cb.getAttribute('data-key'));
+          });
+        });
+
+        resetBtn.addEventListener('click', () => {
+          delete activeColumnFilters[colIdx];
+          closeFilterPopover();
+          applyActiveFiltersAndSort();
+          if (Notify) {
+            Notify.info('Filtro Removido', `O filtro da coluna "${colName}" foi limpo.`);
+          }
+        });
+
+        applyBtn.addEventListener('click', () => {
+          if (selectedSet.size === distinctValues.length) {
+            delete activeColumnFilters[colIdx];
+          } else {
+            const chosenValues = distinctValues
+              .filter(d => selectedSet.has(d.value === null ? '__EMPTY__' : String(d.value)))
+              .map(d => d.value);
+
+            activeColumnFilters[colIdx] = {
+              column: colIdx,
+              operator: 'in',
+              values: chosenValues
+            };
+          }
+          closeFilterPopover();
+          applyActiveFiltersAndSort();
+          if (Notify) {
+            Notify.success('Filtro Aplicado', `Coluna "${colName}" filtrada.`);
+          }
+        });
+
+        closeBtn.addEventListener('click', () => {
+          closeFilterPopover();
+        });
+      }
+
+      function renderActiveFilterPills() {
+        if (!filterPillsBar || !currentDataset) return;
+        const colIndices = Object.keys(activeColumnFilters);
+        const hasSort = activeSortRules && activeSortRules.length > 0;
+
+        if (colIndices.length === 0 && !hasSort) {
+          filterPillsBar.style.display = 'none';
+          filterPillsBar.innerHTML = '';
+          return;
+        }
+
+        filterPillsBar.style.display = 'flex';
+        let pillsHtml = '<span class="f-s-1 text-muted m-r-1 d-flex align-items-center gap-1"><i class="icon icon-filter"></i> Ativos:</span>';
+
+        if (hasSort) {
+          activeSortRules.forEach(rule => {
+            const colName = typeof rule.column === 'number'
+              ? (currentDataset.headers[rule.column] || `Col ${rule.column}`)
+              : rule.column;
+            const dirLabel = rule.order === 'desc' ? 'Decrescente' : 'Crescente';
+            const icon = rule.order === 'desc' ? '▼' : '▲';
+            pillsHtml += `
+              <span class="filter-pill" style="background: rgba(147, 51, 234, 0.12); border-color: rgba(147, 51, 234, 0.3); color: #c084fc;">
+                ${icon} <strong>${escapeHTML(colName)}</strong>: ${dirLabel}
+                <button type="button" class="pill-close pill-sort-close" data-col="${rule.column}" title="Remover ordenação de ${escapeHTML(colName)}">✕</button>
+              </span>
+            `;
+          });
+        }
+
+        colIndices.forEach(colIdx => {
+          const filter = activeColumnFilters[colIdx];
+          const colName = currentDataset.headers[colIdx] || `Coluna ${colIdx}`;
+          const valCount = filter.values ? filter.values.length : 0;
+          let summary = '';
+          if (valCount === 0) {
+            summary = 'Nenhum';
+          } else if (valCount <= 2) {
+            summary = filter.values.map(v => v === null ? '(Vazio)' : String(v)).join(', ');
+          } else {
+            summary = `${valCount} selecionados`;
+          }
+
+          pillsHtml += `
+            <span class="filter-pill">
+              <strong>${escapeHTML(colName)}</strong>: ${escapeHTML(summary)}
+              <button type="button" class="pill-close pill-filter-close" data-col="${colIdx}" title="Remover filtro de ${escapeHTML(colName)}">✕</button>
+            </span>
+          `;
+        });
+
+        pillsHtml += `
+          <button type="button" class="filter-pill-clear-all" id="btn-clear-all-filters-pills" title="Limpar todos os filtros e ordenações">
+            Limpar todos
+          </button>
+        `;
+        filterPillsBar.innerHTML = pillsHtml;
+      }
+
+      function updateFilterAndSortMetrics() {
+        if (!currentDataset) return;
+        const total = currentDataset.rows.length;
+        const filtered = filteredRows.length;
+
+        if (filtered !== total) {
+          metricRows.textContent = `${filtered} / ${total}`;
+          previewSubtitle.textContent = `${currentDataset.title || 'Dados'} · ${filtered} de ${total} registros (filtrado) · ${currentDataset.headers.length} colunas`;
+        } else {
+          metricRows.textContent = total.toLocaleString();
+          previewSubtitle.textContent = `${currentDataset.title || 'Dados'} · ${total} registros · ${currentDataset.headers.length} colunas`;
+        }
+
+        renderConverterChart();
+      }
+
+      function applyActiveFiltersAndSort() {
+        if (!currentDataset) return;
+
+        let workingDataset = {
+          headers: currentDataset.headers,
+          rows: currentDataset.rows.slice(),
+          metadata: { ...(currentDataset.metadata || {}) }
+        };
+
+        const filterRules = Object.values(activeColumnFilters);
+        if (filterRules.length > 0 && Converter && typeof Converter.filter === 'function') {
+          workingDataset = Converter.filter(workingDataset, filterRules);
+        }
+
+        const q = (tableSearch.value || '').toLowerCase().trim();
+        if (q) {
+          workingDataset.rows = workingDataset.rows.filter(row => {
             return row.some(cell => String(cell != null ? cell : '').toLowerCase().includes(q));
           });
         }
+
+        if (activeSortRules && activeSortRules.length > 0 && Converter && typeof Converter.sort === 'function') {
+          workingDataset = Converter.sort(workingDataset, activeSortRules);
+        }
+
+        filteredRows = workingDataset.rows;
         currentPage = 1;
         renderTable();
+        renderActiveFilterPills();
+        updateFilterAndSortMetrics();
+      }
+
+      function applyFilter() {
+        applyActiveFiltersAndSort();
       }
 
       function renderTable() {
         if (!currentDataset) return;
 
-        // Render Header
+        // Render Header with Sort and Filter Buttons
         let theadHtml = '<tr><th style="width: 50px;" class="txt-center text-muted">#</th>';
         currentDataset.headers.forEach((h, cIdx) => {
+          const sortRule = activeSortRules.find(r => r.column === cIdx || r.column === h);
+          let sortIcon = '⇅';
+          let sortActive = false;
+          let sortTitle = `Clique para ordenar por '${escapeHTML(h)}'`;
+          if (sortRule) {
+            sortActive = true;
+            if (sortRule.order === 'asc') {
+              sortIcon = '▲';
+              sortTitle = `Classificado crescente (clique para decrescente)`;
+            } else {
+              sortIcon = '▼';
+              sortTitle = `Classificado decrescente (clique para remover ordenação)`;
+            }
+          }
+
+          const hasFilter = !!activeColumnFilters[cIdx];
+          const filterTitle = hasFilter
+            ? `Filtro ativo nesta coluna (${activeColumnFilters[cIdx].values ? activeColumnFilters[cIdx].values.length : 0} valores selecionados) - clique para editar`
+            : `Filtrar coluna '${escapeHTML(h)}'`;
+
           theadHtml += `<th>
             <div class="th-editable-wrap">
               <button type="button" class="th-title-btn" data-col="${cIdx}" title="Clique para renomear '${escapeHTML(h)}'">
                 <span>${escapeHTML(h)}</span>
                 <i class="icon icon-edit icon-edit-2 text-muted"></i>
               </button>
-              <button type="button" class="btn-col-remove" data-col="${cIdx}" title="Excluir coluna '${escapeHTML(h)}'">✕</button>
+              <div class="th-actions-wrap">
+                <button type="button" class="th-sort-btn ${sortActive ? 'active' : ''}" data-col="${cIdx}" title="${sortTitle}">
+                  <span class="sort-indicator">${sortIcon}</span>
+                </button>
+                <button type="button" class="th-filter-btn ${hasFilter ? 'active' : ''}" data-col="${cIdx}" title="${filterTitle}">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                </button>
+                <button type="button" class="btn-col-remove" data-col="${cIdx}" title="Excluir coluna '${escapeHTML(h)}'">✕</button>
+              </div>
             </div>
           </th>`;
         });
@@ -1495,7 +1837,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
         // Render Body
         if (pageRows.length === 0) {
-          previewTbody.innerHTML = `<tr><td colspan="${currentDataset.headers.length + 2}" class="txt-center text-muted py-4">Nenhum registro encontrado para o filtro digitado.</td></tr>`;
+          previewTbody.innerHTML = `<tr><td colspan="${currentDataset.headers.length + 2}" class="txt-center text-muted py-4">Nenhum registro encontrado para os filtros ativos.</td></tr>`;
         } else {
           let tbodyHtml = '';
           pageRows.forEach((row, rIdx) => {
@@ -1570,6 +1912,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             Converter.updateCell(currentDataset, rowIdx, colIdx, finalVal);
             e.target.classList.add('cell-saved');
             setTimeout(() => e.target.classList.remove('cell-saved'), 600);
+            applyActiveFiltersAndSort();
             updateMetrics();
           }
         }
@@ -1585,16 +1928,34 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         Converter.removeRow(currentDataset, rowIdx);
         const totalPages = Math.max(1, Math.ceil(currentDataset.rows.length / pageSize));
         if (currentPage > totalPages) currentPage = totalPages;
-        applyFilter();
+        applyActiveFiltersAndSort();
         updateMetrics();
         if (Notify) {
           Notify.info('Linha Removida', 'A linha foi excluída do dataset.');
         }
       });
 
-      // Column Rename and Deletion Listeners (Sem input nativo, 100% interativo)
+      // Column Header Action Listeners (Ordenação, Filtro Popover, Renomear e Excluir)
       previewThead.addEventListener('click', async (e) => {
         if (!currentDataset) return;
+
+        // Alternar ordenação da coluna
+        const sortBtn = e.target.closest('.th-sort-btn');
+        if (sortBtn) {
+          const colIdx = parseInt(sortBtn.getAttribute('data-col'), 10);
+          if (isNaN(colIdx)) return;
+          toggleColumnSort(colIdx, e.shiftKey);
+          return;
+        }
+
+        // Abrir popover de filtro da coluna
+        const filterBtn = e.target.closest('.th-filter-btn');
+        if (filterBtn) {
+          const colIdx = parseInt(filterBtn.getAttribute('data-col'), 10);
+          if (isNaN(colIdx)) return;
+          openFilterPopover(colIdx, filterBtn);
+          return;
+        }
 
         // Renomear coluna
         const titleBtn = e.target.closest('.th-title-btn');
@@ -1616,7 +1977,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
           if (newName && newName.trim() && newName.trim() !== currentName) {
             Converter.renameColumn(currentDataset, colIdx, newName.trim());
-            applyFilter();
+            applyActiveFiltersAndSort();
             updateMetrics();
             if (Notify) {
               Notify.success('Coluna Renomeada', `Nome alterado para "${newName.trim()}".`);
@@ -1653,12 +2014,75 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
           if (confirmed) {
             Converter.removeColumn(currentDataset, colIdx);
-            applyFilter();
+            delete activeColumnFilters[colIdx];
+            const newFilters = {};
+            Object.keys(activeColumnFilters).forEach(k => {
+              const numK = parseInt(k, 10);
+              if (numK > colIdx) {
+                newFilters[numK - 1] = { ...activeColumnFilters[k], column: numK - 1 };
+              } else if (numK < colIdx) {
+                newFilters[numK] = activeColumnFilters[k];
+              }
+            });
+            activeColumnFilters = newFilters;
+            activeSortRules = activeSortRules
+              .filter(r => r.column !== colIdx)
+              .map(r => r.column > colIdx ? { ...r, column: r.column - 1 } : r);
+
+            closeFilterPopover();
+            applyActiveFiltersAndSort();
             updateMetrics();
             if (Notify) {
               Notify.info('Coluna Removida', `A coluna "${colName}" foi excluída.`);
             }
           }
+        }
+      });
+
+      // Filter Pills Bar Actions
+      if (filterPillsBar) {
+        filterPillsBar.addEventListener('click', (e) => {
+          const filterClose = e.target.closest('.pill-filter-close');
+          if (filterClose) {
+            const col = filterClose.getAttribute('data-col');
+            delete activeColumnFilters[col];
+            applyActiveFiltersAndSort();
+            return;
+          }
+
+          const sortClose = e.target.closest('.pill-sort-close');
+          if (sortClose) {
+            const col = sortClose.getAttribute('data-col');
+            activeSortRules = activeSortRules.filter(r => String(r.column) !== String(col));
+            applyActiveFiltersAndSort();
+            return;
+          }
+
+          const clearAll = e.target.closest('#btn-clear-all-filters-pills');
+          if (clearAll) {
+            activeColumnFilters = {};
+            activeSortRules = [];
+            closeFilterPopover();
+            applyActiveFiltersAndSort();
+            if (Notify) {
+              Notify.info('Filtros Limpos', 'Todos os filtros e ordenações foram redefinidos.');
+            }
+          }
+        });
+      }
+
+      // Close filter popover on click outside
+      document.addEventListener('click', (e) => {
+        if (!activePopover) return;
+        if (activePopover.contains(e.target)) return;
+        if (e.target.closest('.th-filter-btn')) return;
+        closeFilterPopover();
+      });
+
+      // Close filter popover on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && activePopover) {
+          closeFilterPopover();
         }
       });
 
@@ -1740,7 +2164,10 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             if (confirmed) {
               try {
                 Converter.removeSheet(currentDataset, sheetName);
-                applyFilter();
+                activeColumnFilters = {};
+                activeSortRules = [];
+                closeFilterPopover();
+                applyActiveFiltersAndSort();
                 updateMetrics();
                 renderWorksheetTabs();
                 if (Notify) Notify.info('Planilha Removida', `A aba "${sheetName}" foi excluída.`);
@@ -1757,7 +2184,10 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             const sheetName = tabEl.getAttribute('data-sheet');
             if (sheetName && sheetName !== currentDataset.activeSheet) {
               Converter.selectSheet(currentDataset, sheetName);
-              applyFilter();
+              activeColumnFilters = {};
+              activeSortRules = [];
+              closeFilterPopover();
+              applyActiveFiltersAndSort();
               updateMetrics();
               renderWorksheetTabs();
               populateChartSelects();
@@ -1822,7 +2252,10 @@ FramePER.Converter.toCSV(dataset);</code></pre>
               const baseHeaders = currentDataset.headers.length > 0 ? [...currentDataset.headers] : ['Coluna_1', 'Coluna_2'];
               Converter.addSheet(currentDataset, name.trim(), { headers: baseHeaders, rows: [] });
               Converter.selectSheet(currentDataset, name.trim());
-              applyFilter();
+              activeColumnFilters = {};
+              activeSortRules = [];
+              closeFilterPopover();
+              applyActiveFiltersAndSort();
               updateMetrics();
               renderWorksheetTabs();
               if (Notify) Notify.success('Nova Planilha Criada', `Aba "${name.trim()}" pronta para inserção de dados.`);
