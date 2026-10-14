@@ -8308,6 +8308,14 @@
             throw new Error('Formato de entrada não reconhecido pelo FramePER.Converter.');
         },
 
+        normalize(input, options = {}) {
+            return this.parse(input, options);
+        },
+
+        fromArray(arr, options = {}) {
+            return this.parse(arr, options);
+        },
+
         _fromArrayOfObjects(arr, options = {}) {
             const headerSet = new Set();
             arr.forEach(obj => {
@@ -8764,6 +8772,258 @@ ${dataRows}
             return uint8;
         },
 
+        _parseCellRef(ref) {
+            if (!ref || typeof ref !== 'string') return { col: 0, row: 0 };
+            const match = ref.match(/^([A-Z]+)(\d+)$/i);
+            if (!match) return { col: 0, row: 0 };
+            const letters = match[1].toUpperCase();
+            const digits = match[2];
+            let col = 0;
+            for (let i = 0; i < letters.length; i++) {
+                col = col * 26 + (letters.charCodeAt(i) - 64);
+            }
+            col -= 1;
+            const row = Math.max(0, parseInt(digits, 10) - 1);
+            return { col, row };
+        },
+
+        _unescapeXML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&apos;/g, "'")
+                .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+                .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+        },
+
+        async _readZip(buffer) {
+            let bytes;
+            if (buffer instanceof Uint8Array) {
+                bytes = buffer;
+            } else if (buffer instanceof ArrayBuffer) {
+                bytes = new Uint8Array(buffer);
+            } else if (typeof Buffer !== 'undefined' && Buffer.isBuffer(buffer)) {
+                bytes = new Uint8Array(buffer);
+            } else {
+                throw new Error('Buffer inválido para descompactação ZIP.');
+            }
+
+            const decompress = async (compBytes, method) => {
+                if (method === 0) {
+                    return compBytes;
+                }
+                if (method === 8) {
+                    if (typeof DecompressionStream !== 'undefined') {
+                        try {
+                            const ds = new DecompressionStream('deflate-raw');
+                            const writer = ds.writable.getWriter();
+                            writer.write(compBytes);
+                            writer.close();
+                            const res = new Response(ds.readable);
+                            const ab = await res.arrayBuffer();
+                            return new Uint8Array(ab);
+                        } catch (e) {}
+                    }
+                    if (typeof require !== 'undefined') {
+                        try {
+                            const zlib = require('zlib');
+                            return new Uint8Array(zlib.inflateRawSync(compBytes));
+                        } catch (e) {}
+                    }
+                    throw new Error('Descompressão Deflate requer suporte a DecompressionStream ou zlib.');
+                }
+                throw new Error(`Método de compressão ZIP ${method} não suportado.`);
+            };
+
+            const files = {};
+
+            let eocdOffset = -1;
+            for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+                if (bytes[i] === 0x50 && bytes[i + 1] === 0x4b && bytes[i + 2] === 0x05 && bytes[i + 3] === 0x06) {
+                    eocdOffset = i;
+                    break;
+                }
+            }
+
+            if (eocdOffset !== -1) {
+                const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+                const totalEntries = view.getUint16(eocdOffset + 10, true);
+                const cdOffset = view.getUint32(eocdOffset + 16, true);
+                let pos = cdOffset;
+
+                for (let i = 0; i < totalEntries && pos + 46 <= bytes.length; i++) {
+                    const sig = view.getUint32(pos, true);
+                    if (sig !== 0x02014b50) break;
+
+                    const method = view.getUint16(pos + 10, true);
+                    const compSize = view.getUint32(pos + 20, true);
+                    const fnLen = view.getUint16(pos + 28, true);
+                    const extraLen = view.getUint16(pos + 30, true);
+                    const commentLen = view.getUint16(pos + 32, true);
+                    const lhOffset = view.getUint32(pos + 42, true);
+
+                    const fnBytes = bytes.subarray(pos + 46, pos + 46 + fnLen);
+                    const filename = new TextDecoder('utf-8', { fatal: false }).decode(fnBytes);
+                    pos += 46 + fnLen + extraLen + commentLen;
+
+                    if (lhOffset + 30 <= bytes.length) {
+                        const lhSig = view.getUint32(lhOffset, true);
+                        if (lhSig === 0x04034b50) {
+                            const lhFnLen = view.getUint16(lhOffset + 26, true);
+                            const lhExtraLen = view.getUint16(lhOffset + 28, true);
+                            const dataOffset = lhOffset + 30 + lhFnLen + lhExtraLen;
+                            const compData = bytes.subarray(dataOffset, dataOffset + compSize);
+                            const decompData = await decompress(compData, method);
+                            files[filename] = new TextDecoder('utf-8', { fatal: false }).decode(decompData);
+                        }
+                    }
+                }
+            } else {
+                let pos = 0;
+                const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+                while (pos + 30 <= bytes.length) {
+                    const sig = view.getUint32(pos, true);
+                    if (sig !== 0x04034b50) break;
+
+                    const method = view.getUint16(pos + 8, true);
+                    const compSize = view.getUint32(pos + 18, true);
+                    const fnLen = view.getUint16(pos + 26, true);
+                    const extraLen = view.getUint16(pos + 28, true);
+
+                    const filename = new TextDecoder('utf-8', { fatal: false }).decode(bytes.subarray(pos + 30, pos + 30 + fnLen));
+                    const dataOffset = pos + 30 + fnLen + extraLen;
+                    const compData = bytes.subarray(dataOffset, dataOffset + compSize);
+
+                    const decompData = await decompress(compData, method);
+                    files[filename] = new TextDecoder('utf-8', { fatal: false }).decode(decompData);
+
+                    pos = dataOffset + compSize;
+                }
+            }
+
+            return files;
+        },
+
+        async fromXLSX(buffer, options = {}) {
+            const files = await this._readZip(buffer);
+
+            // 1. Shared Strings (xl/sharedStrings.xml)
+            const sharedStrings = [];
+            const ssKey = Object.keys(files).find(k => k.toLowerCase() === 'xl/sharedstrings.xml');
+            if (ssKey && files[ssKey]) {
+                const ssXML = files[ssKey];
+                const siMatches = ssXML.match(/<si[\s\S]*?<\/si>/gi) || [];
+                siMatches.forEach(si => {
+                    const tMatches = si.match(/<t[\s\S]*?>([\s\S]*?)<\/t>/gi) || [];
+                    let val = '';
+                    tMatches.forEach(tTag => {
+                        val += tTag.replace(/^<t[^>]*>/i, '').replace(/<\/t>$/i, '');
+                    });
+                    sharedStrings.push(this._unescapeXML(val));
+                });
+            }
+
+            // 2. Sheet XML
+            let sheetKey = Object.keys(files).find(k => k.toLowerCase() === 'xl/worksheets/sheet1.xml');
+            if (!sheetKey) {
+                sheetKey = Object.keys(files).find(k => k.toLowerCase().startsWith('xl/worksheets/') && k.toLowerCase().endsWith('.xml'));
+            }
+            if (!sheetKey || !files[sheetKey]) {
+                throw new Error('Nenhuma planilha encontrada no arquivo .xlsx.');
+            }
+            const sheetXML = files[sheetKey];
+
+            // 3. Parse grid rows and cells
+            const grid = [];
+            let maxCol = 0;
+            const rowMatches = sheetXML.match(/<row[\s\S]*?<\/row>/gi) || [];
+
+            rowMatches.forEach((rowTag, autoRowIdx) => {
+                const rAttrMatch = rowTag.match(/<row[^>]*\sr="(\d+)"/i);
+                const rowIdx = rAttrMatch ? parseInt(rAttrMatch[1], 10) - 1 : autoRowIdx;
+
+                if (!grid[rowIdx]) grid[rowIdx] = [];
+
+                const cellMatches = rowTag.match(/<c[\s\S]*?(?:<\/c>|\/>)/gi) || [];
+                let autoColIdx = 0;
+
+                cellMatches.forEach(cTag => {
+                    const rRefMatch = cTag.match(/r="([A-Z]+[0-9]+)"/i);
+                    let colIdx;
+                    if (rRefMatch) {
+                        const coords = this._parseCellRef(rRefMatch[1]);
+                        colIdx = coords.col;
+                    } else {
+                        colIdx = autoColIdx;
+                    }
+                    autoColIdx = colIdx + 1;
+                    if (colIdx > maxCol) maxCol = colIdx;
+
+                    const tMatch = cTag.match(/\st="([^"]+)"/i);
+                    const cellType = tMatch ? tMatch[1] : '';
+
+                    let val = '';
+                    if (cellType === 'inlineStr') {
+                        const isMatch = cTag.match(/<is>[\s\S]*?<t[\s\S]*?>([\s\S]*?)<\/t>/i);
+                        if (isMatch) val = this._unescapeXML(isMatch[1]);
+                    } else if (cellType === 's') {
+                        const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
+                        if (vMatch) {
+                            const idx = parseInt(vMatch[1].trim(), 10);
+                            val = (sharedStrings[idx] !== undefined) ? sharedStrings[idx] : '';
+                        }
+                    } else if (cellType === 'b') {
+                        const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
+                        val = vMatch && vMatch[1].trim() === '1';
+                    } else {
+                        const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/i);
+                        if (vMatch) {
+                            const rawVal = vMatch[1].trim();
+                            const num = Number(rawVal);
+                            if (!isNaN(num) && rawVal !== '') {
+                                val = num;
+                            } else {
+                                val = this._unescapeXML(rawVal);
+                            }
+                        }
+                    }
+
+                    grid[rowIdx][colIdx] = val;
+                });
+            });
+
+            // Clean grid into rectangular 2D array
+            const cleanGrid = [];
+            const totalCols = maxCol + 1;
+            for (let r = 0; r < grid.length; r++) {
+                if (!grid[r]) continue;
+                const row = [];
+                for (let c = 0; c < totalCols; c++) {
+                    const cellVal = grid[r][c];
+                    row.push(cellVal !== undefined ? cellVal : '');
+                }
+                cleanGrid.push(row);
+            }
+
+            if (cleanGrid.length === 0) {
+                return this.parse({ title: options.title || 'Planilha Vazia', headers: [], rows: [] }, options);
+            }
+
+            const headers = cleanGrid[0].map(h => String(h != null ? h : ''));
+            const rows = cleanGrid.slice(1);
+
+            const result = this.parse({
+                title: options.title || 'Planilha Importada',
+                headers,
+                rows
+            }, options);
+            if (result.metadata) result.metadata.detectedType = 'xlsx';
+            return result;
+        },
+
         toXLSX(dataset, options = {}) {
             const ds = this.parse(dataset, options);
             const sheetName = options.sheetName || ds.title || 'Planilha1';
@@ -9107,30 +9367,15 @@ ${dataRows}
 
                 if (lower.endsWith('.xlsx')) {
                     const reader = new FileReader();
-                    reader.onload = (e) => {
+                    reader.onload = async (e) => {
                         try {
-                            const buffer = e.target.result;
-                            const uint8 = new Uint8Array(buffer);
-                            const str = new TextDecoder('utf-8', { fatal: false }).decode(uint8);
-                            const sheetMatch = str.match(/<sheetData[\s\S]*?<\/sheetData>/);
-                            if (sheetMatch) {
-                                const rowMatches = sheetMatch[0].match(/<row[^>]*>[\s\S]*?<\/row>/g) || [];
-                                const rows = [];
-                                rowMatches.forEach(rXml => {
-                                    const cellMatches = Array.from(rXml.matchAll(/<c[^>]*>(?:<is><t>([^<]*)<\/t><\/is>|<v>([^<]*)<\/v>)?<\/c>/g));
-                                    const rowVals = cellMatches.map(m => m[1] !== undefined ? m[1] : (m[2] !== undefined ? m[2] : ''));
-                                    if (rowVals.length > 0) rows.push(rowVals);
-                                });
-                                if (rows.length > 0) {
-                                    return resolve(this.parse(rows, { title: name }));
-                                }
-                            }
-                            resolve(this.parse([], { title: name }));
+                            const ds = await this.fromXLSX(e.target.result, { title: name.replace(/\.xlsx$/i, '') });
+                            resolve(ds);
                         } catch (err) {
                             reject(err);
                         }
                     };
-                    reader.onerror = () => reject(reader.error);
+                    reader.onerror = () => reject(reader.error || new Error('Falha ao ler o arquivo .xlsx'));
                     reader.readAsArrayBuffer(file);
                 } else {
                     const reader = new FileReader();

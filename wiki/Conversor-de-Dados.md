@@ -97,6 +97,16 @@ const datasetJSON = FramePER.Converter.fromJSON(textoJSON);
 const datasetXML = FramePER.Converter.fromXML(textoXML);
 ```
 
+### E. A partir de Planilhas Binárias Excel (`.xlsx`)
+Motor nativo de leitura OpenXML com suporte a descompressão Deflate (Método 8) e tabela de strings compartilhadas (`xl/sharedStrings.xml`):
+```javascript
+// ArrayBuffer, Uint8Array ou Buffer
+const datasetXLSX = await FramePER.Converter.fromXLSX(meuBuffer, { title: 'Vendas 2026' });
+
+console.log(datasetXLSX.headers); // ['Código', 'Item', 'Preço Unitário']
+console.log(datasetXLSX.rows);    // [[101, 'Monitor 4K', 2499.90], ...]
+```
+
 ---
 
 ## 📤 2. Métodos de Exportação e Download
