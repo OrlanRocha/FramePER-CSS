@@ -15,6 +15,7 @@ Combinando um motor robusto de **SCSS moderno** e um conjunto leve e modular de 
 | **📐 Grid Duplo Híbrido** | Poder do **CSS Grid nativo** (`.grid`, `.grid-1` a `.grid-12`, `.grid-auto`) combinado com a interoperabilidade familiar do **Flexbox** (`.row`, `.col-*`, `.g-0` a `.g-5`). |
 | **🎬 Micro-interações & Animações** | Keyframes para entradas e saídas fluidas, efeitos de atenção (`shake`, `shimmer`, `glow-pulse`), elevação 3D ao passar o mouse (`hover-lift`) e motor **Scroll Reveal**. |
 | **📱 Mobile & PWA Ready** | Componentes responsivos pensados para telas de toque, incluindo **Bottom Sheet com gesto de arrastar**, **Input OTP/PIN com foco automático** e layout fluído. |
+| **📊 Conversor Universal de Dados** | Motor tabular 100% client-side para conversão bidirecional entre **XLSX, XLS, CSV, PDF Vetorial, JSON e XML** sem dependências de terceiros. |
 
 ---
 
@@ -64,10 +65,11 @@ Explore os tópicos detalhados nas seções da barra lateral:
 2. **[Cores & Dark Mode](Sistema-de-Cores-e-Temas)** — Paleta de cores, tokens `:root`, transições suaves de tema e funções SCSS (`tint`, `readable`, `shade`).
 3. **[Layout & Grid System](Layout-e-Grid-System)** — Containers fluidos, sistema de 12 colunas, Flexbox interoperável e utilitários de gap.
 4. **[Componentes UI](Componentes-UI)** — Botões, Cards, Stat Cards, Segmented Control, Star Rating, Status Dot com radar, KBD, Badges e Formulários.
-5. **[Componentes Avançados JS](Componentes-Avancados-JS)** — Bottom Sheet, OTP Input, Confetti Canvas, Scroll Reveal, Product Tour, Kanban, DataGrid, Split View e Toasts.
-6. **[Catálogo de 280 Ícones](Catalogo-de-Icones-CSS)** — Como usar a biblioteca vetorial pura em CSS, classes de tamanho e listagem por categorias.
-7. **[Animações & Efeitos](Animacoes-e-Efeitos)** — Biblioteca completa de keyframes, micro-interações de hover e motor Scroll Reveal.
-8. **[Guia de Contribuição](Guia-de-Contribuicao-e-Build)** — Como rodar o projeto localmente, padrões de código e criação de novos componentes.
+5. **[Conversor de Dados (Universal)](Conversor-de-Dados)** — Motor 100% client-side para processamento e exportação entre XLSX, XLS, CSV, PDF, JSON e XML.
+6. **[Componentes Avançados JS](Componentes-Avancados-JS)** — Bottom Sheet, OTP Input, Confetti Canvas, Scroll Reveal, Product Tour, Kanban, DataGrid, Split View e Toasts.
+7. **[Catálogo de 280 Ícones](Catalogo-de-Icones-CSS)** — Como usar a biblioteca vetorial pura em CSS, classes de tamanho e listagem por categorias.
+8. **[Animações & Efeitos](Animacoes-e-Efeitos)** — Biblioteca completa de keyframes, micro-interações de hover e motor Scroll Reveal.
+9. **[Guia de Contribuição](Guia-de-Contribuicao-e-Build)** — Como rodar o projeto localmente, padrões de código e criação de novos componentes.
 
 ---
 

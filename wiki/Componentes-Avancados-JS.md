@@ -243,3 +243,27 @@ const btn = document.querySelector('#meu-btn');
 FramePER.Loader.buttonLoading(btn, true);  // Ativa spinner no botão
 FramePER.Loader.buttonLoading(btn, false); // Restaura texto original
 ```
+
+---
+
+### 10. Conversor Universal de Dados (`FramePER.Converter`)
+
+Motor 100% Vanilla JS (executado no navegador do usuário) para processamento e conversão de dados tabulares entre **XLSX, XLS, CSV, PDF Vetorial, JSON e XML** sem bibliotecas externas:
+
+```javascript
+// Ler arquivo enviado pelo usuário (File)
+const dataset = await FramePER.Converter.readFile(meuArquivo);
+
+// Exportar com 1 clique para qualquer formato:
+FramePER.Converter.toXLSX(dataset, { filename: 'dados.xlsx', download: true });
+FramePER.Converter.toPDF(dataset, { filename: 'relatorio.pdf', title: 'Relatório Executivo', download: true });
+FramePER.Converter.toCSV(dataset, { filename: 'dados.csv', delimiter: ';', download: true });
+FramePER.Converter.toJSON(dataset, { filename: 'dados.json', download: true });
+FramePER.Converter.toXML(dataset, { filename: 'dados.xml', download: true });
+
+// API Unificada Direta:
+await FramePER.Converter.convert(meuArquivo, 'pdf', { download: true });
+```
+
+> 📖 **Documentação Completa**: Consulte a página dedicada [Conversor de Dados (XLSX, XLS, CSV, PDF, JSON, XML)](Conversor-de-Dados) para a referência detalhada de todos os métodos, parâmetros e formatos suportados.
+

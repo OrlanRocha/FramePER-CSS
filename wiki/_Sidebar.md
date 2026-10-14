@@ -30,11 +30,13 @@
 ---
 
 #### ⚡ Módulos & Recursos JS
+* [Conversor de Dados (Universal)](Conversor-de-Dados)
 * [Componentes Avançados](Componentes-Avancados-JS)
   * [Bottom Sheet Mobile](Componentes-Avancados-JS#bottom-sheet-mobile)
   * [OTP / PIN Input](Componentes-Avancados-JS#otp--pin-code-input)
   * [Confetti Engine](Componentes-Avancados-JS#confetti-celebration-engine)
   * [Scroll Reveal](Componentes-Avancados-JS#motor-scroll-reveal)
+  * [Conversor Tabular](Componentes-Avancados-JS#10-conversor-universal-de-dados-frameperconverter)
   * [Product Tour Guiado](Componentes-Avancados-JS#product-tour-guiado)
   * [Kanban Board](Componentes-Avancados-JS#kanban-board-interativo)
   * [Data Grid](Componentes-Avancados-JS#data-grid-com-busca-e-ordenação)

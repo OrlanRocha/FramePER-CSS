@@ -2090,6 +2090,15 @@
                 },
                 {
                     group: 'Componentes & Docs',
+                    id: 'nav-converter',
+                    title: 'Conversor Universal de Dados',
+                    desc: 'Converter XLSX, XLS, CSV, PDF, JSON e XML 100% client-side',
+                    icon: 'icon-layers',
+                    badge: 'Novo',
+                    action: () => { window.location.href = 'converter.html'; }
+                },
+                {
+                    group: 'Componentes & Docs',
                     id: 'nav-components',
                     title: 'Galeria de Componentes UI',
                     desc: 'Botões, modais, tabelas, forms, chips e skeletons',
