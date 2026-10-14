@@ -20,6 +20,41 @@
       background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15));
       border: 1px solid rgba(59, 130, 246, 0.3);
       color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+    }
+    .converter-workspace {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      align-items: start;
+      width: 100%;
+    }
+    @media (min-width: 992px) {
+      .converter-workspace {
+        grid-template-columns: 420px minmax(0, 1fr);
+      }
+    }
+    @media (min-width: 1200px) {
+      .converter-workspace {
+        grid-template-columns: 460px minmax(0, 1fr);
+      }
+    }
+    .export-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    @media (min-width: 768px) {
+      .export-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
     .export-card {
       border: 1px solid var(--border);
@@ -55,24 +90,59 @@
     .export-icon-json { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
     .export-icon-xml  { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
     .table-preview-scroll {
-      max-height: 440px;
+      max-height: 460px;
       overflow-y: auto;
       overflow-x: auto;
       border: 1px solid var(--border);
       border-radius: var(--radius-md, 8px);
+      background: var(--bg-surface);
+    }
+    #preview-table {
+      width: 100%;
+      min-width: 600px;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    #preview-table th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-surface);
+      z-index: 2;
+      border-bottom: 2px solid var(--border);
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
     }
     .stat-pill {
-      background: var(--bg-subtle);
+      background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius-md, 8px);
       padding: 0.75rem 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     .code-preview {
       font-family: 'JetBrains Mono', Consolas, monospace;
-      font-size: 0.85rem;
+      font-size: 0.825rem;
       background: var(--bg-subtle);
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 1rem;
+      overflow-x: auto;
+    }
+    .upload-dropzone {
+      cursor: pointer;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg, 12px);
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      transition: all 0.2s ease;
+      background: var(--bg-surface);
+    }
+    .upload-dropzone:hover, .upload-dropzone.is-dragover {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.05);
     }
   </style>
 </head>
@@ -130,15 +200,15 @@
   </header>
 
   <!-- Main Container -->
-  <main class="container-fluid py-5" style="max-width: 1360px; padding-inline: clamp(1rem, 3vw, 2.5rem);">
+  <main class="container-fluid p-y-5" style="max-width: 1440px; padding-inline: clamp(1rem, 3vw, 2.5rem);">
 
     <!-- Hero Header -->
     <section class="txt-center m-b-5">
-      <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill converter-hero-badge m-b-3 f-s-2 font-medium">
+      <div class="converter-hero-badge">
         <i class="icon icon-layers text-primary"></i>
         <span>Novidade FramePER v2.26.0 · Motor de Dados 100% Client-Side · Zero Dependências</span>
       </div>
-      <h1 class="display-3 font-bold m-b-2">Conversor Universal de Dados</h1>
+      <h1 class="display-3 f-w-bold m-b-2">Conversor Universal de Dados</h1>
       <p class="lead text-muted max-w-lg m-x-auto m-b-4">
         Importe planilhas e arquivos tabulares em <strong>XLSX, XLS, CSV, JSON ou XML</strong> e converta instantaneamente para qualquer formato (incluindo <strong>PDF Vetorial Nativo</strong>) direto no seu navegador com privacidade e segurança absoluta.
       </p>
@@ -150,11 +220,11 @@
       </div>
     </section>
 
-    <!-- Workspace Grid -->
-    <div class="grid grid-lg-12 gap-4 m-b-5">
+    <!-- Workspace Layout (Two Columns on Desktop, Stacked on Mobile) -->
+    <div class="converter-workspace m-b-5">
 
-      <!-- Left Column: Source Input Area (5 Cols on Large) -->
-      <div class="grid-col-lg-5 stack gap-4">
+      <!-- Left Column: Source Input Area -->
+      <div class="converter-sidebar stack gap-4">
 
         <!-- Input Source Card -->
         <div class="converter-card p-4 shadow-sm">
@@ -196,7 +266,7 @@
             <div id="tab-paste" class="tab-content">
               <div class="stack gap-3">
                 <div class="d-flex align-items-center justify-content-between">
-                  <label for="paste-input" class="f-s-2 text-muted font-medium">Cole conteúdo CSV, JSON ou XML:</label>
+                  <label for="paste-input" class="f-s-2 text-muted f-w-medium">Cole conteúdo CSV, JSON ou XML:</label>
                   <select id="paste-format" class="form-select form-select-sm" style="width: auto;">
                     <option value="auto">Auto-detectar</option>
                     <option value="csv">Formato CSV</option>
@@ -247,28 +317,28 @@
         </div>
 
         <!-- Metrics Overview Cards -->
-        <div class="grid grid-2 gap-3" id="dataset-metrics">
+        <div class="metrics-grid" id="dataset-metrics">
           <div class="stat-pill">
-            <span class="d-block f-s-1 text-muted font-medium">FORMATO ATUAL</span>
+            <span class="d-block f-s-1 text-muted f-w-medium">FORMATO ATUAL</span>
             <strong class="f-s-4 text-primary" id="metric-format">—</strong>
           </div>
           <div class="stat-pill">
-            <span class="d-block f-s-1 text-muted font-medium">TOTAL REGISTROS</span>
+            <span class="d-block f-s-1 text-muted f-w-medium">TOTAL REGISTROS</span>
             <strong class="f-s-4" id="metric-rows">0</strong>
           </div>
           <div class="stat-pill">
-            <span class="d-block f-s-1 text-muted font-medium">TOTAL COLUNAS</span>
+            <span class="d-block f-s-1 text-muted f-w-medium">TOTAL COLUNAS</span>
             <strong class="f-s-4" id="metric-cols">0</strong>
           </div>
           <div class="stat-pill">
-            <span class="d-block f-s-1 text-muted font-medium">TAMANHO ESTIMADO</span>
+            <span class="d-block f-s-1 text-muted f-w-medium">TAMANHO ESTIMADO</span>
             <strong class="f-s-4" id="metric-size">—</strong>
           </div>
         </div>
 
         <!-- Developer Quick Usage -->
         <div class="converter-card p-4 shadow-sm">
-          <h3 class="h6 text-muted font-semibold text-uppercase m-b-2 d-flex align-items-center gap-2">
+          <h3 class="h6 text-muted f-w-semibold text-uppercase m-b-2 d-flex align-items-center gap-2">
             <i class="icon icon-code text-primary"></i> Como usar no JavaScript
           </h3>
           <pre class="code-preview m-0"><code>// 100% Client-side / Zero dependências
@@ -282,8 +352,8 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
       </div>
 
-      <!-- Right Column: Data Preview & Export Actions (7 Cols on Large) -->
-      <div class="grid-col-lg-7 stack gap-4">
+      <!-- Right Column: Data Preview & Export Actions -->
+      <div class="converter-content stack gap-4">
 
         <!-- Table Preview Card -->
         <div class="converter-card p-4 shadow-sm">
@@ -303,7 +373,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
           <!-- Table Filter & Rows per page -->
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 m-b-3">
-            <div class="input-group input-group-sm" style="max-width: 300px;">
+            <div class="input-group input-group-sm" style="max-width: 320px; width: 100%;">
               <span class="input-group-text"><i class="icon icon-search"></i></span>
               <input type="text" id="table-search" class="form-control" placeholder="Filtrar dados na tabela..." disabled>
             </div>
@@ -356,7 +426,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             </div>
           </div>
 
-          <div class="grid grid-sm-2 grid-md-3 gap-3">
+          <div class="export-grid">
 
             <!-- Format 1: XLSX -->
             <div class="export-card">
@@ -364,7 +434,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
                 <div class="export-icon-box export-icon-xlsx">
                   <span>XLSX</span>
                 </div>
-                <h3 class="h6 font-bold m-b-1">Excel Moderno</h3>
+                <h3 class="h6 f-w-bold m-b-1">Excel Moderno</h3>
                 <p class="text-muted f-s-1 m-b-3">Pasta de trabalho OpenXML PKZIP nativa com estilos e células tipadas.</p>
               </div>
               <button type="button" class="btn btn-success btn-sm w-100 btn-export" data-format="xlsx" disabled>
@@ -378,7 +448,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
                 <div class="export-icon-box export-icon-xls">
                   <span>XLS</span>
                 </div>
-                <h3 class="h6 font-bold m-b-1">Excel Legado</h3>
+                <h3 class="h6 f-w-bold m-b-1">Excel Legado</h3>
                 <p class="text-muted f-s-1 m-b-3">Planilha XML Spreadsheet 2003 nativa com zebra striping.</p>
               </div>
               <button type="button" class="btn btn-outline-success btn-sm w-100 btn-export" data-format="xls" disabled>
@@ -392,7 +462,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
                 <div class="export-icon-box export-icon-csv">
                   <span>CSV</span>
                 </div>
-                <h3 class="h6 font-bold m-b-1">CSV Universal</h3>
+                <h3 class="h6 f-w-bold m-b-1">CSV Universal</h3>
                 <p class="text-muted f-s-1 m-b-3">RFC 4180 padronizado com UTF-8 BOM para acentuação perfeita no Excel.</p>
               </div>
               <button type="button" class="btn btn-primary btn-sm w-100 btn-export" data-format="csv" disabled>
@@ -406,7 +476,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
                 <div class="export-icon-box export-icon-pdf">
                   <span>PDF</span>
                 </div>
-                <h3 class="h6 font-bold m-b-1">Documento PDF</h3>
+                <h3 class="h6 f-w-bold m-b-1">Documento PDF</h3>
                 <p class="text-muted f-s-1 m-b-3">PDF 1.4 vetorial paginado, com cabeçalho primário, colunas e rodapé.</p>
               </div>
               <button type="button" class="btn btn-danger btn-sm w-100 btn-export" data-format="pdf" disabled>
@@ -420,7 +490,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
                 <div class="export-icon-box export-icon-json">
                   <span>JSON</span>
                 </div>
-                <h3 class="h6 font-bold m-b-1">JSON Estruturado</h3>
+                <h3 class="h6 f-w-bold m-b-1">JSON Estruturado</h3>
                 <p class="text-muted f-s-1 m-b-3">Array de objetos com indentação limpa de 2 espaços pronto para APIs.</p>
               </div>
               <button type="button" class="btn btn-warning btn-sm w-100 btn-export" data-format="json" disabled>
@@ -434,7 +504,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
                 <div class="export-icon-box export-icon-xml">
                   <span>XML</span>
                 </div>
-                <h3 class="h6 font-bold m-b-1">XML Semântico</h3>
+                <h3 class="h6 f-w-bold m-b-1">XML Semântico</h3>
                 <p class="text-muted f-s-1 m-b-3">Árvore hierárquica &lt;dataset&gt;&lt;record&gt; com escape seguro.</p>
               </div>
               <button type="button" class="btn btn-secondary btn-sm w-100 btn-export" data-format="xml" disabled>
@@ -445,30 +515,30 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           </div>
         </div>
 
+        <!-- Features Comparison Footer -->
+        <section class="converter-card p-4 shadow-sm">
+          <h2 class="h5 m-b-3 d-flex align-items-center gap-2">
+            <i class="icon icon-info text-primary"></i> Capacidades Técnicas do FramePER.Converter
+          </h2>
+          <div class="grid grid-md-3 gap-4">
+            <div class="stack gap-1">
+              <strong class="text-primary f-s-3">⚡ 100% Client-Side</strong>
+              <p class="text-muted f-s-2 m-0">Todo o processamento ocorre no motor V8 do navegador do usuário. Nenhum dado transita por rede ou servidores em nuvem.</p>
+            </div>
+            <div class="stack gap-1">
+              <strong class="text-success f-s-3">📦 Zero Dependências</strong>
+              <p class="text-muted f-s-2 m-0">Construído do zero em puro Vanilla JS. Motor PKZIP e gerador vetorial PDF 1.4 proprietários sem pacotes externos.</p>
+            </div>
+            <div class="stack gap-1">
+              <strong class="text-purple f-s-3">🔄 Conversão Bidirecional</strong>
+              <p class="text-muted f-s-2 m-0">Faça o upload em qualquer formato e exporte para qualquer um dos outros 5 formatos com integridade de dados e tipos preservada.</p>
+            </div>
+          </div>
+        </section>
+
       </div>
 
     </div>
-
-    <!-- Features Comparison Footer -->
-    <section class="converter-card p-4 shadow-sm m-b-5">
-      <h2 class="h5 m-b-3 d-flex align-items-center gap-2">
-        <i class="icon icon-info text-primary"></i> Capacidades Técnicas do FramePER.Converter
-      </h2>
-      <div class="grid grid-md-3 gap-4">
-        <div class="stack gap-1">
-          <strong class="text-primary f-s-3">⚡ 100% Client-Side</strong>
-          <p class="text-muted f-s-2 m-0">Todo o processamento ocorre no motor V8 do navegador do usuário. Nenhum dado transita por rede ou servidores em nuvem.</p>
-        </div>
-        <div class="stack gap-1">
-          <strong class="text-success f-s-3">📦 Zero Dependências</strong>
-          <p class="text-muted f-s-2 m-0">Construído do zero em puro Vanilla JS. Motor PKZIP e gerador vetorial PDF 1.4 proprietários sem pacotes externos.</p>
-        </div>
-        <div class="stack gap-1">
-          <strong class="text-purple f-s-3">🔄 Conversão Bidirecional</strong>
-          <p class="text-muted f-s-2 m-0">Faça o upload em qualquer formato e exporte para qualquer um dos outros 5 formatos com integridade de dados e tipos preservada.</p>
-        </div>
-      </div>
-    </section>
 
     <footer class="txt-center f-s-2 text-muted p-y-4">
       Frame PER v2.26.0 · Framework UI Moderno, Responsivo e Gráficos Vetoriais sem dependências.
@@ -476,8 +546,8 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
   </main>
 
-  <script src="../dist/framePER.js"></script>
-  <script src="demo.js"></script>
+  <script src="../dist/framePER.min.js?v=2.26.0"></script>
+  <script src="demo.js?v=2.26.0"></script>
   <script>
     (function () {
       const Converter = window.FramePER ? window.FramePER.Converter : window.FramePERConverter;
@@ -645,7 +715,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         // Render Header
         let theadHtml = '<tr><th style="width: 50px;" class="txt-center text-muted">#</th>';
         currentDataset.headers.forEach(h => {
-          theadHtml += `<th class="font-semibold">${escapeHTML(h)}</th>`;
+          theadHtml += `<th class="f-w-semibold">${escapeHTML(h)}</th>`;
         });
         theadHtml += '</tr>';
         previewThead.innerHTML = theadHtml;
@@ -668,7 +738,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             tbodyHtml += `<tr><td class="txt-center text-muted f-s-1">${rowNumber}</td>`;
             row.forEach(cell => {
               const val = cell != null ? String(cell) : '';
-              tbodyHtml += `<td class="f-s-2 text-truncate" style="max-width: 220px;" title="${escapeHTML(val)}">${escapeHTML(val)}</td>`;
+              tbodyHtml += `<td class="f-s-2 text-truncate" style="max-width: 240px;" title="${escapeHTML(val)}">${escapeHTML(val)}</td>`;
             });
             tbodyHtml += '</tr>';
           });
