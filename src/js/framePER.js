@@ -8397,6 +8397,73 @@
                     detectedType: 'xml'
                 }
             };
+        },
+
+        toCSV(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const delimiter = options.delimiter || ',';
+            const escapeCSV = (val) => {
+                if (val === null || val === undefined) return '';
+                const str = String(val);
+                if (str.includes(delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            };
+
+            const bom = options.bom !== false ? '\uFEFF' : '';
+            const headerLine = ds.headers.map(escapeCSV).join(delimiter);
+            const rowLines = ds.rows.map(r => r.map(escapeCSV).join(delimiter));
+            return bom + [headerLine, ...rowLines].join('\r\n');
+        },
+
+        toJSON(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            if (options.as2DArray) {
+                return JSON.stringify([ds.headers, ...ds.rows], null, options.indent !== undefined ? options.indent : 2);
+            }
+            const arr = ds.rows.map(r => {
+                const obj = {};
+                ds.headers.forEach((h, idx) => {
+                    obj[h] = r[idx] !== undefined ? r[idx] : null;
+                });
+                return obj;
+            });
+            return JSON.stringify(arr, null, options.indent !== undefined ? options.indent : 2);
+        },
+
+        toXML(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const rootTag = options.rootTag || 'dataset';
+            const recordTag = options.recordTag || 'record';
+
+            const sanitizeTag = (t) => {
+                let clean = String(t || 'campo').replace(/[^a-zA-Z0-9_\-]/g, '_');
+                if (/^[0-9\-]/.test(clean)) clean = '_' + clean;
+                return clean || 'campo';
+            };
+
+            const escapeXML = (val) => {
+                if (val === null || val === undefined) return '';
+                return String(val)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            };
+
+            const lines = ['<?xml version="1.0" encoding="UTF-8"?>', `<${rootTag}>`];
+            ds.rows.forEach(r => {
+                lines.push(`  <${recordTag}>`);
+                ds.headers.forEach((h, idx) => {
+                    const tag = sanitizeTag(h);
+                    lines.push(`    <${tag}>${escapeXML(r[idx])}</${tag}>`);
+                });
+                lines.push(`  </${recordTag}>`);
+            });
+            lines.push(`</${rootTag}>`);
+            return lines.join('\n');
         }
     };
     FramePER.Converter = Converter;

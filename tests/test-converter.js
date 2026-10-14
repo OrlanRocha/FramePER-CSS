@@ -88,3 +88,48 @@ assert.deepStrictEqual(ds5.rows[0], ['001', 'Caderno']);
 console.log('  ✓ Passou');
 
 console.log('\n🎉 TODOS OS TESTES DA TASK 1 PASSARAM COM SUCESSO!\n');
+
+// ==========================================
+// TASK 2: GERADORES DE TEXTO (CSV, JSON, XML)
+// ==========================================
+console.log('\n--- TESTES TASK 2: GERADORES CSV, JSON, XML ---');
+
+const testDataset = {
+  title: 'Produtos Teste',
+  headers: ['id', 'nome', 'preço', 'descrição'],
+  rows: [
+    [1, 'Teclado Gamer', 250.5, 'Teclado mecânico RGB, switch azul'],
+    [2, 'Mouse "Pro"', 120.0, 'Mouse com 16.000 DPI & sensor óptico\nAlta precisão'],
+    [3, 'Monitor <Curvo>', 1499.9, 'Tela de 27" & 144Hz']
+  ]
+};
+
+// Teste 6: toCSV
+console.log('▶ Teste 6: toCSV com BOM UTF-8 e escape RFC 4180');
+const csvOut = Converter.toCSV(testDataset);
+assert(csvOut.startsWith('\uFEFF'), 'CSV deve iniciar com BOM UTF-8 para suporte a acentos no Excel');
+assert(csvOut.includes('id,nome,preço,descrição'), 'Cabeçalho do CSV incorreto');
+assert(csvOut.includes('"Teclado mecânico RGB, switch azul"'), 'Campos com vírgula devem ter aspas');
+assert(csvOut.includes('"Mouse ""Pro"""'), 'Aspas duplas internas devem ser escapadas como ""');
+console.log('  ✓ Passou');
+
+// Teste 7: toJSON
+console.log('▶ Teste 7: toJSON com formatação estruturada');
+const jsonOut = Converter.toJSON(testDataset);
+const parsedBack = JSON.parse(jsonOut);
+assert.strictEqual(Array.isArray(parsedBack), true, 'JSON deve ser um array de objetos');
+assert.strictEqual(parsedBack.length, 3);
+assert.strictEqual(parsedBack[0].nome, 'Teclado Gamer');
+assert.strictEqual(parsedBack[1].id, 2);
+console.log('  ✓ Passou');
+
+// Teste 8: toXML
+console.log('▶ Teste 8: toXML com escape e tags válidas');
+const xmlOut = Converter.toXML(testDataset);
+assert(xmlOut.startsWith('<?xml version="1.0" encoding="UTF-8"?>'), 'XML deve iniciar com declaração XML padrão');
+assert(xmlOut.includes('<dataset>'), 'Tag raiz deve ser <dataset>');
+assert(xmlOut.includes('&lt;Curvo&gt;'), 'Caracteres < e > devem ser escapados como &lt; e &gt;');
+assert(xmlOut.includes('&amp;'), 'Caractere & deve ser escapado como &amp;');
+console.log('  ✓ Passou');
+
+console.log('\n🎉 TODOS OS TESTES DA TASK 2 PASSARAM COM SUCESSO!\n');
