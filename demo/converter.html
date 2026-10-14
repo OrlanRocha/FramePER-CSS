@@ -921,6 +921,9 @@ FramePER.Converter.toCSV(dataset);</code></pre>
               <input type="text" id="table-search" class="form-control" placeholder="Filtrar dados na tabela..." disabled>
             </div>
             <div class="d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-outline btn-sm btn-toggle-summary active" id="btn-toggle-summary" title="Exibir ou ocultar linha de totais e agregações no rodapé">
+                <i class="icon icon-activity"></i> <span id="btn-toggle-summary-text">Linha de Totais</span>
+              </button>
               <span class="f-s-2 text-muted">Exibir:</span>
               <select id="table-page-size" class="form-select form-select-sm" style="width: auto;">
                 <option value="5">5 linhas</option>
@@ -944,6 +947,8 @@ FramePER.Converter.toCSV(dataset);</code></pre>
               </thead>
               <tbody id="preview-tbody">
               </tbody>
+              <tfoot id="preview-tfoot" style="display: none;">
+              </tfoot>
             </table>
           </div>
 
@@ -1267,11 +1272,18 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       const filterPillsBar = document.getElementById('filter-pills-bar');
       const previewThead = document.getElementById('preview-thead');
       const previewTbody = document.getElementById('preview-tbody');
+      const previewTfoot = document.getElementById('preview-tfoot');
+      const btnToggleSummary = document.getElementById('btn-toggle-summary');
+      const btnToggleSummaryText = document.getElementById('btn-toggle-summary-text');
       const paginationBar = document.getElementById('table-pagination-bar');
       const paginationInfo = document.getElementById('pagination-info');
       const btnPagePrev = document.getElementById('btn-page-prev');
       const btnPageNext = document.getElementById('btn-page-next');
       const exportButtons = document.querySelectorAll('.btn-export');
+
+      // Table Footer Summary Row State
+      let showSummaryRow = true;
+      let columnAggregations = {};
 
       // Worksheet Elements (Multi-Sheet)
       const worksheetTabsBar = document.getElementById('worksheet-tabs-bar');
@@ -1525,9 +1537,10 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         // Enable Export Buttons
         exportButtons.forEach(btn => btn.disabled = false);
 
-        // Reset sort and filters for new dataset
+        // Reset sort, filters and aggregations for new dataset
         activeSortRules = [];
         activeColumnFilters = {};
+        columnAggregations = {};
         closeFilterPopover();
 
         // Filter and Render
@@ -1545,7 +1558,12 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         currentPage = 1;
         activeSortRules = [];
         activeColumnFilters = {};
+        columnAggregations = {};
         closeFilterPopover();
+        if (previewTfoot) {
+          previewTfoot.style.display = 'none';
+          previewTfoot.innerHTML = '';
+        }
         if (filterPillsBar) {
           filterPillsBar.style.display = 'none';
           filterPillsBar.innerHTML = '';
@@ -1973,6 +1991,9 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         } else {
           paginationBar.style.display = 'none';
         }
+
+        // Render Sticky Table Footer Summary Row
+        renderTableSummary();
       }
 
       function escapeHTML(str) {
@@ -1983,6 +2004,163 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           "'": '&#39;',
           '"': '&quot;'
         }[tag] || tag));
+      }
+
+      function renderTableSummary() {
+        if (!previewTfoot) return;
+        if (!currentDataset || !showSummaryRow || !filteredRows || filteredRows.length === 0) {
+          previewTfoot.style.display = 'none';
+          previewTfoot.innerHTML = '';
+          return;
+        }
+
+        previewTfoot.style.display = '';
+
+        // First cell (# index column)
+        let tfootHtml = '<tr><td class="tfoot-cell tfoot-index" title="Linha de Totais e Agregações"><i class="icon icon-activity text-primary"></i></td>';
+
+        const typeLabels = {
+          sum: 'SOMA',
+          avg: 'MÉDIA',
+          min: 'MÍN',
+          max: 'MÁX',
+          count: 'CONTAGEM'
+        };
+
+        currentDataset.headers.forEach((h, cIdx) => {
+          let aggType = columnAggregations[cIdx];
+          if (aggType === undefined) {
+            if (cIdx === 0) {
+              aggType = 'label';
+            } else {
+              // Auto-detect numeric column
+              let isNum = false;
+              for (const row of currentDataset.rows) {
+                const v = row[cIdx];
+                if (v !== null && v !== undefined && v !== '') {
+                  const parsed = Converter._parseSortValue(v);
+                  if (parsed.type === 'number') {
+                    isNum = true;
+                    break;
+                  }
+                }
+              }
+              aggType = isNum ? 'sum' : 'none';
+            }
+            columnAggregations[cIdx] = aggType;
+          }
+
+          if (cIdx === 0 && (aggType === 'label' || aggType === 'none')) {
+            tfootHtml += `<td class="tfoot-cell" data-col="${cIdx}">
+              <div class="summary-cell-content">
+                <span class="badge badge-primary badge-sm" style="font-weight: 700; letter-spacing: 0.05em;">TOTAL</span>
+                <span class="text-muted f-s-1">(${filteredRows.length} linhas)</span>
+              </div>
+            </td>`;
+          } else if (aggType === 'none') {
+            tfootHtml += `<td class="tfoot-cell" data-col="${cIdx}">
+              <div class="summary-cell-content">
+                <button type="button" class="summary-badge badge-none" data-col="${cIdx}" title="Clique para calcular agregação nesta coluna">
+                  + Totalizar
+                </button>
+              </div>
+            </td>`;
+          } else {
+            // Compute aggregate on active filtered rows
+            const aggResult = Converter.aggregate(
+              { headers: currentDataset.headers, rows: filteredRows },
+              [{ column: cIdx, type: aggType }]
+            );
+            const res = aggResult[cIdx] || {};
+            const valFormatted = res.formatted !== undefined ? res.formatted : (res.value !== undefined ? String(res.value) : '-');
+            const badgeClass = `badge-${aggType}`;
+
+            tfootHtml += `<td class="tfoot-cell" data-col="${cIdx}">
+              <div class="summary-cell-content">
+                <button type="button" class="summary-badge ${badgeClass}" data-col="${cIdx}" title="Cálculo atual: ${typeLabels[aggType] || aggType}. Clique para alternar (Soma, Média, Mín, Máx, Contagem, Ocultar).">
+                  ${typeLabels[aggType] || aggType}
+                </button>
+                <span class="summary-val" title="Resultado sobre ${filteredRows.length} linha(s) visíveis">${escapeHTML(valFormatted)}</span>
+              </div>
+            </td>`;
+          }
+        });
+
+        // Last cell (Actions column)
+        tfootHtml += '<td class="tfoot-cell txt-center text-muted f-s-1">-</td></tr>';
+        previewTfoot.innerHTML = tfootHtml;
+      }
+
+      function cycleColumnAggregation(colIdx) {
+        if (!currentDataset) return;
+        const current = columnAggregations[colIdx] || 'none';
+        const cycle = ['sum', 'avg', 'min', 'max', 'count', 'none'];
+        const curPos = cycle.indexOf(current);
+        const next = cycle[(curPos + 1) % cycle.length];
+        columnAggregations[colIdx] = next;
+        renderTableSummary();
+        if (Notify) {
+          const colName = currentDataset.headers[colIdx] || `Coluna ${colIdx + 1}`;
+          const labels = {
+            sum: 'Soma',
+            avg: 'Média',
+            min: 'Mínimo',
+            max: 'Máximo',
+            count: 'Contagem',
+            none: 'Oculta'
+          };
+          Notify.info('Agregação Alterada', `${colName}: ${labels[next] || next}`);
+        }
+      }
+
+      function getActiveSummaryRowForExport() {
+        if (!showSummaryRow || !currentDataset || !filteredRows || filteredRows.length === 0) return null;
+        const row = [];
+        currentDataset.headers.forEach((h, cIdx) => {
+          if (cIdx === 0) {
+            row.push(`Total (${filteredRows.length} registros)`);
+            return;
+          }
+          const aggType = columnAggregations[cIdx];
+          if (!aggType || aggType === 'none' || aggType === 'label') {
+            row.push('');
+            return;
+          }
+          const aggResult = Converter.aggregate(
+            { headers: currentDataset.headers, rows: filteredRows },
+            [{ column: cIdx, type: aggType }]
+          );
+          const res = aggResult[cIdx];
+          row.push(res && res.formatted !== undefined ? res.formatted : '');
+        });
+        return row;
+      }
+
+      // Footer Summary Row Listeners
+      if (previewTfoot) {
+        previewTfoot.addEventListener('click', (e) => {
+          const badge = e.target.closest('.summary-badge');
+          if (badge) {
+            const colIdx = parseInt(badge.getAttribute('data-col'), 10);
+            if (!isNaN(colIdx)) {
+              cycleColumnAggregation(colIdx);
+            }
+          }
+        });
+      }
+
+      if (btnToggleSummary) {
+        btnToggleSummary.addEventListener('click', () => {
+          showSummaryRow = !showSummaryRow;
+          if (showSummaryRow) {
+            btnToggleSummary.classList.add('active');
+            if (btnToggleSummaryText) btnToggleSummaryText.textContent = 'Linha de Totais';
+          } else {
+            btnToggleSummary.classList.remove('active');
+            if (btnToggleSummaryText) btnToggleSummaryText.textContent = 'Totais Ocultos';
+          }
+          renderTableSummary();
+        });
       }
 
       // Inline Cell Editing Listeners
@@ -2527,14 +2705,19 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           if (!currentDataset || !Converter) return;
           const fmt = btn.getAttribute('data-format');
           const baseName = (currentDataset.title || 'dados_exportados').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-          const filename = `${baseName}.${fmt}`;
-
           try {
             btn.disabled = true;
-            await Converter.convert(currentDataset, fmt, {
+            const filename = `${baseName}.${fmt}`;
+            const exportOptions = {
               filename: filename,
               title: currentDataset.title || 'Relatório de Dados'
-            });
+            };
+            const summaryRow = getActiveSummaryRowForExport();
+            if (summaryRow) {
+              exportOptions.summaryRow = summaryRow;
+            }
+
+            await Converter.convert(currentDataset, fmt, exportOptions);
 
             // Celebration Confetti
             if (Confetti) {
