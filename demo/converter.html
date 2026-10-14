@@ -144,6 +144,86 @@
       border-color: var(--primary);
       background: rgba(59, 130, 246, 0.05);
     }
+    .cell-editable {
+      cursor: text;
+      outline: none;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
+      min-width: 60px;
+    }
+    .cell-editable:hover {
+      background-color: rgba(99, 102, 241, 0.08) !important;
+    }
+    .cell-editable:focus {
+      background-color: var(--bg-surface) !important;
+      outline: 2px solid var(--primary, #6366f1) !important;
+      outline-offset: -2px;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+      z-index: 1;
+    }
+    .cell-saved {
+      animation: cellFlash 0.6s ease;
+    }
+    @keyframes cellFlash {
+      0% { background-color: rgba(16, 185, 129, 0.3) !important; }
+      100% { background-color: transparent; }
+    }
+    .th-editable-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      width: 100%;
+    }
+    .th-title-btn {
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: inherit;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .th-title-btn:hover {
+      color: var(--primary, #6366f1);
+    }
+    .th-title-btn .icon-edit-2 {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      font-size: 0.75rem;
+    }
+    th:hover .th-title-btn .icon-edit-2 {
+      opacity: 0.6;
+    }
+    .btn-col-remove {
+      background: none;
+      border: none;
+      padding: 2px 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      line-height: 1;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: all 0.15s ease;
+    }
+    th:hover .btn-col-remove {
+      opacity: 0.7;
+    }
+    .btn-col-remove:hover {
+      opacity: 1 !important;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+    .btn-row-delete {
+      opacity: 0.3;
+      transition: opacity 0.15s ease;
+    }
+    tr:hover .btn-row-delete {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -365,8 +445,17 @@ FramePER.Converter.toCSV(dataset);</code></pre>
               <span class="text-muted f-s-2" id="preview-subtitle">Carregue dados para visualizar a tabela</span>
             </div>
             <div class="cluster gap-2 align-items-center">
+              <span class="badge badge-subtle badge-primary f-s-1 d-none d-md-inline-flex align-items-center gap-1" id="edit-mode-hint" style="display: none;">
+                <i class="icon icon-edit"></i> Edição Interativa Ativa
+              </span>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-row" style="display: none;" title="Adicionar nova linha no final da tabela">
+                <i class="icon icon-plus m-r-1"></i> Linha
+              </button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="btn-add-col" style="display: none;" title="Adicionar nova coluna na tabela">
+                <i class="icon icon-plus m-r-1"></i> Coluna
+              </button>
               <button type="button" class="btn btn-ghost btn-sm text-danger" id="btn-clear-dataset" style="display: none;">
-                <i class="icon icon-trash m-r-1"></i> Limpar Dados
+                <i class="icon icon-trash m-r-1"></i> Limpar
               </button>
             </div>
           </div>
@@ -610,6 +699,9 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       const btnPresetTeam = document.getElementById('btn-preset-team');
       const btnPresetFinance = document.getElementById('btn-preset-finance');
       const btnClearDataset = document.getElementById('btn-clear-dataset');
+      const btnAddRow = document.getElementById('btn-add-row');
+      const btnAddCol = document.getElementById('btn-add-col');
+      const editModeHint = document.getElementById('edit-mode-hint');
 
       // Metric Elements
       const metricFormat = document.getElementById('metric-format');
@@ -638,6 +730,15 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
       }
 
+      function updateMetrics() {
+        if (!currentDataset) return;
+        metricRows.textContent = currentDataset.rows.length.toLocaleString();
+        metricCols.textContent = currentDataset.headers.length.toLocaleString();
+        const estBytes = JSON.stringify(currentDataset).length;
+        metricSize.textContent = formatBytes(estBytes);
+        previewSubtitle.textContent = (currentDataset.title || 'Dados Carregados') + ' · ' + currentDataset.rows.length + ' linha(s) e ' + currentDataset.headers.length + ' coluna(s)';
+      }
+
       // Load Dataset
       function loadDataset(dataset, formatLabel, byteSize) {
         if (!dataset || !dataset.headers || !dataset.rows) return;
@@ -648,14 +749,14 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         badgeSourceType.textContent = formatLabel || 'Dataset Ativo';
         badgeSourceType.className = 'badge badge-success badge-sm';
         metricFormat.textContent = formatLabel || 'Tabela';
-        metricRows.textContent = dataset.rows.length;
-        metricCols.textContent = dataset.headers.length;
-        metricSize.textContent = formatBytes(rawSourceBytes);
+        updateMetrics();
 
-        previewSubtitle.textContent = (dataset.title || 'Dados Carregados') + ' · ' + dataset.rows.length + ' linha(s) e ' + dataset.headers.length + ' coluna(s)';
         tableSearch.disabled = false;
         tableSearch.value = '';
         btnClearDataset.style.display = 'inline-flex';
+        if (btnAddRow) btnAddRow.style.display = 'inline-flex';
+        if (btnAddCol) btnAddCol.style.display = 'inline-flex';
+        if (editModeHint) editModeHint.style.display = 'inline-flex';
 
         // Enable Export Buttons
         exportButtons.forEach(btn => btn.disabled = false);
@@ -664,7 +765,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         applyFilter();
 
         if (Notify) {
-          Notify.success('Dados Carregados!', `${dataset.rows.length} registros e ${dataset.headers.length} colunas importados.`);
+          Notify.success('Dados Carregados!', `${dataset.rows.length} registros e ${dataset.headers.length} colunas prontos para edição e exportação.`);
         }
       }
 
@@ -685,6 +786,9 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         tableSearch.value = '';
         tableSearch.disabled = true;
         btnClearDataset.style.display = 'none';
+        if (btnAddRow) btnAddRow.style.display = 'none';
+        if (btnAddCol) btnAddCol.style.display = 'none';
+        if (editModeHint) editModeHint.style.display = 'none';
 
         exportButtons.forEach(btn => btn.disabled = true);
 
@@ -714,10 +818,18 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
         // Render Header
         let theadHtml = '<tr><th style="width: 50px;" class="txt-center text-muted">#</th>';
-        currentDataset.headers.forEach(h => {
-          theadHtml += `<th class="f-w-semibold">${escapeHTML(h)}</th>`;
+        currentDataset.headers.forEach((h, cIdx) => {
+          theadHtml += `<th>
+            <div class="th-editable-wrap">
+              <button type="button" class="th-title-btn" data-col="${cIdx}" title="Clique para renomear '${escapeHTML(h)}'">
+                <span>${escapeHTML(h)}</span>
+                <i class="icon icon-edit icon-edit-2 text-muted"></i>
+              </button>
+              <button type="button" class="btn-col-remove" data-col="${cIdx}" title="Excluir coluna '${escapeHTML(h)}'">✕</button>
+            </div>
+          </th>`;
         });
-        theadHtml += '</tr>';
+        theadHtml += '<th style="width: 50px;" class="txt-center text-muted">Ações</th></tr>';
         previewThead.innerHTML = theadHtml;
 
         // Calculate slice
@@ -730,17 +842,22 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
         // Render Body
         if (pageRows.length === 0) {
-          previewTbody.innerHTML = `<tr><td colspan="${currentDataset.headers.length + 1}" class="txt-center text-muted py-4">Nenhum registro encontrado para o filtro digitado.</td></tr>`;
+          previewTbody.innerHTML = `<tr><td colspan="${currentDataset.headers.length + 2}" class="txt-center text-muted py-4">Nenhum registro encontrado para o filtro digitado.</td></tr>`;
         } else {
           let tbodyHtml = '';
           pageRows.forEach((row, rIdx) => {
             const rowNumber = startIdx + rIdx + 1;
+            const realRowIndex = currentDataset.rows.indexOf(row);
             tbodyHtml += `<tr><td class="txt-center text-muted f-s-1">${rowNumber}</td>`;
-            row.forEach(cell => {
+            row.forEach((cell, cIdx) => {
               const val = cell != null ? String(cell) : '';
-              tbodyHtml += `<td class="f-s-2 text-truncate" style="max-width: 240px;" title="${escapeHTML(val)}">${escapeHTML(val)}</td>`;
+              tbodyHtml += `<td class="f-s-2 text-truncate cell-editable" tabindex="0" contenteditable="true" data-row="${realRowIndex}" data-col="${cIdx}" style="max-width: 240px;" title="Clique para editar">${escapeHTML(val)}</td>`;
             });
-            tbodyHtml += '</tr>';
+            tbodyHtml += `<td class="txt-center">
+              <button type="button" class="btn btn-ghost btn-xs text-danger btn-row-delete" data-row="${realRowIndex}" title="Excluir esta linha">
+                <i class="icon icon-trash"></i>
+              </button>
+            </td></tr>`;
           });
           previewTbody.innerHTML = tbodyHtml;
         }
@@ -764,6 +881,146 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           "'": '&#39;',
           '"': '&quot;'
         }[tag] || tag));
+      }
+
+      // Inline Cell Editing Listeners
+      let initialCellText = '';
+      previewTbody.addEventListener('focusin', (e) => {
+        if (e.target.classList.contains('cell-editable')) {
+          initialCellText = e.target.textContent;
+        }
+      });
+
+      previewTbody.addEventListener('keydown', (e) => {
+        if (!e.target.classList.contains('cell-editable')) return;
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.target.blur();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          e.target.textContent = initialCellText;
+          e.target.blur();
+        }
+      });
+
+      previewTbody.addEventListener('focusout', (e) => {
+        if (!e.target.classList.contains('cell-editable') || !currentDataset) return;
+        const newText = e.target.textContent;
+        if (newText !== initialCellText) {
+          const rowIdx = parseInt(e.target.getAttribute('data-row'), 10);
+          const colIdx = parseInt(e.target.getAttribute('data-col'), 10);
+          if (!isNaN(rowIdx) && !isNaN(colIdx)) {
+            let finalVal = newText;
+            if (newText.trim() !== '' && !isNaN(Number(newText))) {
+              finalVal = Number(newText);
+            }
+            Converter.updateCell(currentDataset, rowIdx, colIdx, finalVal);
+            e.target.classList.add('cell-saved');
+            setTimeout(() => e.target.classList.remove('cell-saved'), 600);
+            updateMetrics();
+          }
+        }
+      });
+
+      // Row Deletion Listener
+      previewTbody.addEventListener('click', (e) => {
+        const btnDelete = e.target.closest('.btn-row-delete');
+        if (!btnDelete || !currentDataset) return;
+        const rowIdx = parseInt(btnDelete.getAttribute('data-row'), 10);
+        if (isNaN(rowIdx)) return;
+
+        Converter.removeRow(currentDataset, rowIdx);
+        const totalPages = Math.max(1, Math.ceil(currentDataset.rows.length / pageSize));
+        if (currentPage > totalPages) currentPage = totalPages;
+        applyFilter();
+        updateMetrics();
+        if (Notify) {
+          Notify.info('Linha Removida', 'A linha foi excluída do dataset.');
+        }
+      });
+
+      // Column Rename and Deletion Listeners
+      previewThead.addEventListener('click', (e) => {
+        if (!currentDataset) return;
+
+        // Renomear coluna
+        const titleBtn = e.target.closest('.th-title-btn');
+        if (titleBtn) {
+          const colIdx = parseInt(titleBtn.getAttribute('data-col'), 10);
+          if (isNaN(colIdx)) return;
+          const currentName = currentDataset.headers[colIdx];
+          const newName = prompt('Novo nome para a coluna:', currentName);
+          if (newName && newName.trim() && newName.trim() !== currentName) {
+            Converter.renameColumn(currentDataset, colIdx, newName.trim());
+            applyFilter();
+            updateMetrics();
+            if (Notify) {
+              Notify.success('Coluna Renomeada', `Nome alterado para "${newName.trim()}".`);
+            }
+          }
+          return;
+        }
+
+        // Excluir coluna
+        const removeBtn = e.target.closest('.btn-col-remove');
+        if (removeBtn) {
+          const colIdx = parseInt(removeBtn.getAttribute('data-col'), 10);
+          if (isNaN(colIdx)) return;
+          if (currentDataset.headers.length <= 1) {
+            alert('O dataset precisa ter pelo menos 1 coluna.');
+            return;
+          }
+          const colName = currentDataset.headers[colIdx];
+          if (confirm(`Deseja realmente excluir a coluna "${colName}" e todos os seus dados?`)) {
+            Converter.removeColumn(currentDataset, colIdx);
+            applyFilter();
+            updateMetrics();
+            if (Notify) {
+              Notify.info('Coluna Removida', `A coluna "${colName}" foi excluída.`);
+            }
+          }
+        }
+      });
+
+      // Add Row Button
+      if (btnAddRow) {
+        btnAddRow.addEventListener('click', () => {
+          if (!currentDataset) return;
+          Converter.addRow(currentDataset);
+          const totalPages = Math.max(1, Math.ceil(currentDataset.rows.length / pageSize));
+          currentPage = totalPages;
+          tableSearch.value = '';
+          applyFilter();
+          updateMetrics();
+
+          setTimeout(() => {
+            const lastRowFirstCell = previewTbody.querySelector('tr:last-child td.cell-editable');
+            if (lastRowFirstCell) {
+              lastRowFirstCell.focus();
+            }
+          }, 50);
+
+          if (Notify) {
+            Notify.success('Linha Adicionada', `Linha #${currentDataset.rows.length} pronta para edição.`);
+          }
+        });
+      }
+
+      // Add Column Button
+      if (btnAddCol) {
+        btnAddCol.addEventListener('click', () => {
+          if (!currentDataset) return;
+          const defaultName = `Coluna_${currentDataset.headers.length + 1}`;
+          const colName = prompt('Digite o nome da nova coluna:', defaultName);
+          if (colName && colName.trim()) {
+            Converter.addColumn(currentDataset, colName.trim(), '');
+            applyFilter();
+            updateMetrics();
+            if (Notify) {
+              Notify.success('Coluna Adicionada', `Coluna "${colName.trim()}" criada com sucesso.`);
+            }
+          }
+        });
       }
 
       // Drag & Drop Handlers

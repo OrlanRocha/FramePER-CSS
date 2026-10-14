@@ -9450,6 +9450,116 @@ ${dataRows}
                 mime,
                 download: () => this.download(filename, content, mime)
             };
+        },
+
+        /**
+         * Atualiza o valor de uma célula específica
+         * @param {Object} dataset { headers, rows }
+         * @param {number} rowIndex Índice da linha
+         * @param {number} colIndex Índice da coluna
+         * @param {*} value Novo valor
+         */
+        updateCell(dataset, rowIndex, colIndex, value) {
+            if (!dataset || !Array.isArray(dataset.rows)) return false;
+            if (rowIndex < 0 || rowIndex >= dataset.rows.length) return false;
+            const row = dataset.rows[rowIndex];
+            if (!Array.isArray(row) || colIndex < 0 || colIndex >= dataset.headers.length) return false;
+            row[colIndex] = value;
+            return true;
+        },
+
+        /**
+         * Adiciona uma nova linha ao dataset
+         * @param {Object} dataset { headers, rows }
+         * @param {Array} values Array de valores para a linha (opcional)
+         */
+        addRow(dataset, values = []) {
+            if (!dataset || !Array.isArray(dataset.rows)) return null;
+            const colCount = Array.isArray(dataset.headers) ? dataset.headers.length : (values ? values.length : 0);
+            const newRow = [];
+            for (let i = 0; i < colCount; i++) {
+                newRow.push(i < values.length && values[i] !== undefined ? values[i] : '');
+            }
+            dataset.rows.push(newRow);
+            return newRow;
+        },
+
+        /**
+         * Remove uma linha pelo índice
+         * @param {Object} dataset { headers, rows }
+         * @param {number} rowIndex Índice da linha
+         */
+        removeRow(dataset, rowIndex) {
+            if (!dataset || !Array.isArray(dataset.rows)) return null;
+            if (rowIndex < 0 || rowIndex >= dataset.rows.length) return null;
+            return dataset.rows.splice(rowIndex, 1)[0];
+        },
+
+        /**
+         * Adiciona uma nova coluna ao dataset
+         * @param {Object} dataset { headers, rows }
+         * @param {string} name Nome do novo cabeçalho
+         * @param {*} defaultValue Valor padrão para as linhas existentes
+         */
+        addColumn(dataset, name, defaultValue = '') {
+            if (!dataset) return false;
+            if (!Array.isArray(dataset.headers)) dataset.headers = [];
+            if (!Array.isArray(dataset.rows)) dataset.rows = [];
+
+            const colName = name || `Coluna_${dataset.headers.length + 1}`;
+            dataset.headers.push(colName);
+            dataset.rows.forEach(row => {
+                if (Array.isArray(row)) {
+                    row.push(defaultValue);
+                }
+            });
+            return true;
+        },
+
+        /**
+         * Remove uma coluna pelo índice ou nome
+         * @param {Object} dataset { headers, rows }
+         * @param {number|string} indexOrName Índice ou nome da coluna
+         */
+        removeColumn(dataset, indexOrName) {
+            if (!dataset || !Array.isArray(dataset.headers)) return false;
+            let colIdx = -1;
+            if (typeof indexOrName === 'number') {
+                colIdx = indexOrName;
+            } else {
+                colIdx = dataset.headers.indexOf(indexOrName);
+            }
+            if (colIdx < 0 || colIdx >= dataset.headers.length) return false;
+
+            dataset.headers.splice(colIdx, 1);
+            if (Array.isArray(dataset.rows)) {
+                dataset.rows.forEach(row => {
+                    if (Array.isArray(row)) {
+                        row.splice(colIdx, 1);
+                    }
+                });
+            }
+            return true;
+        },
+
+        /**
+         * Renomeia uma coluna pelo índice ou nome atual
+         * @param {Object} dataset { headers, rows }
+         * @param {number|string} indexOrName Índice ou nome atual
+         * @param {string} newName Novo nome da coluna
+         */
+        renameColumn(dataset, indexOrName, newName) {
+            if (!dataset || !Array.isArray(dataset.headers) || !newName) return false;
+            let colIdx = -1;
+            if (typeof indexOrName === 'number') {
+                colIdx = indexOrName;
+            } else {
+                colIdx = dataset.headers.indexOf(indexOrName);
+            }
+            if (colIdx < 0 || colIdx >= dataset.headers.length) return false;
+
+            dataset.headers[colIdx] = String(newName);
+            return true;
         }
     };
     FramePER.Converter = Converter;
