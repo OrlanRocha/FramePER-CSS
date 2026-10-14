@@ -177,3 +177,41 @@ assert(xlsxStr.includes('xl/workbook.xml'), 'XLSX deve conter workbook.xml');
 console.log('  ✓ Passou');
 
 console.log('\n🎉 TODOS OS TESTES DA TASK 3 PASSARAM COM SUCESSO!\n');
+
+// ==========================================
+// TASK 4: MOTOR VETORIAL DE PDF (PDF 1.4)
+// ==========================================
+console.log('\n--- TESTES TASK 4: MOTOR PDF 1.4 VETORIAL ---');
+
+// Teste 13: toPDF Estrutura Básica
+console.log('▶ Teste 13: Geração de PDF 1.4 Válido');
+const pdfBytes = Converter.toPDF(testDataset, { asBuffer: true });
+assert(pdfBytes instanceof Uint8Array, 'toPDF com asBuffer: true deve retornar Uint8Array');
+const pdfStr = Buffer.from(pdfBytes).toString('binary');
+assert(pdfStr.startsWith('%PDF-1.4'), 'PDF deve iniciar com cabeçalho %PDF-1.4');
+assert(pdfStr.includes('/Type /Catalog'), 'PDF deve conter Catalog');
+assert(pdfStr.includes('/Type /Pages'), 'PDF deve conter Pages');
+assert(pdfStr.includes('/Type /Page'), 'PDF deve conter Page');
+assert(pdfStr.includes('/BaseFont /Helvetica'), 'PDF deve conter fonte Helvetica');
+assert(pdfStr.includes('xref'), 'PDF deve conter tabela xref');
+assert(pdfStr.includes('%%EOF'), 'PDF deve terminar com marcador %%EOF');
+console.log('  ✓ Passou');
+
+// Teste 14: toPDF com Paginação Multi-Página
+console.log('▶ Teste 14: Paginação Multi-Página em Relatórios Grandes (100 linhas)');
+const largeRows = [];
+for (let i = 1; i <= 100; i++) {
+  largeRows.push([i, 'Item ' + i, (i * 15.5).toFixed(2), 'Descrição do produto ' + i]);
+}
+const largeDataset = {
+  title: 'Inventário Completo de Teste',
+  headers: ['ID', 'Produto', 'Preço Unitário', 'Detalhes'],
+  rows: largeRows
+};
+const multiPdfBytes = Converter.toPDF(largeDataset, { asBuffer: true });
+const multiPdfStr = Buffer.from(multiPdfBytes).toString('binary');
+const pageCountMatch = multiPdfStr.match(/\/Count\s+(\d+)/);
+assert(pageCountMatch && parseInt(pageCountMatch[1], 10) >= 3, 'Dataset com 100 linhas deve gerar pelo menos 3 páginas no A4');
+console.log('  ✓ Passou (' + pageCountMatch[1] + ' páginas geradas)');
+
+console.log('\n🎉 TODOS OS TESTES DA TASK 4 PASSARAM COM SUCESSO!\n');

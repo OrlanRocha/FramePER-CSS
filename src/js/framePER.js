@@ -8766,6 +8766,192 @@ ${dataRows}
                 return new Blob([zipBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             }
             return zipBytes;
+        },
+
+        toPDF(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const title = options.title || ds.title || 'Relatório de Dados';
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR');
+
+            const pageWidth = 595.28;
+            const pageHeight = 841.89;
+            const marginLeft = 36;
+            const marginRight = 36;
+            const marginTop = 36;
+            const marginBottom = 36;
+            const contentWidth = pageWidth - marginLeft - marginRight;
+            const colHeaderHeight = 22;
+            const rowHeight = 18;
+
+            // Normalize and escape text for PDF syntax
+            const escapePDF = (str) => {
+                if (str === null || str === undefined) return '';
+                // Transliterate accented characters to safe latin characters for Helvetica standard type1 font
+                const map = {
+                    'á':'a','à':'a','ã':'a','â':'a','ä':'a','é':'e','è':'e','ê':'e','ë':'e',
+                    'í':'i','ì':'i','î':'i','ï':'i','ó':'o','ò':'o','õ':'o','ô':'o','ö':'o',
+                    'ú':'u','ù':'u','û':'u','ü':'u','ç':'c','ñ':'n','Á':'A','À':'A','Ã':'A',
+                    'Â':'A','Ä':'A','É':'E','È':'E','Ê':'E','Ë':'E','Í':'I','Ì':'I','Î':'I',
+                    'Ï':'I','Ó':'O','Ò':'O','Õ':'O','Ô':'O','Ö':'O','Ú':'U','Ù':'U','Û':'U',
+                    'Ü':'U','Ç':'C','Ñ':'N'
+                };
+                let clean = String(str).replace(/[^\u0000-\u007E]/g, ch => map[ch] || ch);
+                return clean
+                    .replace(/\\/g, '\\\\')
+                    .replace(/\(/g, '\\(')
+                    .replace(/\)/g, '\\)')
+                    .replace(/[\r\n]+/g, ' ')
+                    .slice(0, 75);
+            };
+
+            // Calculate proportional column widths
+            const colWeights = ds.headers.map((h, cIdx) => {
+                let maxL = String(h).length;
+                ds.rows.forEach(r => {
+                    const l = String(r[cIdx] || '').length;
+                    if (l > maxL) maxL = l;
+                });
+                return Math.max(6, Math.min(32, maxL));
+            });
+            const totalWeight = colWeights.reduce((a, b) => a + b, 0) || 1;
+            const colWidths = colWeights.map(w => (w / totalWeight) * contentWidth);
+
+            // Chunk rows into pages
+            const rowsPage1 = 34; // leaves room for title block
+            const rowsPageN = 38;
+            const pageChunks = [];
+
+            if (ds.rows.length <= rowsPage1) {
+                pageChunks.push(ds.rows);
+            } else {
+                pageChunks.push(ds.rows.slice(0, rowsPage1));
+                let curIdx = rowsPage1;
+                while (curIdx < ds.rows.length) {
+                    pageChunks.push(ds.rows.slice(curIdx, curIdx + rowsPageN));
+                    curIdx += rowsPageN;
+                }
+            }
+
+            const totalPages = pageChunks.length;
+            const pageContents = [];
+
+            let globalRowCounter = 0;
+            pageChunks.forEach((chunk, pageIdx) => {
+                const pageNum = pageIdx + 1;
+                let stream = '';
+
+                let tableTopY;
+                if (pageIdx === 0) {
+                    // Header Block (Page 1 only)
+                    // Accent bar
+                    stream += `0.145 0.388 0.922 rg ${marginLeft} ${pageHeight - marginTop - 4} ${contentWidth} 4 re f\n`;
+                    // Title
+                    stream += `BT /F2 15 Tf 0.1 0.1 0.1 rg ${marginLeft} ${pageHeight - marginTop - 22} Td (${escapePDF(title)}) Tj ET\n`;
+                    // Subtitle / Date
+                    stream += `BT /F1 8 Tf 0.45 0.45 0.45 rg ${marginLeft} ${pageHeight - marginTop - 34} Td (Gerado em ${escapePDF(dateStr)} - FramePER UI Framework) Tj ET\n`;
+                    tableTopY = pageHeight - marginTop - 48;
+                } else {
+                    // Subsequent pages header
+                    stream += `BT /F2 9 Tf 0.4 0.4 0.4 rg ${marginLeft} ${pageHeight - marginTop - 12} Td (${escapePDF(title)} - Continuação) Tj ET\n`;
+                    stream += `0.85 0.88 0.92 RG 0.5 w ${marginLeft} ${pageHeight - marginTop - 16} m ${pageWidth - marginRight} ${pageHeight - marginTop - 16} l S\n`;
+                    tableTopY = pageHeight - marginTop - 24;
+                }
+
+                // Table Header background
+                stream += `0.145 0.388 0.922 rg ${marginLeft} ${tableTopY - colHeaderHeight} ${contentWidth} ${colHeaderHeight} re f\n`;
+
+                // Table Header text
+                let curX = marginLeft;
+                ds.headers.forEach((h, cIdx) => {
+                    const w = colWidths[cIdx];
+                    stream += `BT /F2 8.5 Tf 1 1 1 rg ${curX + 4} ${tableTopY - colHeaderHeight + 7} Td (${escapePDF(h)}) Tj ET\n`;
+                    curX += w;
+                });
+
+                // Table Data Rows
+                chunk.forEach((row, rIdx) => {
+                    const rowY = tableTopY - colHeaderHeight - (rIdx + 1) * rowHeight;
+                    // Zebra stripe
+                    if (globalRowCounter % 2 === 1) {
+                        stream += `0.973 0.980 0.988 rg ${marginLeft} ${rowY} ${contentWidth} ${rowHeight} re f\n`;
+                    }
+                    // Bottom border
+                    stream += `0.88 0.90 0.93 RG 0.5 w ${marginLeft} ${rowY} m ${pageWidth - marginRight} ${rowY} l S\n`;
+
+                    // Cell contents
+                    curX = marginLeft;
+                    row.forEach((val, cIdx) => {
+                        const w = colWidths[cIdx];
+                        stream += `BT /F1 7.5 Tf 0.15 0.15 0.15 rg ${curX + 4} ${rowY + 5.5} Td (${escapePDF(val)}) Tj ET\n`;
+                        curX += w;
+                    });
+
+                    globalRowCounter++;
+                });
+
+                // Footer
+                stream += `0.85 0.88 0.92 RG 0.5 w ${marginLeft} ${marginBottom + 12} m ${pageWidth - marginRight} ${marginBottom + 12} l S\n`;
+                stream += `BT /F1 7.5 Tf 0.45 0.45 0.45 rg ${marginLeft} ${marginBottom + 2} Td (FramePER - Conversor Universal) Tj ET\n`;
+                stream += `BT /F1 7.5 Tf 0.45 0.45 0.45 rg ${pageWidth - marginRight - 65} ${marginBottom + 2} Td (Página ${pageNum} de ${totalPages}) Tj ET\n`;
+
+                pageContents.push(stream);
+            });
+
+            // Assemble PDF 1.4 objects
+            const objects = [];
+            const addObject = (content) => {
+                objects.push(content);
+                return objects.length;
+            };
+
+            // Obj 1: Catalog
+            addObject(`<< /Type /Catalog /Pages 2 0 R >>`);
+
+            // Obj 2: Pages (Kids placeholder)
+            const pagesObjIdx = addObject(``); // updated later
+
+            // Fonts
+            const font1Idx = addObject(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>`);
+            const font2Idx = addObject(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>`);
+
+            // Create Page & Content objects
+            const pageObjIndices = [];
+            pageContents.forEach(streamContent => {
+                const streamBytes = new TextEncoder().encode(streamContent);
+                const contentObjIdx = addObject(`<< /Length ${streamBytes.length} >>\nstream\n${streamContent}\nendstream`);
+                const pageObjIdx = addObject(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${contentObjIdx} 0 R /Resources << /Font << /F1 ${font1Idx} 0 R /F2 ${font2Idx} 0 R >> >> >>`);
+                pageObjIndices.push(pageObjIdx);
+            });
+
+            // Update Obj 2 (Pages)
+            const kidsStr = pageObjIndices.map(idx => `${idx} 0 R`).join(' ');
+            objects[pagesObjIdx - 1] = `<< /Type /Pages /Kids [${kidsStr}] /Count ${totalPages} >>`;
+
+            // Build binary PDF
+            let pdf = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
+            const xrefOffsets = [];
+
+            objects.forEach((objContent, i) => {
+                xrefOffsets.push(pdf.length);
+                pdf += `${i + 1} 0 obj\n${objContent}\nendobj\n`;
+            });
+
+            const startXref = pdf.length;
+            pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+            xrefOffsets.forEach(off => {
+                pdf += String(off).padStart(10, '0') + ' 00000 n \n';
+            });
+            pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF\n`;
+
+            const pdfBytes = new TextEncoder().encode(pdf);
+            if (options.asBuffer || options.raw) {
+                return pdfBytes;
+            }
+            if (typeof Blob !== 'undefined') {
+                return new Blob([pdfBytes], { type: 'application/pdf' });
+            }
+            return pdfBytes;
         }
     };
     FramePER.Converter = Converter;
