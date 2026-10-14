@@ -9929,6 +9929,109 @@ ${dataRows}
                 series,
                 pieSeries
             };
+        },
+
+        /**
+         * Cria e empacota um arquivo ZIP contendo múltiplos arquivos
+         * @param {Array<{ name: string, data: string|Uint8Array|ArrayBuffer }>} files
+         * @param {Object} options { filename, autoDownload }
+         * @returns {Object} { filename, mime: 'application/zip', content, download() }
+         */
+        toZip(files, options = {}) {
+            if (!Array.isArray(files) || files.length === 0) {
+                throw new Error('Nenhum arquivo fornecido para empacotamento ZIP.');
+            }
+
+            const zipBytes = this._createZip(files);
+            const filename = options.filename || 'pacote.zip';
+            const mime = 'application/zip';
+
+            if (options.autoDownload !== false && typeof document !== 'undefined') {
+                this.download(filename, zipBytes, mime);
+            }
+
+            return {
+                filename,
+                mime,
+                content: zipBytes,
+                download: () => this.download(filename, zipBytes, mime)
+            };
+        },
+
+        /**
+         * Converte múltiplos arquivos de uma vez para um formato alvo e empacota em ZIP
+         * @param {Array<File|Object>} files Lista de arquivos a converter
+         * @param {string} targetFormat Formato de destino ('xlsx', 'pdf', 'csv', 'json', 'xml', 'xls')
+         * @param {Object} options { zipFilename, onProgress, ignoreErrors, autoDownload }
+         * @returns {Promise<{ results: Array, zip: Object, download() }>}
+         */
+        async convertBatch(files, targetFormat, options = {}) {
+            if (!Array.isArray(files) || files.length === 0) {
+                throw new Error('Nenhum arquivo fornecido para conversão em lote.');
+            }
+
+            const results = [];
+            const zipFiles = [];
+            const total = files.length;
+            const fmt = String(targetFormat || 'xlsx').trim().toLowerCase();
+
+            for (let i = 0; i < total; i++) {
+                const file = files[i];
+                const rawName = file.name || `arquivo_${i + 1}`;
+                const baseName = rawName.replace(/\.[a-zA-Z0-9]+$/, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
+
+                try {
+                    let dataset;
+                    if (file && typeof file.headers !== 'undefined' && typeof file.rows !== 'undefined') {
+                        dataset = file;
+                    } else if (file && typeof file.text === 'function') {
+                        dataset = await this.readFile(file);
+                    } else if (file && file.content !== undefined) {
+                        dataset = this.parse(file.content, { title: baseName });
+                    } else {
+                        dataset = await this.readFile(file);
+                    }
+
+                    const converted = this.convert(dataset, fmt, {
+                        filename: `${baseName}.${fmt}`,
+                        title: baseName,
+                        autoDownload: false
+                    });
+
+                    results.push(converted);
+                    zipFiles.push({
+                        name: converted.filename,
+                        data: converted.content
+                    });
+                } catch (err) {
+                    if (options.ignoreErrors) {
+                        console.warn(`[FramePER.Converter] Falha ao converter "${rawName}":`, err);
+                    } else {
+                        throw err;
+                    }
+                }
+
+                if (typeof options.onProgress === 'function') {
+                    options.onProgress({
+                        current: i + 1,
+                        total,
+                        percent: Math.round(((i + 1) / total) * 100),
+                        filename: rawName
+                    });
+                }
+            }
+
+            const zipFilename = options.zipFilename || `conversao_lote_${fmt}.zip`;
+            const zipResult = this.toZip(zipFiles, {
+                filename: zipFilename,
+                autoDownload: options.autoDownload !== false
+            });
+
+            return {
+                results,
+                zip: zipResult,
+                download: () => zipResult.download()
+            };
         }
     };
     FramePER.Converter = Converter;

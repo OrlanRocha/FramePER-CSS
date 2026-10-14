@@ -315,9 +315,10 @@
             <span class="badge badge-primary badge-sm" id="badge-source-type">Aguardando dados</span>
           </div>
 
-          <!-- Tabs: File / Paste / Sample -->
-          <ul class="tabs m-b-3">
+          <!-- Tabs: File / Batch / Paste / Sample -->
+          <ul class="tabs m-b-3" id="input-tabs">
             <li class="tab-item"><a class="tab-link active" data-target="#tab-upload"><i class="icon icon-upload m-r-1"></i> Upload</a></li>
+            <li class="tab-item"><a class="tab-link" data-target="#tab-batch"><i class="icon icon-layers m-r-1"></i> Lote (ZIP) <span class="badge badge-purple badge-xs">Novo</span></a></li>
             <li class="tab-item"><a class="tab-link" data-target="#tab-paste"><i class="icon icon-edit m-r-1"></i> Colar Texto</a></li>
             <li class="tab-item"><a class="tab-link" data-target="#tab-presets"><i class="icon icon-star m-r-1"></i> Exemplos</a></li>
           </ul>
@@ -338,6 +339,51 @@
                   <span class="badge badge-subtle badge-xs">.csv</span>
                   <span class="badge badge-subtle badge-xs">.json</span>
                   <span class="badge badge-subtle badge-xs">.xml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Batch Multi-File Converter -->
+            <div id="tab-batch" class="tab-content">
+              <div class="stack gap-3">
+                <div class="upload-dropzone" id="batch-dropzone" style="padding: 1.5rem 1rem;">
+                  <input type="file" id="batch-file-input" multiple accept=".xlsx,.xls,.csv,.json,.xml,text/csv,application/json,application/xml,text/xml" style="display: none;">
+                  <div class="upload-icon" style="width: 44px; height: 44px; margin-inline: auto; margin-bottom: 0.5rem;">
+                    <i class="icon icon-layers"></i>
+                  </div>
+                  <strong class="d-block f-s-3">Conversão em Lote</strong>
+                  <span class="text-muted f-s-1">Arraste múltiplos arquivos aqui ou clique para selecionar</span>
+                </div>
+
+                <!-- Selected Files List -->
+                <div id="batch-files-container" style="display: none;">
+                  <div class="d-flex align-items-center justify-content-between m-b-2">
+                    <span class="f-s-2 text-muted f-w-medium" id="batch-files-count">0 arquivo(s)</span>
+                    <button type="button" class="btn btn-ghost btn-xs text-danger" id="btn-clear-batch">Limpar Lista</button>
+                  </div>
+                  <div class="stack gap-1" id="batch-files-list" style="max-height: 160px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-md, 8px); padding: 0.5rem; background: var(--bg-subtle);">
+                  </div>
+                </div>
+
+                <!-- Target Format Selector & Convert Button -->
+                <div class="stack gap-2" id="batch-actions-area" style="display: none;">
+                  <div>
+                    <label for="batch-target-format" class="form-label f-s-1 text-muted m-b-1">Formato de destino do lote:</label>
+                    <select id="batch-target-format" class="form-select form-select-sm w-100">
+                      <option value="xlsx" selected>Excel Moderno (.xlsx)</option>
+                      <option value="pdf">Documento PDF Vetorial (.pdf)</option>
+                      <option value="csv">Planilha CSV (.csv)</option>
+                      <option value="json">JSON Estruturado (.json)</option>
+                      <option value="xml">XML Semântico (.xml)</option>
+                      <option value="xls">Excel Legado (.xls)</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-primary btn-sm w-100" id="btn-process-batch">
+                    <i class="icon icon-download m-r-1"></i> Converter Todos e Baixar (.zip)
+                  </button>
+                  <div class="progress progress-sm" id="batch-progress-bar" style="display: none; height: 6px; border-radius: 4px; overflow: hidden; background: var(--border);">
+                    <div class="progress-bar bg-primary" id="batch-progress-fill" style="width: 0%; height: 100%; transition: width 0.2s ease;"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -782,6 +828,57 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       const chartAggSelect = document.getElementById('chart-agg-select');
       const chartContainer = document.getElementById('converter-chart-container');
       let currentChart = null;
+
+      // Batch Elements
+      const batchDropzone = document.getElementById('batch-dropzone');
+      const batchFileInput = document.getElementById('batch-file-input');
+      const batchFilesContainer = document.getElementById('batch-files-container');
+      const batchFilesCount = document.getElementById('batch-files-count');
+      const batchFilesList = document.getElementById('batch-files-list');
+      const batchActionsArea = document.getElementById('batch-actions-area');
+      const batchTargetFormat = document.getElementById('batch-target-format');
+      const btnProcessBatch = document.getElementById('btn-process-batch');
+      const btnClearBatch = document.getElementById('btn-clear-batch');
+      const batchProgressBar = document.getElementById('batch-progress-bar');
+      const batchProgressFill = document.getElementById('batch-progress-fill');
+      let batchFiles = [];
+
+      function renderBatchList() {
+        if (!batchFilesContainer || !batchFilesList) return;
+        if (batchFiles.length === 0) {
+          batchFilesContainer.style.display = 'none';
+          if (batchActionsArea) batchActionsArea.style.display = 'none';
+          return;
+        }
+
+        batchFilesContainer.style.display = 'block';
+        if (batchActionsArea) batchActionsArea.style.display = 'flex';
+        batchFilesCount.textContent = `${batchFiles.length} arquivo(s) selecionado(s)`;
+
+        let html = '';
+        batchFiles.forEach((file, idx) => {
+          const ext = file.name.split('.').pop().toUpperCase();
+          html += `<div class="d-flex align-items-center justify-content-between p-2 rounded bg-surface border f-s-1">
+            <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 82%;">
+              <span class="badge badge-subtle badge-xs">${escapeHTML(ext)}</span>
+              <strong class="text-truncate" title="${escapeHTML(file.name)}">${escapeHTML(file.name)}</strong>
+              <span class="text-muted">(${formatBytes(file.size)})</span>
+            </div>
+            <button type="button" class="btn btn-ghost btn-xs text-danger btn-remove-batch-file" data-idx="${idx}" title="Remover">✕</button>
+          </div>`;
+        });
+        batchFilesList.innerHTML = html;
+      }
+
+      function addBatchFiles(newFiles) {
+        if (!newFiles) return;
+        Array.from(newFiles).forEach(file => {
+          if (!batchFiles.some(f => f.name === file.name && f.size === file.size)) {
+            batchFiles.push(file);
+          }
+        });
+        renderBatchList();
+      }
 
       // Helper to format bytes
       function formatBytes(bytes) {
@@ -1386,6 +1483,123 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           } finally {
             btn.disabled = false;
           }
+        });
+      });
+
+      // Batch Listeners
+      if (batchDropzone) {
+        batchDropzone.addEventListener('click', () => batchFileInput && batchFileInput.click());
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+          batchDropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            batchDropzone.classList.add('is-dragover');
+          });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          batchDropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            batchDropzone.classList.remove('is-dragover');
+          });
+        });
+
+        batchDropzone.addEventListener('drop', (e) => {
+          const files = e.dataTransfer.files;
+          if (files && files.length > 0) {
+            addBatchFiles(files);
+          }
+        });
+      }
+
+      if (batchFileInput) {
+        batchFileInput.addEventListener('change', () => {
+          if (batchFileInput.files && batchFileInput.files.length > 0) {
+            addBatchFiles(batchFileInput.files);
+            batchFileInput.value = '';
+          }
+        });
+      }
+
+      if (batchFilesList) {
+        batchFilesList.addEventListener('click', (e) => {
+          const btn = e.target.closest('.btn-remove-batch-file');
+          if (btn) {
+            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+            if (!isNaN(idx)) {
+              batchFiles.splice(idx, 1);
+              renderBatchList();
+            }
+          }
+        });
+      }
+
+      if (btnClearBatch) {
+        btnClearBatch.addEventListener('click', () => {
+          batchFiles = [];
+          renderBatchList();
+        });
+      }
+
+      if (btnProcessBatch) {
+        btnProcessBatch.addEventListener('click', async () => {
+          if (batchFiles.length === 0 || !Converter || !Converter.convertBatch) return;
+
+          const targetFormat = batchTargetFormat ? batchTargetFormat.value : 'xlsx';
+          btnProcessBatch.disabled = true;
+          if (batchProgressBar) {
+            batchProgressBar.style.display = 'block';
+            batchProgressFill.style.width = '10%';
+          }
+
+          try {
+            const result = await Converter.convertBatch(batchFiles, targetFormat, {
+              zipFilename: `conversao_lote_${targetFormat}.zip`,
+              autoDownload: true,
+              ignoreErrors: true,
+              onProgress: ({ percent }) => {
+                if (batchProgressFill) {
+                  batchProgressFill.style.width = `${percent}%`;
+                }
+              }
+            });
+
+            if (Confetti) {
+              Confetti.burst({ count: 70, spread: 80 });
+            }
+            if (Notify) {
+              Notify.success('Conversão em Lote Concluída!', `${result.results.length} arquivo(s) convertidos e empacotados em "${result.zip.filename}".`);
+            }
+          } catch (err) {
+            console.error(err);
+            if (Notify) {
+              Notify.error('Erro na Conversão em Lote', err.message);
+            }
+          } finally {
+            btnProcessBatch.disabled = false;
+            setTimeout(() => {
+              if (batchProgressBar) batchProgressBar.style.display = 'none';
+              if (batchProgressFill) batchProgressFill.style.width = '0%';
+            }, 1200);
+          }
+        });
+      }
+
+      // Tabs Click Switching
+      document.querySelectorAll('#input-tabs .tab-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetSel = link.getAttribute('data-target');
+          if (!targetSel) return;
+          document.querySelectorAll('#input-tabs .tab-link').forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+
+          const card = link.closest('.converter-card') || document;
+          card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          const targetEl = card.querySelector(targetSel);
+          if (targetEl) targetEl.classList.add('active');
         });
       });
 
