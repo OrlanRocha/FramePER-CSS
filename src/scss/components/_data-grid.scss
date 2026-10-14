@@ -58,12 +58,24 @@
     align-items: center;
     gap: 0.5rem;
   }
+
+  .data-grid-import {
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 .data-grid-table-wrapper {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  transition: all 0.2s ease;
+
+  &.data-grid-dragover {
+    outline: 2px dashed var(--color-primary, #6366f1);
+    outline-offset: -4px;
+    background-color: rgba(99, 102, 241, 0.05);
+  }
 }
 
 .data-grid-table {

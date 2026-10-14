@@ -6066,6 +6066,7 @@
                         selectable: this.container.getAttribute('data-selectable') !== 'false',
                         pagination: this.container.getAttribute('data-pagination') !== 'false',
                         exportable: this.container.getAttribute('data-exportable') !== 'false',
+                        importable: this.container.getAttribute('data-importable') !== 'false',
                         emptyText: 'Nenhum registro encontrado',
                         onSelect: null,
                         onChange: null
@@ -6145,7 +6146,7 @@
                     this.container.classList.add('data-grid-container');
                     this.container.innerHTML = '';
 
-                    if (this.options.searchable || this.options.exportable) {
+                    if (this.options.searchable || this.options.exportable || this.options.importable) {
                         this.toolbarEl = document.createElement('div');
                         this.toolbarEl.className = 'data-grid-toolbar';
 
@@ -6160,6 +6161,34 @@
                                 });
                             }
                             this.toolbarEl.appendChild(searchWrap);
+                        }
+
+                        if (this.options.importable) {
+                            const importWrap = document.createElement('div');
+                            importWrap.className = 'data-grid-import d-inline-block';
+
+                            const fileInput = document.createElement('input');
+                            fileInput.type = 'file';
+                            fileInput.accept = '.xlsx,.xls,.csv,.json,.xml';
+                            fileInput.style.display = 'none';
+
+                            const importBtn = document.createElement('button');
+                            importBtn.type = 'button';
+                            importBtn.className = 'btn btn-outline btn-sm';
+                            importBtn.innerHTML = '<i class="icon icon-upload m-r-1"></i> Importar';
+                            importBtn.title = 'Importar arquivo (.xlsx, .xls, .csv, .json, .xml)';
+
+                            importBtn.addEventListener('click', () => fileInput.click());
+                            fileInput.addEventListener('change', () => {
+                                if (fileInput.files && fileInput.files.length > 0) {
+                                    this.importFile(fileInput.files[0]);
+                                    fileInput.value = '';
+                                }
+                            });
+
+                            importWrap.appendChild(fileInput);
+                            importWrap.appendChild(importBtn);
+                            this.toolbarEl.appendChild(importWrap);
                         }
 
                         if (this.options.exportable) {
@@ -6237,6 +6266,10 @@
 
                     this.tableWrapperEl.appendChild(this.tableEl);
                     this.container.appendChild(this.tableWrapperEl);
+
+                    if (this.options.importable) {
+                        this._setupDragDrop();
+                    }
 
                     if (this.options.pagination) {
                         this.footerEl = document.createElement('div');
@@ -6735,6 +6768,144 @@
 
                 exportXML(filename, options = {}) {
                     return this.export('xml', Object.assign({ filename }, options));
+                }
+
+                loadDataset(dataset, options = {}) {
+                    if (!dataset || !Array.isArray(dataset.headers) || !Array.isArray(dataset.rows)) {
+                        return false;
+                    }
+                    const mode = options.mode || 'replace';
+
+                    if (mode === 'replace') {
+                        this.columns = dataset.headers.map(h => ({
+                            key: h,
+                            title: h.charAt(0).toUpperCase() + h.slice(1),
+                            sortable: true
+                        }));
+
+                        this.allData = dataset.rows.map((row, rIdx) => {
+                            const obj = { _gridId: `row-${rIdx + 1}` };
+                            dataset.headers.forEach((h, cIdx) => {
+                                const val = row[cIdx] !== undefined ? row[cIdx] : '';
+                                obj[h] = val;
+                                obj[`_${h}_raw`] = val;
+                            });
+                            return obj;
+                        });
+
+                        this.selectedIds.clear();
+                        this.currentPage = 1;
+                        if (dataset.title) {
+                            this.options.title = dataset.title;
+                        }
+
+                        if (this.theadEl) {
+                            this._renderThead();
+                        }
+                    } else if (mode === 'append') {
+                        const existingCount = this.allData.length;
+                        const newRows = dataset.rows.map((row, rIdx) => {
+                            const obj = { _gridId: `row-${existingCount + rIdx + 1}` };
+                            dataset.headers.forEach((h, cIdx) => {
+                                const val = row[cIdx] !== undefined ? row[cIdx] : '';
+                                obj[h] = val;
+                                obj[`_${h}_raw`] = val;
+                            });
+                            return obj;
+                        });
+                        this.allData = this.allData.concat(newRows);
+                    }
+
+                    this.filter(this.searchQuery || '');
+
+                    if (this.container && typeof this.container.dispatchEvent === 'function') {
+                        this.container.dispatchEvent(new CustomEvent('frameper:datagrid:import', {
+                            bubbles: true,
+                            detail: {
+                                dataset,
+                                mode,
+                                count: dataset.rows.length,
+                                total: this.allData.length
+                            }
+                        }));
+                    }
+
+                    return true;
+                }
+
+                async importFile(file, options = {}) {
+                    const Converter = (typeof FramePER !== 'undefined' && FramePER.Converter)
+                        ? FramePER.Converter
+                        : ((typeof window !== 'undefined' && (window.FramePERConverter || (window.FramePER && window.FramePER.Converter)))
+                            || (typeof FramePERConverter !== 'undefined' ? FramePERConverter : null));
+
+                    if (!Converter || typeof Converter.readFile !== 'function') {
+                        console.error('FramePER.Converter.readFile não encontrado para importação no DataGrid.');
+                        return null;
+                    }
+
+                    try {
+                        const dataset = await Converter.readFile(file, options);
+                        if (!dataset) return null;
+
+                        this.loadDataset(dataset, options);
+
+                        if (typeof window !== 'undefined') {
+                            if (typeof FramePER !== 'undefined' && FramePER.Confetti && options.confetti !== false) {
+                                FramePER.Confetti.burst({ count: 60, spread: 75 });
+                            }
+                            if (typeof FramePER !== 'undefined' && FramePER.Notify && options.notify !== false) {
+                                const fileName = file && file.name ? ` (${file.name})` : '';
+                                FramePER.Notify.success('Arquivo Importado', `${dataset.rows.length} registros carregados com sucesso${fileName}.`);
+                            }
+                        }
+
+                        return dataset;
+                    } catch (err) {
+                        console.error('Erro ao importar arquivo no DataGrid:', err);
+                        if (typeof FramePER !== 'undefined' && FramePER.Notify && options.notify !== false) {
+                            FramePER.Notify.error('Erro na Importação', err.message || 'Falha ao processar arquivo.');
+                        }
+                        throw err;
+                    }
+                }
+
+                _setupDragDrop() {
+                    const target = this.tableWrapperEl || this.container;
+                    if (!target || typeof target.addEventListener !== 'function') return;
+
+                    let dragCounter = 0;
+                    ['dragenter', 'dragover'].forEach(name => {
+                        target.addEventListener(name, (e) => {
+                            e.preventDefault();
+                            if (e.stopPropagation) e.stopPropagation();
+                            dragCounter++;
+                            if (target.classList && target.classList.add) target.classList.add('data-grid-dragover');
+                        });
+                    });
+
+                    ['dragleave'].forEach(name => {
+                        target.addEventListener(name, (e) => {
+                            e.preventDefault();
+                            if (e.stopPropagation) e.stopPropagation();
+                            dragCounter--;
+                            if (dragCounter <= 0 && target.classList && target.classList.remove) {
+                                target.classList.remove('data-grid-dragover');
+                                dragCounter = 0;
+                            }
+                        });
+                    });
+
+                    target.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        if (e.stopPropagation) e.stopPropagation();
+                        if (target.classList && target.classList.remove) target.classList.remove('data-grid-dragover');
+                        dragCounter = 0;
+                        const dt = e.dataTransfer;
+                        if (dt && dt.files && dt.files.length > 0) {
+                            this.importFile(dt.files[0]);
+                        }
+                    });
                 }
 
                 _emitSelect() {
@@ -9360,35 +9531,58 @@ ${dataRows}
         },
 
         readFile(file) {
-            return new Promise((resolve, reject) => {
+            return new Promise(async (resolve, reject) => {
                 if (!file) return reject(new Error('Nenhum arquivo fornecido.'));
                 const name = file.name || 'arquivo';
                 const lower = name.toLowerCase();
 
                 if (lower.endsWith('.xlsx')) {
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
+                    if (typeof file.arrayBuffer === 'function') {
                         try {
-                            const ds = await this.fromXLSX(e.target.result, { title: name.replace(/\.xlsx$/i, '') });
-                            resolve(ds);
+                            const buffer = await file.arrayBuffer();
+                            const ds = await this.fromXLSX(buffer, { title: name.replace(/\.xlsx$/i, '') });
+                            return resolve(ds);
                         } catch (err) {
-                            reject(err);
+                            return reject(err);
                         }
-                    };
-                    reader.onerror = () => reject(reader.error || new Error('Falha ao ler o arquivo .xlsx'));
-                    reader.readAsArrayBuffer(file);
+                    } else if (typeof FileReader !== 'undefined') {
+                        const reader = new FileReader();
+                        reader.onload = async (e) => {
+                            try {
+                                const ds = await this.fromXLSX(e.target.result, { title: name.replace(/\.xlsx$/i, '') });
+                                resolve(ds);
+                            } catch (err) {
+                                reject(err);
+                            }
+                        };
+                        reader.onerror = () => reject(reader.error || new Error('Falha ao ler o arquivo .xlsx'));
+                        reader.readAsArrayBuffer(file);
+                    } else {
+                        reject(new Error('Ambiente sem suporte a leitura de arquivos binários (file.arrayBuffer ou FileReader).'));
+                    }
                 } else {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
+                    if (typeof file.text === 'function') {
                         try {
-                            const text = e.target.result;
-                            resolve(this.parse(text, { title: name }));
+                            const text = await file.text();
+                            return resolve(this.parse(text, { title: name }));
                         } catch (err) {
-                            reject(err);
+                            return reject(err);
                         }
-                    };
-                    reader.onerror = () => reject(reader.error);
-                    reader.readAsText(file);
+                    } else if (typeof FileReader !== 'undefined') {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const text = e.target.result;
+                                resolve(this.parse(text, { title: name }));
+                            } catch (err) {
+                                reject(err);
+                            }
+                        };
+                        reader.onerror = () => reject(reader.error);
+                        reader.readAsText(file);
+                    } else {
+                        reject(new Error('Ambiente sem suporte a leitura de texto (file.text ou FileReader).'));
+                    }
                 }
             });
         },
