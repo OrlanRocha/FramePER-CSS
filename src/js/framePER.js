@@ -10910,6 +10910,214 @@ ${worksheetsXML}
             }
 
             return result;
+        },
+
+        _formatAggregateValue(val, type, context = {}) {
+            if (val === null || val === undefined) return '—';
+            if (typeof val === 'string' && (type === 'min' || type === 'max')) {
+                return val;
+            }
+            if (typeof val !== 'number') {
+                return String(val);
+            }
+
+            const prefix = context.currencyPrefix || '';
+            const suffix = context.suffix || '';
+
+            if (type === 'count' || type === 'count_distinct') {
+                return val.toLocaleString('pt-BR');
+            }
+
+            if (prefix) {
+                const numStr = Math.abs(val).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                const sign = val < 0 ? '-' : '';
+                return `${sign}${prefix} ${numStr}`;
+            }
+
+            if (Number.isInteger(val) && type !== 'avg' && type !== 'average') {
+                return val.toLocaleString('pt-BR') + suffix;
+            }
+
+            return val.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) + suffix;
+        },
+
+        aggregate(dataset, config, options = {}) {
+            if (!dataset || !Array.isArray(dataset.rows)) return {};
+            const headers = dataset.headers || [];
+
+            const targets = [];
+            if (Array.isArray(config)) {
+                config.forEach(item => {
+                    if (item && item.column !== undefined) {
+                        targets.push({
+                            column: item.column,
+                            type: String(item.type || 'sum').toLowerCase()
+                        });
+                    }
+                });
+            } else if (config && typeof config === 'object') {
+                Object.entries(config).forEach(([col, type]) => {
+                    targets.push({
+                        column: col,
+                        type: String(type || 'sum').toLowerCase()
+                    });
+                });
+            }
+
+            const results = {};
+
+            targets.forEach(target => {
+                let colIdx = -1;
+                if (typeof target.column === 'number') {
+                    colIdx = target.column;
+                } else if (typeof target.column === 'string') {
+                    const norm = target.column.trim().toLowerCase();
+                    colIdx = headers.findIndex(h => String(h).trim().toLowerCase() === norm);
+                    if (colIdx === -1 && !isNaN(Number(target.column))) {
+                        colIdx = Number(target.column);
+                    }
+                }
+
+                if (colIdx < 0 || colIdx >= headers.length) return;
+                const colName = headers[colIdx];
+                const type = target.type;
+
+                // Inspect column cells
+                let currencyPrefix = '';
+                let hasPercent = false;
+                const rawValues = [];
+                const parsedValues = [];
+
+                for (const row of dataset.rows) {
+                    const cell = row[colIdx];
+                    rawValues.push(cell);
+                    const parsed = this._parseSortValue(cell);
+                    parsedValues.push(parsed);
+
+                    if (typeof cell === 'string') {
+                        if (!currencyPrefix) {
+                            const curMatch = cell.match(/^(R\$|\$|€|£|¥)/i);
+                            if (curMatch) currencyPrefix = curMatch[1];
+                        }
+                        if (cell.includes('%')) hasPercent = true;
+                    }
+                }
+
+                const formatContext = {
+                    currencyPrefix,
+                    suffix: hasPercent ? '%' : ''
+                };
+
+                let computedValue = null;
+                let validCount = 0;
+
+                switch (type) {
+                    case 'count': {
+                        validCount = rawValues.filter(v => v !== null && v !== undefined && String(v).trim() !== '').length;
+                        computedValue = validCount;
+                        break;
+                    }
+                    case 'count_distinct': {
+                        const uniqueSet = new Set(
+                            rawValues
+                                .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+                                .map(v => String(v).trim().toLowerCase())
+                        );
+                        computedValue = uniqueSet.size;
+                        validCount = computedValue;
+                        break;
+                    }
+                    case 'sum': {
+                        let sum = 0;
+                        parsedValues.forEach(p => {
+                            if (!p.isNull && p.type === 'number') {
+                                sum += p.val;
+                                validCount++;
+                            }
+                        });
+                        computedValue = validCount > 0 ? sum : 0;
+                        break;
+                    }
+                    case 'avg':
+                    case 'average': {
+                        let sum = 0;
+                        parsedValues.forEach(p => {
+                            if (!p.isNull && p.type === 'number') {
+                                sum += p.val;
+                                validCount++;
+                            }
+                        });
+                        computedValue = validCount > 0 ? (sum / validCount) : 0;
+                        break;
+                    }
+                    case 'min': {
+                        let minVal = null;
+                        let minRaw = null;
+                        let isDate = false;
+                        parsedValues.forEach(p => {
+                            if (!p.isNull) {
+                                validCount++;
+                                if (p.type === 'date') isDate = true;
+                                if (minVal === null || p.val < minVal) {
+                                    minVal = p.val;
+                                    minRaw = p.raw !== undefined ? p.raw : p.val;
+                                }
+                            }
+                        });
+                        computedValue = isDate ? minRaw : minVal;
+                        break;
+                    }
+                    case 'max': {
+                        let maxVal = null;
+                        let maxRaw = null;
+                        let isDate = false;
+                        parsedValues.forEach(p => {
+                            if (!p.isNull) {
+                                validCount++;
+                                if (p.type === 'date') isDate = true;
+                                if (maxVal === null || p.val > maxVal) {
+                                    maxVal = p.val;
+                                    maxRaw = p.raw !== undefined ? p.raw : p.val;
+                                }
+                            }
+                        });
+                        computedValue = isDate ? maxRaw : maxVal;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+
+                let numValue = typeof computedValue === 'number' ? computedValue : null;
+                const formatted = this._formatAggregateValue(
+                    computedValue,
+                    type,
+                    formatContext
+                );
+
+                const itemResult = {
+                    column: colName,
+                    columnIndex: colIdx,
+                    type,
+                    value: numValue !== null ? numValue : computedValue,
+                    formatted,
+                    count: validCount
+                };
+
+                results[colName] = itemResult;
+                results[colIdx] = itemResult;
+                if (typeof target.column !== 'number' && target.column !== colName) {
+                    results[target.column] = itemResult;
+                }
+            });
+
+            return results;
         }
     };
     FramePER.Converter = Converter;
