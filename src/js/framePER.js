@@ -8952,6 +8952,141 @@ ${dataRows}
                 return new Blob([pdfBytes], { type: 'application/pdf' });
             }
             return pdfBytes;
+        },
+
+        download(filename, content, mimeType) {
+            let blob;
+            if (typeof Blob !== 'undefined' && content instanceof Blob) {
+                blob = content;
+            } else if (content instanceof Uint8Array || (typeof ArrayBuffer !== 'undefined' && content instanceof ArrayBuffer)) {
+                blob = (typeof Blob !== 'undefined') ? new Blob([content], { type: mimeType || 'application/octet-stream' }) : null;
+            } else {
+                blob = (typeof Blob !== 'undefined') ? new Blob([String(content)], { type: mimeType || 'text/plain;charset=utf-8' }) : null;
+            }
+
+            if (typeof document !== 'undefined' && document.createElement && typeof URL !== 'undefined' && URL.createObjectURL && blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style.display = 'none';
+                (document.body || document.documentElement).appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }, 150);
+            }
+
+            return { filename, mime: mimeType, content, blob };
+        },
+
+        readFile(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return reject(new Error('Nenhum arquivo fornecido.'));
+                const name = file.name || 'arquivo';
+                const lower = name.toLowerCase();
+
+                if (lower.endsWith('.xlsx')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const buffer = e.target.result;
+                            const uint8 = new Uint8Array(buffer);
+                            const str = new TextDecoder('utf-8', { fatal: false }).decode(uint8);
+                            const sheetMatch = str.match(/<sheetData[\s\S]*?<\/sheetData>/);
+                            if (sheetMatch) {
+                                const rowMatches = sheetMatch[0].match(/<row[^>]*>[\s\S]*?<\/row>/g) || [];
+                                const rows = [];
+                                rowMatches.forEach(rXml => {
+                                    const cellMatches = Array.from(rXml.matchAll(/<c[^>]*>(?:<is><t>([^<]*)<\/t><\/is>|<v>([^<]*)<\/v>)?<\/c>/g));
+                                    const rowVals = cellMatches.map(m => m[1] !== undefined ? m[1] : (m[2] !== undefined ? m[2] : ''));
+                                    if (rowVals.length > 0) rows.push(rowVals);
+                                });
+                                if (rows.length > 0) {
+                                    return resolve(this.parse(rows, { title: name }));
+                                }
+                            }
+                            resolve(this.parse([], { title: name }));
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    reader.onerror = () => reject(reader.error);
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const text = e.target.result;
+                            resolve(this.parse(text, { title: name }));
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    reader.onerror = () => reject(reader.error);
+                    reader.readAsText(file);
+                }
+            });
+        },
+
+        convert(input, targetFormat, options = {}) {
+            const ds = this.parse(input, options);
+            const fmt = String(targetFormat || 'csv').trim().toLowerCase();
+            let content;
+            let ext;
+            let mime;
+
+            switch (fmt) {
+                case 'csv':
+                    content = this.toCSV(ds, options);
+                    ext = 'csv';
+                    mime = 'text/csv;charset=utf-8';
+                    break;
+                case 'json':
+                    content = this.toJSON(ds, options);
+                    ext = 'json';
+                    mime = 'application/json';
+                    break;
+                case 'xml':
+                    content = this.toXML(ds, options);
+                    ext = 'xml';
+                    mime = 'application/xml';
+                    break;
+                case 'xls':
+                    content = this.toXLS(ds, options);
+                    ext = 'xls';
+                    mime = 'application/vnd.ms-excel';
+                    break;
+                case 'xlsx':
+                    content = this.toXLSX(ds, options);
+                    ext = 'xlsx';
+                    mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                    break;
+                case 'pdf':
+                    content = this.toPDF(ds, options);
+                    ext = 'pdf';
+                    mime = 'application/pdf';
+                    break;
+                default:
+                    throw new Error(`Formato de destino "${targetFormat}" não suportado. Use: csv, json, xml, xls, xlsx ou pdf.`);
+            }
+
+            const baseName = (options.filename || ds.title || 'dados').replace(/\.[a-zA-Z0-9]+$/, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
+            const filename = `${baseName}.${ext}`;
+
+            if (options.autoDownload !== false && typeof document !== 'undefined') {
+                this.download(filename, content, mime);
+            }
+
+            return {
+                dataset: ds,
+                format: fmt,
+                filename,
+                content,
+                mime,
+                download: () => this.download(filename, content, mime)
+            };
         }
     };
     FramePER.Converter = Converter;

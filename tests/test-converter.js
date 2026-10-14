@@ -215,3 +215,21 @@ assert(pageCountMatch && parseInt(pageCountMatch[1], 10) >= 3, 'Dataset com 100 
 console.log('  ✓ Passou (' + pageCountMatch[1] + ' páginas geradas)');
 
 console.log('\n🎉 TODOS OS TESTES DA TASK 4 PASSARAM COM SUCESSO!\n');
+
+// ==========================================
+// TASK 5: API UNIFICADA CONVERT & DOWNLOAD
+// ==========================================
+console.log('\n--- TESTES TASK 5: API UNIFICADA CONVERT & DOWNLOAD ---');
+
+const formats = ['csv', 'json', 'xml', 'xls', 'xlsx', 'pdf'];
+formats.forEach(fmt => {
+  console.log(`▶ Teste 15.${fmt}: Converter.convert(dataset, '${fmt}')`);
+  const res = Converter.convert(testDataset, fmt, { autoDownload: false, asBuffer: true });
+  assert.strictEqual(res.format, fmt, `Formato retornado incorreto para ${fmt}`);
+  assert(res.filename.endsWith('.' + fmt), `Extensão de arquivo incorreta para ${fmt}: ${res.filename}`);
+  assert(res.content, `Conteúdo não gerado para ${fmt}`);
+  assert(typeof res.download === 'function', `Método download() deve estar presente no resultado de ${fmt}`);
+  console.log(`  ✓ Passou (${res.filename} -> ${res.mime})`);
+});
+
+console.log('\n🎉 TODOS OS TESTES DA TASK 5 PASSARAM COM SUCESSO!\n');
