@@ -9560,6 +9560,181 @@ ${dataRows}
 
             dataset.headers[colIdx] = String(newName);
             return true;
+        },
+
+        /**
+         * Converte um dataset em estrutura de dados para gráficos FramePER.Chart
+         * @param {Object} dataset { headers, rows }
+         * @param {Object} options { labelColumn, seriesColumns, valueColumn, aggregation, maxItems }
+         * @returns {Object} { labels, series, pieSeries }
+         */
+        toChartData(dataset, options = {}) {
+            if (!dataset || !Array.isArray(dataset.headers) || !Array.isArray(dataset.rows)) {
+                return { labels: [], series: [], pieSeries: [] };
+            }
+
+            const headers = dataset.headers;
+            const rows = dataset.rows;
+            if (headers.length === 0 || rows.length === 0) {
+                return { labels: [], series: [], pieSeries: [] };
+            }
+
+            // Helper para conversão de célula em número
+            function parseNum(val) {
+                if (typeof val === 'number') return isNaN(val) ? 0 : val;
+                if (!val) return 0;
+                let s = String(val).trim();
+                s = s.replace(/[^0-9,\.\-]/g, '');
+                if (s.includes(',') && s.includes('.')) {
+                    if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+                        s = s.replace(/\./g, '').replace(',', '.');
+                    } else {
+                        s = s.replace(/,/g, '');
+                    }
+                } else if (s.includes(',')) {
+                    s = s.replace(',', '.');
+                }
+                const n = parseFloat(s);
+                return isNaN(n) ? 0 : n;
+            }
+
+            // Helper para verificar se uma coluna é majoritariamente numérica
+            function isNumericCol(colIdx) {
+                let numericCount = 0;
+                let totalChecked = 0;
+                for (let r = 0; r < Math.min(rows.length, 20); r++) {
+                    const v = rows[r][colIdx];
+                    if (v !== undefined && v !== null && String(v).trim() !== '') {
+                        totalChecked++;
+                        if (typeof v === 'number' || (!isNaN(Number(v)) || /[0-9]/.test(String(v)))) {
+                            numericCount++;
+                        }
+                    }
+                }
+                return totalChecked > 0 && (numericCount / totalChecked) >= 0.7;
+            }
+
+            // 1. Identificar coluna de Rótulos (Label Column)
+            let labelIdx = -1;
+            if (options.labelColumn !== undefined) {
+                labelIdx = typeof options.labelColumn === 'number'
+                    ? options.labelColumn
+                    : headers.indexOf(options.labelColumn);
+            }
+            if (labelIdx === -1) {
+                for (let i = 0; i < headers.length; i++) {
+                    if (!isNumericCol(i)) {
+                        labelIdx = i;
+                        break;
+                    }
+                }
+                if (labelIdx === -1) labelIdx = 0;
+            }
+
+            const aggregation = options.aggregation || 'none';
+
+            // Caso Agrupado: 'sum', 'count' ou 'avg'
+            if (aggregation === 'sum' || aggregation === 'count' || aggregation === 'avg') {
+                let valIdx = -1;
+                const reqValCol = options.valueColumn || (Array.isArray(options.seriesColumns) ? options.seriesColumns[0] : null);
+                if (reqValCol !== null && reqValCol !== undefined) {
+                    valIdx = typeof reqValCol === 'number' ? reqValCol : headers.indexOf(reqValCol);
+                }
+                if (valIdx === -1) {
+                    for (let i = 0; i < headers.length; i++) {
+                        if (i !== labelIdx && isNumericCol(i)) {
+                            valIdx = i;
+                            break;
+                        }
+                    }
+                    if (valIdx === -1) valIdx = labelIdx === 0 && headers.length > 1 ? 1 : 0;
+                }
+
+                const groups = new Map();
+                for (let r = 0; r < rows.length; r++) {
+                    const labelVal = String(rows[r][labelIdx] != null ? rows[r][labelIdx] : '');
+                    const numVal = parseNum(rows[r][valIdx]);
+
+                    if (!groups.has(labelVal)) {
+                        groups.set(labelVal, { count: 0, sum: 0 });
+                    }
+                    const entry = groups.get(labelVal);
+                    entry.count++;
+                    entry.sum += numVal;
+                }
+
+                let labels = Array.from(groups.keys());
+                let values = [];
+                if (aggregation === 'count') {
+                    values = labels.map(k => groups.get(k).count);
+                } else if (aggregation === 'avg') {
+                    values = labels.map(k => {
+                        const g = groups.get(k);
+                        return g.count ? parseFloat((g.sum / g.count).toFixed(2)) : 0;
+                    });
+                } else {
+                    values = labels.map(k => parseFloat(groups.get(k).sum.toFixed(2)));
+                }
+
+                if (options.maxItems && options.maxItems > 0 && labels.length > options.maxItems) {
+                    labels = labels.slice(0, options.maxItems);
+                    values = values.slice(0, options.maxItems);
+                }
+
+                const metricName = aggregation === 'count' ? 'Contagem' : (headers[valIdx] || 'Total');
+                const pieSeries = labels.map((name, i) => ({ name, value: values[i] }));
+
+                return {
+                    labels,
+                    series: [{ name: metricName, data: values }],
+                    pieSeries
+                };
+            }
+
+            // Caso Não-Agrupado ('none'): cada linha do dataset é um ponto
+            let seriesIndices = [];
+            if (Array.isArray(options.seriesColumns) && options.seriesColumns.length > 0) {
+                options.seriesColumns.forEach(c => {
+                    const idx = typeof c === 'number' ? c : headers.indexOf(c);
+                    if (idx !== -1) seriesIndices.push(idx);
+                });
+            } else if (options.valueColumn !== undefined) {
+                const idx = typeof options.valueColumn === 'number' ? options.valueColumn : headers.indexOf(options.valueColumn);
+                if (idx !== -1) seriesIndices.push(idx);
+            } else {
+                for (let i = 0; i < headers.length; i++) {
+                    if (i !== labelIdx && isNumericCol(i)) {
+                        seriesIndices.push(i);
+                    }
+                }
+                if (seriesIndices.length === 0 && headers.length > 1) {
+                    seriesIndices.push(headers.length - 1);
+                }
+            }
+
+            let effectiveRows = rows;
+            if (options.maxItems && options.maxItems > 0 && effectiveRows.length > options.maxItems) {
+                effectiveRows = effectiveRows.slice(0, options.maxItems);
+            }
+
+            const labels = effectiveRows.map(row => String(row[labelIdx] != null ? row[labelIdx] : ''));
+            const series = seriesIndices.map(sIdx => {
+                const sName = headers[sIdx] || `Série ${sIdx + 1}`;
+                const sData = effectiveRows.map(row => parseNum(row[sIdx]));
+                return { name: sName, data: sData };
+            });
+
+            const firstSeriesData = series.length > 0 ? series[0].data : [];
+            const pieSeries = labels.map((name, i) => ({
+                name,
+                value: firstSeriesData[i] !== undefined ? firstSeriesData[i] : 0
+            }));
+
+            return {
+                labels,
+                series,
+                pieSeries
+            };
         }
     };
     FramePER.Converter = Converter;

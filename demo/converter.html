@@ -504,12 +504,65 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           </div>
         </div>
 
+        <!-- Chart Visualization Card -->
+        <div class="converter-card p-4 shadow-sm" id="chart-visualization-card" style="display: none;">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 m-b-3">
+            <div>
+              <h2 class="h5 m-0 d-flex align-items-center gap-2">
+                <i class="icon icon-pie-chart text-purple"></i> 3. Visualização Gráfica Interativa
+              </h2>
+              <span class="text-muted f-s-2">Gráficos vetoriais SVG gerados sob demanda com a engine nativa FramePER.Chart</span>
+            </div>
+            <div class="cluster gap-2 align-items-center">
+              <span class="badge badge-subtle badge-purple f-s-1">
+                <i class="icon icon-activity"></i> Pure SVG Vector
+              </span>
+            </div>
+          </div>
+
+          <!-- Chart Controls Bar -->
+          <div class="grid grid-sm-2 grid-md-4 gap-2 m-b-3 p-3 bg-subtle rounded-md border">
+            <div>
+              <label for="chart-type-select" class="form-label f-s-1 text-muted m-b-1">Tipo de Gráfico</label>
+              <select id="chart-type-select" class="form-select form-select-sm w-100">
+                <option value="bar" selected>Barras Verticais</option>
+                <option value="line">Linhas</option>
+                <option value="area">Área Suavizada</option>
+                <option value="donut">Rosca (Donut)</option>
+                <option value="pie">Pizza (Pie)</option>
+              </select>
+            </div>
+            <div>
+              <label for="chart-label-select" class="form-label f-s-1 text-muted m-b-1">Eixo X (Rótulos / Categorias)</label>
+              <select id="chart-label-select" class="form-select form-select-sm w-100">
+              </select>
+            </div>
+            <div>
+              <label for="chart-metric-select" class="form-label f-s-1 text-muted m-b-1">Eixo Y (Métrica Numérica)</label>
+              <select id="chart-metric-select" class="form-select form-select-sm w-100">
+              </select>
+            </div>
+            <div>
+              <label for="chart-agg-select" class="form-label f-s-1 text-muted m-b-1">Agrupamento</label>
+              <select id="chart-agg-select" class="form-select form-select-sm w-100">
+                <option value="none" selected>Nenhum (Valores diretos)</option>
+                <option value="sum">Soma (Por Categoria)</option>
+                <option value="avg">Média (Por Categoria)</option>
+                <option value="count">Contagem de Registros</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Chart Container -->
+          <div id="converter-chart-container" style="min-height: 280px; width: 100%;"></div>
+        </div>
+
         <!-- Export Actions Grid (6 Formats) -->
         <div class="converter-card p-4 shadow-sm">
           <div class="d-flex align-items-center justify-content-between m-b-3">
             <div>
               <h2 class="h5 m-0 d-flex align-items-center gap-2">
-                <i class="icon icon-download text-primary"></i> 3. Exportar nos 6 Formatos
+                <i class="icon icon-download text-primary"></i> 4. Exportar nos 6 Formatos
               </h2>
               <p class="text-muted f-s-2 m-0">Clique no formato desejado para converter e baixar imediatamente com comemoração festiva:</p>
             </div>
@@ -721,6 +774,15 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       const btnPageNext = document.getElementById('btn-page-next');
       const exportButtons = document.querySelectorAll('.btn-export');
 
+      // Chart Elements
+      const chartVisualizationCard = document.getElementById('chart-visualization-card');
+      const chartTypeSelect = document.getElementById('chart-type-select');
+      const chartLabelSelect = document.getElementById('chart-label-select');
+      const chartMetricSelect = document.getElementById('chart-metric-select');
+      const chartAggSelect = document.getElementById('chart-agg-select');
+      const chartContainer = document.getElementById('converter-chart-container');
+      let currentChart = null;
+
       // Helper to format bytes
       function formatBytes(bytes) {
         if (!bytes || bytes <= 0) return '0 B';
@@ -730,6 +792,112 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
       }
 
+      function populateChartSelects() {
+        if (!currentDataset || !chartLabelSelect || !chartMetricSelect) return;
+        const headers = currentDataset.headers;
+        if (!headers || headers.length === 0) return;
+
+        const prevLabelVal = chartLabelSelect.value;
+        const prevMetricVal = chartMetricSelect.value;
+
+        chartLabelSelect.innerHTML = '';
+        chartMetricSelect.innerHTML = '';
+
+        headers.forEach((h) => {
+          const opt1 = document.createElement('option');
+          opt1.value = h;
+          opt1.textContent = h;
+          chartLabelSelect.appendChild(opt1);
+
+          const opt2 = document.createElement('option');
+          opt2.value = h;
+          opt2.textContent = h;
+          chartMetricSelect.appendChild(opt2);
+        });
+
+        // Set default label
+        if (headers.includes(prevLabelVal)) {
+          chartLabelSelect.value = prevLabelVal;
+        } else {
+          chartLabelSelect.value = headers[0];
+        }
+
+        // Set default metric
+        if (headers.includes(prevMetricVal)) {
+          chartMetricSelect.value = prevMetricVal;
+        } else {
+          let foundNumeric = false;
+          for (let i = 0; i < headers.length; i++) {
+            if (headers[i] !== chartLabelSelect.value) {
+              const sampleVal = currentDataset.rows[0] ? currentDataset.rows[0][i] : null;
+              if (sampleVal !== null && sampleVal !== undefined) {
+                const s = String(sampleVal).replace(/[^0-9,\.\-]/g, '');
+                if (s !== '' && !isNaN(parseFloat(s))) {
+                  chartMetricSelect.value = headers[i];
+                  foundNumeric = true;
+                  break;
+                }
+              }
+            }
+          }
+          if (!foundNumeric && headers.length > 1) {
+            chartMetricSelect.value = headers[headers.length - 1];
+          }
+        }
+      }
+
+      function renderConverterChart() {
+        if (!currentDataset || !chartVisualizationCard || !chartContainer) return;
+        if (!window.FramePER || !window.FramePER.Chart || !Converter || !Converter.toChartData) return;
+
+        const chartType = chartTypeSelect ? chartTypeSelect.value : 'bar';
+        const labelCol = chartLabelSelect ? chartLabelSelect.value : null;
+        const metricCol = chartMetricSelect ? chartMetricSelect.value : null;
+        const agg = chartAggSelect ? chartAggSelect.value : 'none';
+
+        const chartData = Converter.toChartData(currentDataset, {
+          labelColumn: labelCol,
+          valueColumn: metricCol,
+          aggregation: agg,
+          maxItems: 20
+        });
+
+        chartContainer.innerHTML = '';
+
+        if (!chartData || !chartData.labels || chartData.labels.length === 0) {
+          chartContainer.innerHTML = '<div class="txt-center text-muted p-5">Nenhum dado disponível para plotagem no gráfico.</div>';
+          return;
+        }
+
+        const isCircular = chartType === 'donut' || chartType === 'pie';
+        const dataConfig = isCircular ? {
+          labels: chartData.labels,
+          series: chartData.pieSeries
+        } : {
+          labels: chartData.labels,
+          series: chartData.series
+        };
+
+        try {
+          currentChart = new window.FramePER.Chart(chartContainer, {
+            type: chartType,
+            data: dataConfig,
+            options: {
+              height: 280,
+              curved: true,
+              fill: chartType === 'area',
+              showDots: true,
+              showGrid: true,
+              tooltip: true,
+              legend: true,
+              animated: true
+            }
+          });
+        } catch (err) {
+          console.warn('FramePER.Chart render notice:', err);
+        }
+      }
+
       function updateMetrics() {
         if (!currentDataset) return;
         metricRows.textContent = currentDataset.rows.length.toLocaleString();
@@ -737,6 +905,7 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         const estBytes = JSON.stringify(currentDataset).length;
         metricSize.textContent = formatBytes(estBytes);
         previewSubtitle.textContent = (currentDataset.title || 'Dados Carregados') + ' · ' + currentDataset.rows.length + ' linha(s) e ' + currentDataset.headers.length + ' coluna(s)';
+        renderConverterChart();
       }
 
       // Load Dataset
@@ -757,6 +926,13 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         if (btnAddRow) btnAddRow.style.display = 'inline-flex';
         if (btnAddCol) btnAddCol.style.display = 'inline-flex';
         if (editModeHint) editModeHint.style.display = 'inline-flex';
+
+        // Show and Render Chart
+        if (chartVisualizationCard) {
+          chartVisualizationCard.style.display = 'block';
+          populateChartSelects();
+          renderConverterChart();
+        }
 
         // Enable Export Buttons
         exportButtons.forEach(btn => btn.disabled = false);
@@ -789,6 +965,13 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         if (btnAddRow) btnAddRow.style.display = 'none';
         if (btnAddCol) btnAddCol.style.display = 'none';
         if (editModeHint) editModeHint.style.display = 'none';
+
+        if (chartVisualizationCard) {
+          chartVisualizationCard.style.display = 'none';
+        }
+        if (chartContainer) {
+          chartContainer.innerHTML = '';
+        }
 
         exportButtons.forEach(btn => btn.disabled = true);
 
@@ -1022,6 +1205,15 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           }
         });
       }
+
+      // Chart Controls Listeners
+      [chartTypeSelect, chartLabelSelect, chartMetricSelect, chartAggSelect].forEach(sel => {
+        if (sel) {
+          sel.addEventListener('change', () => {
+            renderConverterChart();
+          });
+        }
+      });
 
       // Drag & Drop Handlers
       if (dropzone) {
