@@ -11263,6 +11263,272 @@ ${worksheetsXML}
             });
 
             return results;
+        },
+
+        _interpolateColor(color1, color2, factor) {
+            const parseHex = (hex) => {
+                let clean = String(hex || '').trim().replace(/^#/, '');
+                if (clean.length === 3) {
+                    clean = clean.split('').map(c => c + c).join('');
+                }
+                if (clean.length !== 6) clean = '000000';
+                return {
+                    r: parseInt(clean.substring(0, 2), 16),
+                    g: parseInt(clean.substring(2, 4), 16),
+                    b: parseInt(clean.substring(4, 6), 16)
+                };
+            };
+            const c1 = parseHex(color1);
+            const c2 = parseHex(color2);
+            const f = Math.max(0, Math.min(1, factor));
+            const r = Math.round(c1.r + f * (c2.r - c1.r));
+            const g = Math.round(c1.g + f * (c2.g - c1.g));
+            const b = Math.round(c1.b + f * (c2.b - c1.b));
+            return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        },
+
+        evaluateConditionalFormatting(dataset, rules, options = {}) {
+            if (!dataset || !Array.isArray(dataset.rows)) return {};
+            const headers = dataset.headers || [];
+            const rows = dataset.rows || [];
+            const activeRules = (Array.isArray(rules) ? rules : []).filter(r => r && r.enabled !== false);
+            if (activeRules.length === 0 || rows.length === 0) return {};
+
+            // Pre-calculate column stats for rules that need it
+            const colStats = {};
+            const getColStats = (cIdx) => {
+                if (colStats[cIdx]) return colStats[cIdx];
+                let sum = 0;
+                let count = 0;
+                let min = null;
+                let max = null;
+                const numList = [];
+                const freqMap = {};
+
+                for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+                    const raw = rows[rIdx][cIdx];
+                    const key = (raw === null || raw === undefined) ? '__NULL__' : String(raw).trim().toLowerCase();
+                    freqMap[key] = (freqMap[key] || 0) + 1;
+
+                    if (raw !== null && raw !== undefined && raw !== '') {
+                        const parsed = this._parseSortValue(raw);
+                        if (parsed.type === 'number' && !parsed.isNull) {
+                            const val = parsed.val;
+                            sum += val;
+                            count++;
+                            numList.push({ rIdx, val });
+                            if (min === null || val < min) min = val;
+                            if (max === null || val > max) max = val;
+                        }
+                    }
+                }
+
+                const avg = count > 0 ? (sum / count) : 0;
+                const sortedDesc = [...numList].sort((a, b) => b.val - a.val);
+                const sortedAsc = [...numList].sort((a, b) => a.val - b.val);
+
+                colStats[cIdx] = {
+                    sum,
+                    count,
+                    min: min !== null ? min : 0,
+                    max: max !== null ? max : 0,
+                    avg,
+                    sortedDesc,
+                    sortedAsc,
+                    freqMap
+                };
+                return colStats[cIdx];
+            };
+
+            const stylesMap = {};
+
+            const resolveTargetColumns = (rule) => {
+                if (rule.column === '*' || rule.column === '__all__') {
+                    return headers.map((_, idx) => idx);
+                }
+                if (typeof rule.column === 'number') {
+                    return [rule.column];
+                }
+                if (typeof rule.column === 'string') {
+                    const norm = rule.column.trim().toLowerCase();
+                    const idx = headers.findIndex(h => String(h).trim().toLowerCase() === norm);
+                    if (idx !== -1) return [idx];
+                    if (!isNaN(Number(rule.column))) return [Number(rule.column)];
+                }
+                return [];
+            };
+
+            for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+                const row = rows[rIdx];
+                for (let cIdx = 0; cIdx < headers.length; cIdx++) {
+                    const cellVal = row[cIdx];
+                    const parsedCell = this._parseSortValue(cellVal);
+
+                    for (const rule of activeRules) {
+                        const targetCols = resolveTargetColumns(rule);
+                        if (!targetCols.includes(cIdx)) continue;
+
+                        let matches = false;
+                        let customStyle = null;
+
+                        const type = String(rule.type || '').toLowerCase();
+                        switch (type) {
+                            case 'greater_than': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    matches = parsedCell.val > Number(rule.value);
+                                }
+                                break;
+                            }
+                            case 'less_than': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    matches = parsedCell.val < Number(rule.value);
+                                }
+                                break;
+                            }
+                            case 'between': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull && Array.isArray(rule.value)) {
+                                    const minV = Number(rule.value[0]);
+                                    const maxV = Number(rule.value[1]);
+                                    matches = parsedCell.val >= minV && parsedCell.val <= maxV;
+                                }
+                                break;
+                            }
+                            case 'equal_to': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull && !isNaN(Number(rule.value))) {
+                                    matches = parsedCell.val === Number(rule.value);
+                                } else {
+                                    matches = String(cellVal || '').toLowerCase() === String(rule.value || '').toLowerCase();
+                                }
+                                break;
+                            }
+                            case 'not_equal': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull && !isNaN(Number(rule.value))) {
+                                    matches = parsedCell.val !== Number(rule.value);
+                                } else {
+                                    matches = String(cellVal || '').toLowerCase() !== String(rule.value || '').toLowerCase();
+                                }
+                                break;
+                            }
+                            case 'contains': {
+                                matches = String(cellVal || '').toLowerCase().includes(String(rule.value || '').toLowerCase());
+                                break;
+                            }
+                            case 'not_contains': {
+                                matches = !String(cellVal || '').toLowerCase().includes(String(rule.value || '').toLowerCase());
+                                break;
+                            }
+                            case 'starts_with': {
+                                matches = String(cellVal || '').toLowerCase().startsWith(String(rule.value || '').toLowerCase());
+                                break;
+                            }
+                            case 'ends_with': {
+                                matches = String(cellVal || '').toLowerCase().endsWith(String(rule.value || '').toLowerCase());
+                                break;
+                            }
+                            case 'empty': {
+                                matches = (cellVal === null || cellVal === undefined || String(cellVal).trim() === '');
+                                break;
+                            }
+                            case 'not_empty': {
+                                matches = (cellVal !== null && cellVal !== undefined && String(cellVal).trim() !== '');
+                                break;
+                            }
+                            case 'above_average': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    matches = parsedCell.val > stats.avg;
+                                }
+                                break;
+                            }
+                            case 'below_average': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    matches = parsedCell.val < stats.avg;
+                                }
+                                break;
+                            }
+                            case 'top_n': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    const n = Math.max(1, parseInt(rule.value, 10) || 10);
+                                    const topItems = stats.sortedDesc.slice(0, n);
+                                    matches = topItems.some(item => item.rIdx === rIdx);
+                                }
+                                break;
+                            }
+                            case 'bottom_n': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    const n = Math.max(1, parseInt(rule.value, 10) || 10);
+                                    const bottomItems = stats.sortedAsc.slice(0, n);
+                                    matches = bottomItems.some(item => item.rIdx === rIdx);
+                                }
+                                break;
+                            }
+                            case 'duplicates': {
+                                const stats = getColStats(cIdx);
+                                const key = (cellVal === null || cellVal === undefined) ? '__NULL__' : String(cellVal).trim().toLowerCase();
+                                matches = stats.freqMap[key] > 1;
+                                break;
+                            }
+                            case 'unique': {
+                                const stats = getColStats(cIdx);
+                                const key = (cellVal === null || cellVal === undefined) ? '__NULL__' : String(cellVal).trim().toLowerCase();
+                                matches = stats.freqMap[key] === 1;
+                                break;
+                            }
+                            case 'color_scale': {
+                                if (parsedCell.type === 'number' && !parsedCell.isNull) {
+                                    const stats = getColStats(cIdx);
+                                    matches = true;
+                                    let factor = 0.5;
+                                    if (stats.max > stats.min) {
+                                        factor = (parsedCell.val - stats.min) / (stats.max - stats.min);
+                                    }
+                                    const minCol = (rule.style && rule.style.minColor) ? rule.style.minColor : '#ef4444';
+                                    const maxCol = (rule.style && rule.style.maxColor) ? rule.style.maxColor : '#22c55e';
+                                    let bg;
+                                    if (rule.style && rule.style.midColor) {
+                                        const midCol = rule.style.midColor;
+                                        if (factor < 0.5) {
+                                            bg = this._interpolateColor(minCol, midCol, factor * 2);
+                                        } else {
+                                            bg = this._interpolateColor(midCol, maxCol, (factor - 0.5) * 2);
+                                        }
+                                    } else {
+                                        bg = this._interpolateColor(minCol, maxCol, factor);
+                                    }
+                                    customStyle = {
+                                        bg,
+                                        color: (factor < 0.2 || factor > 0.8) ? '#ffffff' : '#000000',
+                                        ruleId: rule.id
+                                    };
+                                }
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+
+                        if (matches) {
+                            if (!stylesMap[rIdx]) stylesMap[rIdx] = {};
+                            const baseStyle = customStyle || Object.assign({}, rule.style, { ruleId: rule.id });
+                            if (!stylesMap[rIdx][cIdx]) {
+                                stylesMap[rIdx][cIdx] = baseStyle;
+                            } else {
+                                for (const prop in baseStyle) {
+                                    if (stylesMap[rIdx][cIdx][prop] === undefined) {
+                                        stylesMap[rIdx][cIdx][prop] = baseStyle[prop];
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return stylesMap;
         }
     };
     FramePER.Converter = Converter;
