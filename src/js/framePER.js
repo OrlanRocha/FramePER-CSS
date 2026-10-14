@@ -9064,6 +9064,78 @@
             };
         },
 
+        _resolveSummaryRow(dataset, options = {}) {
+            if (!options) return null;
+            const ds = (dataset && Array.isArray(dataset.headers)) ? dataset : this.parse(dataset, options);
+            const headers = ds.headers || [];
+            if (!headers.length) return null;
+
+            let summary = options.summaryRow;
+            if (!summary && options.includeSummary) {
+                let aggConfig = options.aggregations;
+                if (!aggConfig) {
+                    aggConfig = [];
+                    headers.forEach((h, idx) => {
+                        let hasNumeric = false;
+                        for (const row of ds.rows) {
+                            const val = row[idx];
+                            if (val !== null && val !== undefined && val !== '') {
+                                const parsed = this._parseSortValue(val);
+                                if (parsed.type === 'number') {
+                                    hasNumeric = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (hasNumeric) {
+                            aggConfig.push({ column: idx, type: 'sum' });
+                        }
+                    });
+                }
+                const aggResults = this.aggregate(ds, aggConfig);
+                const label = options.summaryLabel || 'Total';
+                summary = headers.map((h, idx) => {
+                    if (idx === 0) return label;
+                    const res = aggResults[idx] !== undefined ? aggResults[idx] : aggResults[h];
+                    if (res) {
+                        return res.formatted !== undefined ? res.formatted : res.value;
+                    }
+                    return '';
+                });
+            }
+
+            if (!summary) return null;
+
+            if (Array.isArray(summary)) {
+                const row = [];
+                for (let i = 0; i < headers.length; i++) {
+                    const val = summary[i];
+                    row.push(val !== undefined && val !== null ? val : '');
+                }
+                return row;
+            }
+
+            if (typeof summary === 'object') {
+                const label = summary.__label__ || summary.label || 'Total';
+                const row = [];
+                for (let i = 0; i < headers.length; i++) {
+                    const h = headers[i];
+                    let val = summary[i] !== undefined ? summary[i] : summary[h];
+                    if (val === undefined || val === null) {
+                        val = (i === 0) ? label : '';
+                    } else if (typeof val === 'object' && val.formatted !== undefined) {
+                        val = val.formatted;
+                    } else if (typeof val === 'object' && val.value !== undefined) {
+                        val = val.value;
+                    }
+                    row.push(val);
+                }
+                return row;
+            }
+
+            return null;
+        },
+
         toCSV(dataset, options = {}) {
             const ds = this.parse(dataset, options);
             const delimiter = options.delimiter || ',';
@@ -9079,6 +9151,12 @@
             const bom = options.bom !== false ? '\uFEFF' : '';
             const headerLine = ds.headers.map(escapeCSV).join(delimiter);
             const rowLines = ds.rows.map(r => r.map(escapeCSV).join(delimiter));
+
+            const summaryRow = this._resolveSummaryRow(ds, options);
+            if (summaryRow && summaryRow.length) {
+                rowLines.push(summaryRow.map(escapeCSV).join(delimiter));
+            }
+
             return bom + [headerLine, ...rowLines].join('\r\n');
         },
 
@@ -9184,12 +9262,28 @@
                     return `   <Row ss:Height="20">\n    ${cells}\n   </Row>`;
                 }).join('\n');
 
+                let summaryXML = '';
+                const summaryRow = this._resolveSummaryRow(sDs, options);
+                if (summaryRow && summaryRow.length) {
+                    const cells = summaryRow.map(val => {
+                        if (val === null || val === undefined || val === '') {
+                            return '<Cell ss:StyleID="SummaryStyle"><Data ss:Type="String"></Data></Cell>';
+                        }
+                        const num = Number(val);
+                        if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
+                            return `<Cell ss:StyleID="SummaryStyle"><Data ss:Type="Number">${num}</Data></Cell>`;
+                        }
+                        return `<Cell ss:StyleID="SummaryStyle"><Data ss:Type="String">${escapeXML(val)}</Data></Cell>`;
+                    }).join('');
+                    summaryXML = `\n   <Row ss:Height="24">\n    ${cells}\n   </Row>`;
+                }
+
                 return ` <Worksheet ss:Name="${escapeXML(name)}">
   <Table ss:DefaultColumnWidth="100">
    <Row ss:Height="26">
     ${headerCells}
    </Row>
-${dataRows}
+${dataRows}${summaryXML}
   </Table>
  </Worksheet>`;
             }).join('\n');
@@ -9217,6 +9311,15 @@ ${dataRows}
   </Style>
   <Style ss:ID="Zebra">
    <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="SummaryStyle">
+   <Alignment ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#475569"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Double" ss:Weight="3" ss:Color="#475569"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#0F172A" ss:Bold="1"/>
+   <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
   </Style>
  </Styles>
 ${worksheetsXML}
@@ -9750,6 +9853,23 @@ ${worksheetsXML}
                     rowsXML.push(`<row r="${rowNum}">${cells}</row>`);
                 });
 
+                const summaryRow = this._resolveSummaryRow(sheetDs, options);
+                if (summaryRow && summaryRow.length) {
+                    const sumRowNum = sheetDs.rows.length + 2;
+                    const sumCells = summaryRow.map((val, cIdx) => {
+                        const ref = colName(cIdx) + sumRowNum;
+                        if (val === null || val === undefined || val === '') {
+                            return `<c r="${ref}" s="3"/>`;
+                        }
+                        const num = Number(val);
+                        if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
+                            return `<c r="${ref}" t="n" s="3"><v>${num}</v></c>`;
+                        }
+                        return `<c r="${ref}" t="inlineStr" s="3"><is><t>${escapeXML(val)}</t></is></c>`;
+                    }).join('');
+                    rowsXML.push(`<row r="${sumRowNum}">${sumCells}</row>`);
+                }
+
                 const sheetXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetData>
@@ -9794,22 +9914,25 @@ ${worksheetsXML}
 
             const stylesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="2">
+  <fonts count="3">
     <font><name val="Calibri"/><sz val="11"/><color rgb="000000"/></font>
     <font><b/><name val="Calibri"/><sz val="11"/><color rgb="FFFFFF"/></font>
+    <font><b/><name val="Calibri"/><sz val="11"/><color rgb="0F172A"/></font>
   </fonts>
-  <fills count="3">
+  <fills count="4">
     <fill><patternFill patternType="none"/></fill>
     <fill><patternFill patternType="gray125"/></fill>
     <fill><patternFill patternType="solid"><fgColor rgb="FF2563EB"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/></patternFill></fill>
   </fills>
   <borders count="1">
     <border><left/><right/><top/><bottom/><diagonal/></border>
   </borders>
-  <cellXfs count="3">
+  <cellXfs count="4">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
     <xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFont="1" applyFill="1"/>
     <xf numFmtId="0" fontId="0" fillId="1" borderId="0"/>
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="0" applyFont="1" applyFill="1"/>
   </cellXfs>
 </styleSheet>`;
 
@@ -9823,7 +9946,7 @@ ${worksheetsXML}
             ];
 
             const zipBytes = this._createZip(files);
-            if (options.asBuffer || options.raw) {
+            if (options.asBuffer || options.raw || options.asBlob === false) {
                 return zipBytes;
             }
             if (typeof Blob !== 'undefined') {
@@ -9954,6 +10077,28 @@ ${worksheetsXML}
                     globalRowCounter++;
                 });
 
+                // Summary Row (on final page)
+                const summaryRow = this._resolveSummaryRow(ds, options);
+                if (summaryRow && summaryRow.length && pageIdx === totalPages - 1) {
+                    const summaryY = tableTopY - colHeaderHeight - (chunk.length + 1) * rowHeight;
+                    // Background
+                    stream += `0.945 0.961 0.976 rg ${marginLeft} ${summaryY} ${contentWidth} ${rowHeight} re f\n`;
+                    // Top border (darker accent)
+                    stream += `0.278 0.333 0.412 RG 1 w ${marginLeft} ${summaryY + rowHeight} m ${pageWidth - marginRight} ${summaryY + rowHeight} l S\n`;
+                    // Bottom border
+                    stream += `0.278 0.333 0.412 RG 1 w ${marginLeft} ${summaryY} m ${pageWidth - marginRight} ${summaryY} l S\n`;
+
+                    // Cell text in Bold Helvetica
+                    curX = marginLeft;
+                    summaryRow.forEach((val, cIdx) => {
+                        const w = colWidths[cIdx] || 0;
+                        if (val !== null && val !== undefined && val !== '') {
+                            stream += `BT /F2 7.5 Tf 0.05 0.09 0.16 rg ${curX + 4} ${summaryY + 5.5} Td (${escapePDF(val)}) Tj ET\n`;
+                        }
+                        curX += w;
+                    });
+                }
+
                 // Footer
                 stream += `0.85 0.88 0.92 RG 0.5 w ${marginLeft} ${marginBottom + 12} m ${pageWidth - marginRight} ${marginBottom + 12} l S\n`;
                 stream += `BT /F1 7.5 Tf 0.45 0.45 0.45 rg ${marginLeft} ${marginBottom + 2} Td (FramePER - Conversor Universal) Tj ET\n`;
@@ -10009,7 +10154,7 @@ ${worksheetsXML}
             pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF\n`;
 
             const pdfBytes = new TextEncoder().encode(pdf);
-            if (options.asBuffer || options.raw) {
+            if (options.asBuffer || options.raw || options.asBlob === false) {
                 return pdfBytes;
             }
             if (typeof Blob !== 'undefined') {

@@ -147,15 +147,51 @@ async function runTests() {
         { column: 3, type: 'sum' }, // Preco
         { column: 4, type: 'avg' }  // Estoque
     ]);
-    assert.ok(aggByColIdx[3] || aggByColIdx['Preco']);
     const precoRes = aggByColIdx[3] || aggByColIdx['Preco'];
     assert.ok(Math.abs(precoRes.value - 11781.49) < 0.01);
     console.log('  ✓ Passou');
 
-    console.log('\n🎉 TODOS OS TESTES DA TASK 1 PASSARAM COM SUCESSO!\n');
+    // ▶ Teste 6: toCSV com summaryRow
+    console.log('▶ Teste 6: Converter.toCSV com summaryRow');
+    const summaryList = ['Total', '', '', 'R$ 11.781,49', 48, ''];
+    const csvWithSummary = Converter.toCSV(sampleData, { summaryRow: summaryList });
+    assert.ok(csvWithSummary.includes('Total'), 'CSV deve conter linha de Total');
+    assert.ok(csvWithSummary.includes('R$ 11.781,49'), 'CSV deve conter valor formatado de Preco');
+    assert.ok(csvWithSummary.includes('48'), 'CSV deve conter total de Estoque');
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 7: toXLS com summaryRow
+    console.log('▶ Teste 7: Converter.toXLS com summaryRow');
+    const xlsWithSummary = Converter.toXLS(sampleData, { summaryRow: summaryList });
+    assert.ok(xlsWithSummary.includes('Total'), 'XLS XML deve conter célula de Total');
+    assert.ok(xlsWithSummary.includes('11.781,49'), 'XLS XML deve conter valor total');
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 8: toXLSX com summaryRow e leitura via fromXLSX
+    console.log('▶ Teste 8: Converter.toXLSX com summaryRow');
+    const xlsxBlob = Converter.toXLSX(sampleData, { summaryRow: summaryList, asBlob: false });
+    assert.ok(xlsxBlob instanceof Uint8Array, 'Deve retornar buffer binário');
+    // Ler de volta com fromXLSX
+    const readBack = await Converter.fromXLSX(xlsxBlob);
+    assert.strictEqual(readBack.rows.length, sampleData.rows.length + 1, 'Deve conter 1 linha extra de resumo no XLSX');
+    const lastRow = readBack.rows[readBack.rows.length - 1];
+    assert.strictEqual(lastRow[0], 'Total');
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 9: toPDF com summaryRow
+    console.log('▶ Teste 9: Converter.toPDF com summaryRow');
+    const pdfBlob = Converter.toPDF(sampleData, { summaryRow: summaryList, asBuffer: true });
+    assert.ok(pdfBlob instanceof Uint8Array, 'PDF deve retornar Uint8Array válido');
+    const pdfText = Buffer.from(pdfBlob).toString('latin1');
+    assert.ok(pdfText.includes('%PDF-1.4'), 'PDF deve ter cabeçalho PDF 1.4');
+    assert.ok(pdfText.includes('Total'), 'PDF deve incluir texto do resumo Total');
+    console.log('  ✓ Passou');
+
+    console.log('\n🎉 TODOS OS TESTES DE AGREGAÇÃO E EXPORTAÇÃO PASSARAM COM SUCESSO!\n');
 }
 
 runTests().catch(err => {
     console.error('❌ Falha nos testes de agregação:', err);
     process.exit(1);
 });
+
