@@ -8464,6 +8464,308 @@
             });
             lines.push(`</${rootTag}>`);
             return lines.join('\n');
+        },
+
+        toXLS(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const sheetName = options.sheetName || ds.title || 'Sheet1';
+
+            const escapeXML = (val) => {
+                if (val === null || val === undefined) return '';
+                return String(val)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            };
+
+            const headerCells = ds.headers.map(h => {
+                return `<Cell ss:StyleID="HeaderStyle"><Data ss:Type="String">${escapeXML(h)}</Data></Cell>`;
+            }).join('');
+
+            const dataRows = ds.rows.map((r, rIdx) => {
+                const styleAttr = rIdx % 2 === 1 ? ' ss:StyleID="Zebra"' : '';
+                const cells = r.map(val => {
+                    if (val === null || val === undefined || val === '') {
+                        return '<Cell><Data ss:Type="String"></Data></Cell>';
+                    }
+                    const num = Number(val);
+                    if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
+                        return `<Cell${styleAttr}><Data ss:Type="Number">${num}</Data></Cell>`;
+                    }
+                    return `<Cell${styleAttr}><Data ss:Type="String">${escapeXML(val)}</Data></Cell>`;
+                }).join('');
+                return `   <Row ss:Height="20">\n    ${cells}\n   </Row>`;
+            }).join('\n');
+
+            return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+  </Style>
+  <Style ss:ID="HeaderStyle">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#FFFFFF" ss:Bold="1"/>
+   <Interior ss:Color="#2563EB" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="Zebra">
+   <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="${escapeXML(sheetName)}">
+  <Table ss:DefaultColumnWidth="100">
+   <Row ss:Height="26">
+    ${headerCells}
+   </Row>
+${dataRows}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+        },
+
+        _crc32(bytes) {
+            let table = Converter._crcTable;
+            if (!table) {
+                table = new Uint32Array(256);
+                for (let i = 0; i < 256; i++) {
+                    let c = i;
+                    for (let k = 0; k < 8; k++) {
+                        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                    }
+                    table[i] = c >>> 0;
+                }
+                Converter._crcTable = table;
+            }
+            const arr = (typeof bytes === 'string') ? new TextEncoder().encode(bytes) : bytes;
+            let crc = 0 ^ (-1);
+            for (let i = 0; i < arr.length; i++) {
+                crc = (crc >>> 8) ^ table[(crc ^ arr[i]) & 0xFF];
+            }
+            return (crc ^ (-1)) >>> 0;
+        },
+
+        _createZip(files) {
+            const encoder = new TextEncoder();
+            const normalizedFiles = files.map(f => {
+                const nameBytes = encoder.encode(f.name);
+                const dataBytes = (typeof f.data === 'string') ? encoder.encode(f.data) : (f.data instanceof Uint8Array ? f.data : new Uint8Array(f.data));
+                const crc = this._crc32(dataBytes);
+                return { nameBytes, dataBytes, crc };
+            });
+
+            let totalLocalHeadersSize = 0;
+            let totalDataSize = 0;
+            let totalCdSize = 0;
+
+            normalizedFiles.forEach(f => {
+                totalLocalHeadersSize += 30 + f.nameBytes.length;
+                totalDataSize += f.dataBytes.length;
+                totalCdSize += 46 + f.nameBytes.length;
+            });
+
+            const totalSize = totalLocalHeadersSize + totalDataSize + totalCdSize + 22;
+            const buffer = new ArrayBuffer(totalSize);
+            const view = new DataView(buffer);
+            const uint8 = new Uint8Array(buffer);
+
+            let offset = 0;
+            const localOffsets = [];
+
+            // 1. Write Local File Headers + File Data
+            normalizedFiles.forEach(f => {
+                localOffsets.push(offset);
+                view.setUint32(offset, 0x04034b50, true);
+                view.setUint16(offset + 4, 20, true);
+                view.setUint16(offset + 6, 0x0800, true);
+                view.setUint16(offset + 8, 0, true);
+                view.setUint16(offset + 10, 0, true);
+                view.setUint16(offset + 12, 0, true);
+                view.setUint32(offset + 14, f.crc, true);
+                view.setUint32(offset + 18, f.dataBytes.length, true);
+                view.setUint32(offset + 22, f.dataBytes.length, true);
+                view.setUint16(offset + 26, f.nameBytes.length, true);
+                view.setUint16(offset + 28, 0, true);
+                offset += 30;
+
+                uint8.set(f.nameBytes, offset);
+                offset += f.nameBytes.length;
+
+                uint8.set(f.dataBytes, offset);
+                offset += f.dataBytes.length;
+            });
+
+            // 2. Write Central Directory
+            const cdOffset = offset;
+            normalizedFiles.forEach((f, idx) => {
+                view.setUint32(offset, 0x02014b50, true);
+                view.setUint16(offset + 4, 0x0314, true);
+                view.setUint16(offset + 6, 20, true);
+                view.setUint16(offset + 8, 0x0800, true);
+                view.setUint16(offset + 10, 0, true);
+                view.setUint16(offset + 12, 0, true);
+                view.setUint16(offset + 14, 0, true);
+                view.setUint32(offset + 16, f.crc, true);
+                view.setUint32(offset + 20, f.dataBytes.length, true);
+                view.setUint32(offset + 24, f.dataBytes.length, true);
+                view.setUint16(offset + 28, f.nameBytes.length, true);
+                view.setUint16(offset + 30, 0, true);
+                view.setUint16(offset + 32, 0, true);
+                view.setUint16(offset + 34, 0, true);
+                view.setUint16(offset + 36, 0, true);
+                view.setUint32(offset + 38, 0x81A40000, true);
+                view.setUint32(offset + 42, localOffsets[idx], true);
+                offset += 46;
+
+                uint8.set(f.nameBytes, offset);
+                offset += f.nameBytes.length;
+            });
+            const cdSize = offset - cdOffset;
+
+            // 3. Write End of Central Directory Record (EOCD)
+            view.setUint32(offset, 0x06054b50, true);
+            view.setUint16(offset + 4, 0, true);
+            view.setUint16(offset + 6, 0, true);
+            view.setUint16(offset + 8, normalizedFiles.length, true);
+            view.setUint16(offset + 10, normalizedFiles.length, true);
+            view.setUint32(offset + 12, cdSize, true);
+            view.setUint32(offset + 16, cdOffset, true);
+            view.setUint16(offset + 20, 0, true);
+
+            return uint8;
+        },
+
+        toXLSX(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const sheetName = options.sheetName || ds.title || 'Planilha1';
+
+            const colName = (index) => {
+                let name = '';
+                let num = index;
+                while (num >= 0) {
+                    name = String.fromCharCode((num % 26) + 65) + name;
+                    num = Math.floor(num / 26) - 1;
+                }
+                return name;
+            };
+
+            const escapeXML = (val) => {
+                if (val === null || val === undefined) return '';
+                return String(val)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            };
+
+            const rowsXML = [];
+            const headerCells = ds.headers.map((h, idx) => {
+                const ref = colName(idx) + '1';
+                return `<c r="${ref}" t="inlineStr" s="1"><is><t>${escapeXML(h)}</t></is></c>`;
+            }).join('');
+            rowsXML.push(`<row r="1">${headerCells}</row>`);
+
+            ds.rows.forEach((r, rIdx) => {
+                const rowNum = rIdx + 2;
+                const styleId = (rIdx % 2 === 1) ? '2' : '0';
+                const cells = r.map((val, cIdx) => {
+                    const ref = colName(cIdx) + rowNum;
+                    if (val === null || val === undefined || val === '') {
+                        return `<c r="${ref}" s="${styleId}"/>`;
+                    }
+                    const num = Number(val);
+                    if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
+                        return `<c r="${ref}" t="n" s="${styleId}"><v>${num}</v></c>`;
+                    }
+                    return `<c r="${ref}" t="inlineStr" s="${styleId}"><is><t>${escapeXML(val)}</t></is></c>`;
+                }).join('');
+                rowsXML.push(`<row r="${rowNum}">${cells}</row>`);
+            });
+
+            const sheetXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>
+    ${rowsXML.join('\n    ')}
+  </sheetData>
+</worksheet>`;
+
+            const contentTypesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+
+            const rootRelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+            const workbookXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="${escapeXML(sheetName)}" sheetId="1" r:id="rId1"/>
+  </sheets>
+</workbook>`;
+
+            const workbookRelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+            const stylesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="2">
+    <font><name val="Calibri"/><sz val="11"/><color rgb="000000"/></font>
+    <font><b/><name val="Calibri"/><sz val="11"/><color rgb="FFFFFF"/></font>
+  </fonts>
+  <fills count="3">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF2563EB"/></patternFill></fill>
+  </fills>
+  <borders count="1">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+  </borders>
+  <cellXfs count="3">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFont="1" applyFill="1"/>
+    <xf numFmtId="0" fontId="0" fillId="1" borderId="0"/>
+  </cellXfs>
+</styleSheet>`;
+
+            const files = [
+                { name: '[Content_Types].xml', data: contentTypesXML },
+                { name: '_rels/.rels', data: rootRelsXML },
+                { name: 'xl/workbook.xml', data: workbookXML },
+                { name: 'xl/_rels/workbook.xml.rels', data: workbookRelsXML },
+                { name: 'xl/styles.xml', data: stylesXML },
+                { name: 'xl/worksheets/sheet1.xml', data: sheetXML }
+            ];
+
+            const zipBytes = this._createZip(files);
+            if (options.asBuffer || options.raw) {
+                return zipBytes;
+            }
+            if (typeof Blob !== 'undefined') {
+                return new Blob([zipBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            }
+            return zipBytes;
         }
     };
     FramePER.Converter = Converter;

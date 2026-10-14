@@ -133,3 +133,47 @@ assert(xmlOut.includes('&amp;'), 'Caractere & deve ser escapado como &amp;');
 console.log('  ✓ Passou');
 
 console.log('\n🎉 TODOS OS TESTES DA TASK 2 PASSARAM COM SUCESSO!\n');
+
+// ==========================================
+// TASK 3: GERADORES DE PLANILHA (XLS, XLSX)
+// ==========================================
+console.log('\n--- TESTES TASK 3: GERADORES XLS E XLSX (MICRO-ZIP) ---');
+
+// Teste 9: toXLS (XML Spreadsheet 2003)
+console.log('▶ Teste 9: toXLS compatível com Excel 97-2003');
+const xlsOut = Converter.toXLS(testDataset);
+assert(xlsOut.includes('<?xml version="1.0"?>'), 'XLS deve ter cabeçalho XML');
+assert(xlsOut.includes('xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"'), 'XLS deve ter namespace oficial do Excel');
+assert(xlsOut.includes('ss:Type="Number">250.5</Data>'), 'Números devem ter Type="Number"');
+assert(xlsOut.includes('ss:Type="String">Teclado Gamer</Data>'), 'Textos devem ter Type="String"');
+console.log('  ✓ Passou');
+
+// Teste 10: _crc32 (Vetor Canônico)
+console.log('▶ Teste 10: Cálculo de Hash CRC32');
+const testBytes = Buffer.from('123456789');
+const crc = Converter._crc32(testBytes);
+assert.strictEqual(crc >>> 0, 0xCBF43926 >>> 0, 'CRC32 de "123456789" deve ser 0xCBF43926');
+console.log('  ✓ Passou');
+
+// Teste 11: _createZip (Micro-ZIP STORE Mode)
+console.log('▶ Teste 11: Criação de Arquivo ZIP Binário Puro');
+const zipFiles = [
+  { name: 'teste.txt', data: 'Conteúdo de Teste do Zip' }
+];
+const zipBytes = Converter._createZip(zipFiles);
+assert(zipBytes instanceof Uint8Array, 'Retorno de _createZip deve ser Uint8Array');
+assert(zipBytes[0] === 0x50 && zipBytes[1] === 0x4B && zipBytes[2] === 0x03 && zipBytes[3] === 0x04, 'Assinatura PK 0x04034b50 incorreta');
+console.log('  ✓ Passou');
+
+// Teste 12: toXLSX (OpenXML)
+console.log('▶ Teste 12: Geração de XLSX Real');
+const xlsxBytes = Converter.toXLSX(testDataset, { asBuffer: true });
+assert(xlsxBytes instanceof Uint8Array, 'toXLSX com asBuffer: true deve retornar Uint8Array');
+const xlsxArr = xlsxBytes;
+assert(xlsxArr[0] === 0x50 && xlsxArr[1] === 0x4B, 'XLSX deve ser um arquivo ZIP com assinatura PK');
+const xlsxStr = Buffer.from(xlsxArr).toString('binary');
+assert(xlsxStr.includes('xl/worksheets/sheet1.xml'), 'XLSX deve conter sheet1.xml');
+assert(xlsxStr.includes('xl/workbook.xml'), 'XLSX deve conter workbook.xml');
+console.log('  ✓ Passou');
+
+console.log('\n🎉 TODOS OS TESTES DA TASK 3 PASSARAM COM SUCESSO!\n');
