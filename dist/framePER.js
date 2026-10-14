@@ -7639,6 +7639,8 @@
         if (FramePER.Timeline && FramePER.Timeline.init) {
             FramePER.Timeline.init();
         }
+    });
+
     // ==========================================
     // SEGMENTED CONTROL COMPONENT
     // ==========================================
@@ -8133,6 +8135,963 @@
     };
     FramePER.Confetti = Confetti;
 
+    // ==========================================
+    // DATA CONVERTER ENGINE (v2.26)
+    // ==========================================
+    const Converter = {
+        parse(input, options = {}) {
+            if (!input) {
+                return { headers: [], rows: [], metadata: { totalRows: 0, totalCols: 0 } };
+            }
+            if (Array.isArray(input)) {
+                if (input.length === 0) {
+                    return { headers: [], rows: [], metadata: { totalRows: 0, totalCols: 0 } };
+                }
+                if (Array.isArray(input[0])) {
+                    return this._from2DArray(input, options);
+                }
+                if (typeof input[0] === 'object' && input[0] !== null) {
+                    return this._fromArrayOfObjects(input, options);
+                }
+            }
+            if (typeof input === 'string') {
+                const trimmed = input.trim();
+                if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+                    try {
+                        return this._parseJSON(trimmed, options);
+                    } catch (e) {
+                        // fallback se não for JSON válido
+                    }
+                }
+                if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
+                    try {
+                        return this._parseXML(trimmed, options);
+                    } catch (e) {
+                        // fallback se não for XML válido
+                    }
+                }
+                return this._parseCSV(trimmed, options);
+            }
+            if (typeof input === 'object' && input !== null) {
+                if (input.headers && Array.isArray(input.rows)) {
+                    return {
+                        title: input.title || options.title || 'Dataset',
+                        headers: [...input.headers],
+                        rows: input.rows.map(r => Array.isArray(r) ? [...r] : Object.values(r)),
+                        metadata: {
+                            totalRows: input.rows.length,
+                            totalCols: input.headers.length,
+                            detectedType: 'dataset'
+                        }
+                    };
+                }
+                return this._fromArrayOfObjects([input], options);
+            }
+            throw new Error('Formato de entrada não reconhecido pelo FramePER.Converter.');
+        },
+
+        _fromArrayOfObjects(arr, options = {}) {
+            const headerSet = new Set();
+            arr.forEach(obj => {
+                if (obj && typeof obj === 'object') {
+                    Object.keys(obj).forEach(k => headerSet.add(k));
+                }
+            });
+            const headers = Array.from(headerSet);
+            const rows = arr.map(obj => {
+                return headers.map(h => (obj && obj[h] !== undefined && obj[h] !== null) ? obj[h] : '');
+            });
+            return {
+                title: options.title || 'Dataset',
+                headers,
+                rows,
+                metadata: {
+                    totalRows: rows.length,
+                    totalCols: headers.length,
+                    detectedType: 'array-of-objects'
+                }
+            };
+        },
+
+        _from2DArray(matrix, options = {}) {
+            const headers = (matrix[0] || []).map(h => String(h != null ? h : ''));
+            const rows = matrix.slice(1).map(r => Array.isArray(r) ? r : [r]);
+            return {
+                title: options.title || 'Dataset',
+                headers,
+                rows,
+                metadata: {
+                    totalRows: rows.length,
+                    totalCols: headers.length,
+                    detectedType: '2d-array'
+                }
+            };
+        },
+
+        _parseCSV(text, options = {}) {
+            let clean = text;
+            if (clean.charCodeAt(0) === 0xFEFF) {
+                clean = clean.slice(1);
+            }
+            let delimiter = options.delimiter;
+            if (!delimiter) {
+                const firstLine = clean.split(/\r\n|\n|\r/)[0] || '';
+                const counts = {
+                    ';': (firstLine.match(/;/g) || []).length,
+                    ',': (firstLine.match(/,/g) || []).length,
+                    '\t': (firstLine.match(/\t/g) || []).length,
+                    '|': (firstLine.match(/\|/g) || []).length
+                };
+                delimiter = Object.keys(counts).reduce((a, b) => counts[a] >= counts[b] ? a : b, ',');
+                if (counts[delimiter] === 0) delimiter = ',';
+            }
+
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < clean.length; i++) {
+                const c = clean[i];
+                const next = clean[i + 1];
+
+                if (inQuotes) {
+                    if (c === '"') {
+                        if (next === '"') {
+                            currentField += '"';
+                            i++;
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        currentField += c;
+                    }
+                } else {
+                    if (c === '"') {
+                        inQuotes = true;
+                    } else if (c === delimiter) {
+                        currentRow.push(currentField.trim());
+                        currentField = '';
+                    } else if (c === '\r') {
+                        if (next === '\n') i++;
+                        currentRow.push(currentField.trim());
+                        if (currentRow.length > 1 || currentRow[0] !== '') {
+                            rows.push(currentRow);
+                        }
+                        currentRow = [];
+                        currentField = '';
+                    } else if (c === '\n') {
+                        currentRow.push(currentField.trim());
+                        if (currentRow.length > 1 || currentRow[0] !== '') {
+                            rows.push(currentRow);
+                        }
+                        currentRow = [];
+                        currentField = '';
+                    } else {
+                        currentField += c;
+                    }
+                }
+            }
+
+            if (currentField !== '' || currentRow.length > 0) {
+                currentRow.push(currentField.trim());
+                if (currentRow.length > 1 || currentRow[0] !== '') {
+                    rows.push(currentRow);
+                }
+            }
+
+            if (rows.length === 0) {
+                return { headers: [], rows: [], metadata: { totalRows: 0, totalCols: 0, detectedType: 'csv' } };
+            }
+
+            const rawHeaders = rows[0].map(h => String(h || '').trim());
+            const dataRows = rows.slice(1).map(r => {
+                const row = [...r];
+                while (row.length < rawHeaders.length) row.push('');
+                return row.map(val => {
+                    if (val === '') return '';
+                    const num = Number(val);
+                    return (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === val.trim()) ? num : val;
+                });
+            });
+
+            return {
+                title: options.title || 'Dados CSV',
+                headers: rawHeaders,
+                rows: dataRows,
+                metadata: {
+                    totalRows: dataRows.length,
+                    totalCols: rawHeaders.length,
+                    delimiter,
+                    detectedType: 'csv'
+                }
+            };
+        },
+
+        _parseJSON(text, options = {}) {
+            const data = JSON.parse(text);
+            const dataset = this.parse(data, options);
+            dataset.metadata.detectedType = 'json';
+            return dataset;
+        },
+
+        _parseXML(text, options = {}) {
+            let headers = [];
+            let rows = [];
+
+            if (typeof DOMParser !== 'undefined') {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'application/xml');
+                const root = doc.documentElement;
+                if (root && root.children && root.children.length > 0) {
+                    const headerSet = new Set();
+                    const records = Array.from(root.children);
+                    records.forEach(rec => {
+                        Array.from(rec.children).forEach(child => headerSet.add(child.tagName));
+                    });
+                    headers = Array.from(headerSet);
+                    rows = records.map(rec => {
+                        return headers.map(h => {
+                            const child = rec.querySelector(h);
+                            return child ? child.textContent.trim() : '';
+                        });
+                    });
+                }
+            }
+
+            // Fallback para Node.js ou caso DOMParser retorne vazio
+            if (headers.length === 0) {
+                const cleanXml = text.replace(/<\?xml[\s\S]*?\?>/i, '').trim();
+                const rootMatch = cleanXml.match(/<([a-zA-Z0-9_\-]+)[^>]*>([\s\S]*?)<\/\1>/);
+                const inner = rootMatch ? rootMatch[2].trim() : cleanXml;
+                
+                const recordMatches = inner.match(/<([a-zA-Z0-9_\-]+)[^>]*>([\s\S]*?)<\/\1>/g);
+                if (recordMatches) {
+                    const headerSet = new Set();
+                    const parsedRecords = [];
+                    recordMatches.forEach(recStr => {
+                        const recInnerMatch = recStr.match(/<([a-zA-Z0-9_\-]+)[^>]*>([\s\S]*?)<\/\1>/);
+                        const recBody = recInnerMatch ? recInnerMatch[2] : recStr;
+                        const fieldMatches = Array.from(recBody.matchAll(/<([a-zA-Z0-9_\-]+)[^>]*>([^<]*)<\/\1>/g));
+                        if (fieldMatches.length > 0) {
+                            const recObj = {};
+                            fieldMatches.forEach(m => {
+                                headerSet.add(m[1]);
+                                recObj[m[1]] = m[2].trim();
+                            });
+                            parsedRecords.push(recObj);
+                        }
+                    });
+                    headers = Array.from(headerSet);
+                    rows = parsedRecords.map(obj => headers.map(h => obj[h] !== undefined ? obj[h] : ''));
+                }
+            }
+
+            return {
+                title: options.title || 'Dados XML',
+                headers,
+                rows,
+                metadata: {
+                    totalRows: rows.length,
+                    totalCols: headers.length,
+                    detectedType: 'xml'
+                }
+            };
+        },
+
+        toCSV(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const delimiter = options.delimiter || ',';
+            const escapeCSV = (val) => {
+                if (val === null || val === undefined) return '';
+                const str = String(val);
+                if (str.includes(delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            };
+
+            const bom = options.bom !== false ? '\uFEFF' : '';
+            const headerLine = ds.headers.map(escapeCSV).join(delimiter);
+            const rowLines = ds.rows.map(r => r.map(escapeCSV).join(delimiter));
+            return bom + [headerLine, ...rowLines].join('\r\n');
+        },
+
+        toJSON(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            if (options.as2DArray) {
+                return JSON.stringify([ds.headers, ...ds.rows], null, options.indent !== undefined ? options.indent : 2);
+            }
+            const arr = ds.rows.map(r => {
+                const obj = {};
+                ds.headers.forEach((h, idx) => {
+                    obj[h] = r[idx] !== undefined ? r[idx] : null;
+                });
+                return obj;
+            });
+            return JSON.stringify(arr, null, options.indent !== undefined ? options.indent : 2);
+        },
+
+        toXML(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const rootTag = options.rootTag || 'dataset';
+            const recordTag = options.recordTag || 'record';
+
+            const sanitizeTag = (t) => {
+                let clean = String(t || 'campo').replace(/[^a-zA-Z0-9_\-]/g, '_');
+                if (/^[0-9\-]/.test(clean)) clean = '_' + clean;
+                return clean || 'campo';
+            };
+
+            const escapeXML = (val) => {
+                if (val === null || val === undefined) return '';
+                return String(val)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            };
+
+            const lines = ['<?xml version="1.0" encoding="UTF-8"?>', `<${rootTag}>`];
+            ds.rows.forEach(r => {
+                lines.push(`  <${recordTag}>`);
+                ds.headers.forEach((h, idx) => {
+                    const tag = sanitizeTag(h);
+                    lines.push(`    <${tag}>${escapeXML(r[idx])}</${tag}>`);
+                });
+                lines.push(`  </${recordTag}>`);
+            });
+            lines.push(`</${rootTag}>`);
+            return lines.join('\n');
+        },
+
+        toXLS(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const sheetName = options.sheetName || ds.title || 'Sheet1';
+
+            const escapeXML = (val) => {
+                if (val === null || val === undefined) return '';
+                return String(val)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            };
+
+            const headerCells = ds.headers.map(h => {
+                return `<Cell ss:StyleID="HeaderStyle"><Data ss:Type="String">${escapeXML(h)}</Data></Cell>`;
+            }).join('');
+
+            const dataRows = ds.rows.map((r, rIdx) => {
+                const styleAttr = rIdx % 2 === 1 ? ' ss:StyleID="Zebra"' : '';
+                const cells = r.map(val => {
+                    if (val === null || val === undefined || val === '') {
+                        return '<Cell><Data ss:Type="String"></Data></Cell>';
+                    }
+                    const num = Number(val);
+                    if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
+                        return `<Cell${styleAttr}><Data ss:Type="Number">${num}</Data></Cell>`;
+                    }
+                    return `<Cell${styleAttr}><Data ss:Type="String">${escapeXML(val)}</Data></Cell>`;
+                }).join('');
+                return `   <Row ss:Height="20">\n    ${cells}\n   </Row>`;
+            }).join('\n');
+
+            return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+  </Style>
+  <Style ss:ID="HeaderStyle">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#FFFFFF" ss:Bold="1"/>
+   <Interior ss:Color="#2563EB" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="Zebra">
+   <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="${escapeXML(sheetName)}">
+  <Table ss:DefaultColumnWidth="100">
+   <Row ss:Height="26">
+    ${headerCells}
+   </Row>
+${dataRows}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+        },
+
+        _crc32(bytes) {
+            let table = Converter._crcTable;
+            if (!table) {
+                table = new Uint32Array(256);
+                for (let i = 0; i < 256; i++) {
+                    let c = i;
+                    for (let k = 0; k < 8; k++) {
+                        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                    }
+                    table[i] = c >>> 0;
+                }
+                Converter._crcTable = table;
+            }
+            const arr = (typeof bytes === 'string') ? new TextEncoder().encode(bytes) : bytes;
+            let crc = 0 ^ (-1);
+            for (let i = 0; i < arr.length; i++) {
+                crc = (crc >>> 8) ^ table[(crc ^ arr[i]) & 0xFF];
+            }
+            return (crc ^ (-1)) >>> 0;
+        },
+
+        _createZip(files) {
+            const encoder = new TextEncoder();
+            const normalizedFiles = files.map(f => {
+                const nameBytes = encoder.encode(f.name);
+                const dataBytes = (typeof f.data === 'string') ? encoder.encode(f.data) : (f.data instanceof Uint8Array ? f.data : new Uint8Array(f.data));
+                const crc = this._crc32(dataBytes);
+                return { nameBytes, dataBytes, crc };
+            });
+
+            let totalLocalHeadersSize = 0;
+            let totalDataSize = 0;
+            let totalCdSize = 0;
+
+            normalizedFiles.forEach(f => {
+                totalLocalHeadersSize += 30 + f.nameBytes.length;
+                totalDataSize += f.dataBytes.length;
+                totalCdSize += 46 + f.nameBytes.length;
+            });
+
+            const totalSize = totalLocalHeadersSize + totalDataSize + totalCdSize + 22;
+            const buffer = new ArrayBuffer(totalSize);
+            const view = new DataView(buffer);
+            const uint8 = new Uint8Array(buffer);
+
+            let offset = 0;
+            const localOffsets = [];
+
+            // 1. Write Local File Headers + File Data
+            normalizedFiles.forEach(f => {
+                localOffsets.push(offset);
+                view.setUint32(offset, 0x04034b50, true);
+                view.setUint16(offset + 4, 20, true);
+                view.setUint16(offset + 6, 0x0800, true);
+                view.setUint16(offset + 8, 0, true);
+                view.setUint16(offset + 10, 0, true);
+                view.setUint16(offset + 12, 0, true);
+                view.setUint32(offset + 14, f.crc, true);
+                view.setUint32(offset + 18, f.dataBytes.length, true);
+                view.setUint32(offset + 22, f.dataBytes.length, true);
+                view.setUint16(offset + 26, f.nameBytes.length, true);
+                view.setUint16(offset + 28, 0, true);
+                offset += 30;
+
+                uint8.set(f.nameBytes, offset);
+                offset += f.nameBytes.length;
+
+                uint8.set(f.dataBytes, offset);
+                offset += f.dataBytes.length;
+            });
+
+            // 2. Write Central Directory
+            const cdOffset = offset;
+            normalizedFiles.forEach((f, idx) => {
+                view.setUint32(offset, 0x02014b50, true);
+                view.setUint16(offset + 4, 0x0314, true);
+                view.setUint16(offset + 6, 20, true);
+                view.setUint16(offset + 8, 0x0800, true);
+                view.setUint16(offset + 10, 0, true);
+                view.setUint16(offset + 12, 0, true);
+                view.setUint16(offset + 14, 0, true);
+                view.setUint32(offset + 16, f.crc, true);
+                view.setUint32(offset + 20, f.dataBytes.length, true);
+                view.setUint32(offset + 24, f.dataBytes.length, true);
+                view.setUint16(offset + 28, f.nameBytes.length, true);
+                view.setUint16(offset + 30, 0, true);
+                view.setUint16(offset + 32, 0, true);
+                view.setUint16(offset + 34, 0, true);
+                view.setUint16(offset + 36, 0, true);
+                view.setUint32(offset + 38, 0x81A40000, true);
+                view.setUint32(offset + 42, localOffsets[idx], true);
+                offset += 46;
+
+                uint8.set(f.nameBytes, offset);
+                offset += f.nameBytes.length;
+            });
+            const cdSize = offset - cdOffset;
+
+            // 3. Write End of Central Directory Record (EOCD)
+            view.setUint32(offset, 0x06054b50, true);
+            view.setUint16(offset + 4, 0, true);
+            view.setUint16(offset + 6, 0, true);
+            view.setUint16(offset + 8, normalizedFiles.length, true);
+            view.setUint16(offset + 10, normalizedFiles.length, true);
+            view.setUint32(offset + 12, cdSize, true);
+            view.setUint32(offset + 16, cdOffset, true);
+            view.setUint16(offset + 20, 0, true);
+
+            return uint8;
+        },
+
+        toXLSX(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const sheetName = options.sheetName || ds.title || 'Planilha1';
+
+            const colName = (index) => {
+                let name = '';
+                let num = index;
+                while (num >= 0) {
+                    name = String.fromCharCode((num % 26) + 65) + name;
+                    num = Math.floor(num / 26) - 1;
+                }
+                return name;
+            };
+
+            const escapeXML = (val) => {
+                if (val === null || val === undefined) return '';
+                return String(val)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            };
+
+            const rowsXML = [];
+            const headerCells = ds.headers.map((h, idx) => {
+                const ref = colName(idx) + '1';
+                return `<c r="${ref}" t="inlineStr" s="1"><is><t>${escapeXML(h)}</t></is></c>`;
+            }).join('');
+            rowsXML.push(`<row r="1">${headerCells}</row>`);
+
+            ds.rows.forEach((r, rIdx) => {
+                const rowNum = rIdx + 2;
+                const styleId = (rIdx % 2 === 1) ? '2' : '0';
+                const cells = r.map((val, cIdx) => {
+                    const ref = colName(cIdx) + rowNum;
+                    if (val === null || val === undefined || val === '') {
+                        return `<c r="${ref}" s="${styleId}"/>`;
+                    }
+                    const num = Number(val);
+                    if (typeof val === 'number' || (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === String(val).trim())) {
+                        return `<c r="${ref}" t="n" s="${styleId}"><v>${num}</v></c>`;
+                    }
+                    return `<c r="${ref}" t="inlineStr" s="${styleId}"><is><t>${escapeXML(val)}</t></is></c>`;
+                }).join('');
+                rowsXML.push(`<row r="${rowNum}">${cells}</row>`);
+            });
+
+            const sheetXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>
+    ${rowsXML.join('\n    ')}
+  </sheetData>
+</worksheet>`;
+
+            const contentTypesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+
+            const rootRelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+            const workbookXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="${escapeXML(sheetName)}" sheetId="1" r:id="rId1"/>
+  </sheets>
+</workbook>`;
+
+            const workbookRelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+            const stylesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="2">
+    <font><name val="Calibri"/><sz val="11"/><color rgb="000000"/></font>
+    <font><b/><name val="Calibri"/><sz val="11"/><color rgb="FFFFFF"/></font>
+  </fonts>
+  <fills count="3">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF2563EB"/></patternFill></fill>
+  </fills>
+  <borders count="1">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+  </borders>
+  <cellXfs count="3">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFont="1" applyFill="1"/>
+    <xf numFmtId="0" fontId="0" fillId="1" borderId="0"/>
+  </cellXfs>
+</styleSheet>`;
+
+            const files = [
+                { name: '[Content_Types].xml', data: contentTypesXML },
+                { name: '_rels/.rels', data: rootRelsXML },
+                { name: 'xl/workbook.xml', data: workbookXML },
+                { name: 'xl/_rels/workbook.xml.rels', data: workbookRelsXML },
+                { name: 'xl/styles.xml', data: stylesXML },
+                { name: 'xl/worksheets/sheet1.xml', data: sheetXML }
+            ];
+
+            const zipBytes = this._createZip(files);
+            if (options.asBuffer || options.raw) {
+                return zipBytes;
+            }
+            if (typeof Blob !== 'undefined') {
+                return new Blob([zipBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            }
+            return zipBytes;
+        },
+
+        toPDF(dataset, options = {}) {
+            const ds = this.parse(dataset, options);
+            const title = options.title || ds.title || 'Relatório de Dados';
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR');
+
+            const pageWidth = 595.28;
+            const pageHeight = 841.89;
+            const marginLeft = 36;
+            const marginRight = 36;
+            const marginTop = 36;
+            const marginBottom = 36;
+            const contentWidth = pageWidth - marginLeft - marginRight;
+            const colHeaderHeight = 22;
+            const rowHeight = 18;
+
+            // Normalize and escape text for PDF syntax
+            const escapePDF = (str) => {
+                if (str === null || str === undefined) return '';
+                // Transliterate accented characters to safe latin characters for Helvetica standard type1 font
+                const map = {
+                    'á':'a','à':'a','ã':'a','â':'a','ä':'a','é':'e','è':'e','ê':'e','ë':'e',
+                    'í':'i','ì':'i','î':'i','ï':'i','ó':'o','ò':'o','õ':'o','ô':'o','ö':'o',
+                    'ú':'u','ù':'u','û':'u','ü':'u','ç':'c','ñ':'n','Á':'A','À':'A','Ã':'A',
+                    'Â':'A','Ä':'A','É':'E','È':'E','Ê':'E','Ë':'E','Í':'I','Ì':'I','Î':'I',
+                    'Ï':'I','Ó':'O','Ò':'O','Õ':'O','Ô':'O','Ö':'O','Ú':'U','Ù':'U','Û':'U',
+                    'Ü':'U','Ç':'C','Ñ':'N'
+                };
+                let clean = String(str).replace(/[^\u0000-\u007E]/g, ch => map[ch] || ch);
+                return clean
+                    .replace(/\\/g, '\\\\')
+                    .replace(/\(/g, '\\(')
+                    .replace(/\)/g, '\\)')
+                    .replace(/[\r\n]+/g, ' ')
+                    .slice(0, 75);
+            };
+
+            // Calculate proportional column widths
+            const colWeights = ds.headers.map((h, cIdx) => {
+                let maxL = String(h).length;
+                ds.rows.forEach(r => {
+                    const l = String(r[cIdx] || '').length;
+                    if (l > maxL) maxL = l;
+                });
+                return Math.max(6, Math.min(32, maxL));
+            });
+            const totalWeight = colWeights.reduce((a, b) => a + b, 0) || 1;
+            const colWidths = colWeights.map(w => (w / totalWeight) * contentWidth);
+
+            // Chunk rows into pages
+            const rowsPage1 = 34; // leaves room for title block
+            const rowsPageN = 38;
+            const pageChunks = [];
+
+            if (ds.rows.length <= rowsPage1) {
+                pageChunks.push(ds.rows);
+            } else {
+                pageChunks.push(ds.rows.slice(0, rowsPage1));
+                let curIdx = rowsPage1;
+                while (curIdx < ds.rows.length) {
+                    pageChunks.push(ds.rows.slice(curIdx, curIdx + rowsPageN));
+                    curIdx += rowsPageN;
+                }
+            }
+
+            const totalPages = pageChunks.length;
+            const pageContents = [];
+
+            let globalRowCounter = 0;
+            pageChunks.forEach((chunk, pageIdx) => {
+                const pageNum = pageIdx + 1;
+                let stream = '';
+
+                let tableTopY;
+                if (pageIdx === 0) {
+                    // Header Block (Page 1 only)
+                    // Accent bar
+                    stream += `0.145 0.388 0.922 rg ${marginLeft} ${pageHeight - marginTop - 4} ${contentWidth} 4 re f\n`;
+                    // Title
+                    stream += `BT /F2 15 Tf 0.1 0.1 0.1 rg ${marginLeft} ${pageHeight - marginTop - 22} Td (${escapePDF(title)}) Tj ET\n`;
+                    // Subtitle / Date
+                    stream += `BT /F1 8 Tf 0.45 0.45 0.45 rg ${marginLeft} ${pageHeight - marginTop - 34} Td (Gerado em ${escapePDF(dateStr)} - FramePER UI Framework) Tj ET\n`;
+                    tableTopY = pageHeight - marginTop - 48;
+                } else {
+                    // Subsequent pages header
+                    stream += `BT /F2 9 Tf 0.4 0.4 0.4 rg ${marginLeft} ${pageHeight - marginTop - 12} Td (${escapePDF(title)} - Continuação) Tj ET\n`;
+                    stream += `0.85 0.88 0.92 RG 0.5 w ${marginLeft} ${pageHeight - marginTop - 16} m ${pageWidth - marginRight} ${pageHeight - marginTop - 16} l S\n`;
+                    tableTopY = pageHeight - marginTop - 24;
+                }
+
+                // Table Header background
+                stream += `0.145 0.388 0.922 rg ${marginLeft} ${tableTopY - colHeaderHeight} ${contentWidth} ${colHeaderHeight} re f\n`;
+
+                // Table Header text
+                let curX = marginLeft;
+                ds.headers.forEach((h, cIdx) => {
+                    const w = colWidths[cIdx];
+                    stream += `BT /F2 8.5 Tf 1 1 1 rg ${curX + 4} ${tableTopY - colHeaderHeight + 7} Td (${escapePDF(h)}) Tj ET\n`;
+                    curX += w;
+                });
+
+                // Table Data Rows
+                chunk.forEach((row, rIdx) => {
+                    const rowY = tableTopY - colHeaderHeight - (rIdx + 1) * rowHeight;
+                    // Zebra stripe
+                    if (globalRowCounter % 2 === 1) {
+                        stream += `0.973 0.980 0.988 rg ${marginLeft} ${rowY} ${contentWidth} ${rowHeight} re f\n`;
+                    }
+                    // Bottom border
+                    stream += `0.88 0.90 0.93 RG 0.5 w ${marginLeft} ${rowY} m ${pageWidth - marginRight} ${rowY} l S\n`;
+
+                    // Cell contents
+                    curX = marginLeft;
+                    row.forEach((val, cIdx) => {
+                        const w = colWidths[cIdx];
+                        stream += `BT /F1 7.5 Tf 0.15 0.15 0.15 rg ${curX + 4} ${rowY + 5.5} Td (${escapePDF(val)}) Tj ET\n`;
+                        curX += w;
+                    });
+
+                    globalRowCounter++;
+                });
+
+                // Footer
+                stream += `0.85 0.88 0.92 RG 0.5 w ${marginLeft} ${marginBottom + 12} m ${pageWidth - marginRight} ${marginBottom + 12} l S\n`;
+                stream += `BT /F1 7.5 Tf 0.45 0.45 0.45 rg ${marginLeft} ${marginBottom + 2} Td (FramePER - Conversor Universal) Tj ET\n`;
+                stream += `BT /F1 7.5 Tf 0.45 0.45 0.45 rg ${pageWidth - marginRight - 65} ${marginBottom + 2} Td (Página ${pageNum} de ${totalPages}) Tj ET\n`;
+
+                pageContents.push(stream);
+            });
+
+            // Assemble PDF 1.4 objects
+            const objects = [];
+            const addObject = (content) => {
+                objects.push(content);
+                return objects.length;
+            };
+
+            // Obj 1: Catalog
+            addObject(`<< /Type /Catalog /Pages 2 0 R >>`);
+
+            // Obj 2: Pages (Kids placeholder)
+            const pagesObjIdx = addObject(``); // updated later
+
+            // Fonts
+            const font1Idx = addObject(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>`);
+            const font2Idx = addObject(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>`);
+
+            // Create Page & Content objects
+            const pageObjIndices = [];
+            pageContents.forEach(streamContent => {
+                const streamBytes = new TextEncoder().encode(streamContent);
+                const contentObjIdx = addObject(`<< /Length ${streamBytes.length} >>\nstream\n${streamContent}\nendstream`);
+                const pageObjIdx = addObject(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${contentObjIdx} 0 R /Resources << /Font << /F1 ${font1Idx} 0 R /F2 ${font2Idx} 0 R >> >> >>`);
+                pageObjIndices.push(pageObjIdx);
+            });
+
+            // Update Obj 2 (Pages)
+            const kidsStr = pageObjIndices.map(idx => `${idx} 0 R`).join(' ');
+            objects[pagesObjIdx - 1] = `<< /Type /Pages /Kids [${kidsStr}] /Count ${totalPages} >>`;
+
+            // Build binary PDF
+            let pdf = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
+            const xrefOffsets = [];
+
+            objects.forEach((objContent, i) => {
+                xrefOffsets.push(pdf.length);
+                pdf += `${i + 1} 0 obj\n${objContent}\nendobj\n`;
+            });
+
+            const startXref = pdf.length;
+            pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+            xrefOffsets.forEach(off => {
+                pdf += String(off).padStart(10, '0') + ' 00000 n \n';
+            });
+            pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF\n`;
+
+            const pdfBytes = new TextEncoder().encode(pdf);
+            if (options.asBuffer || options.raw) {
+                return pdfBytes;
+            }
+            if (typeof Blob !== 'undefined') {
+                return new Blob([pdfBytes], { type: 'application/pdf' });
+            }
+            return pdfBytes;
+        },
+
+        download(filename, content, mimeType) {
+            let blob;
+            if (typeof Blob !== 'undefined' && content instanceof Blob) {
+                blob = content;
+            } else if (content instanceof Uint8Array || (typeof ArrayBuffer !== 'undefined' && content instanceof ArrayBuffer)) {
+                blob = (typeof Blob !== 'undefined') ? new Blob([content], { type: mimeType || 'application/octet-stream' }) : null;
+            } else {
+                blob = (typeof Blob !== 'undefined') ? new Blob([String(content)], { type: mimeType || 'text/plain;charset=utf-8' }) : null;
+            }
+
+            if (typeof document !== 'undefined' && document.createElement && typeof URL !== 'undefined' && URL.createObjectURL && blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style.display = 'none';
+                (document.body || document.documentElement).appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }, 150);
+            }
+
+            return { filename, mime: mimeType, content, blob };
+        },
+
+        readFile(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return reject(new Error('Nenhum arquivo fornecido.'));
+                const name = file.name || 'arquivo';
+                const lower = name.toLowerCase();
+
+                if (lower.endsWith('.xlsx')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const buffer = e.target.result;
+                            const uint8 = new Uint8Array(buffer);
+                            const str = new TextDecoder('utf-8', { fatal: false }).decode(uint8);
+                            const sheetMatch = str.match(/<sheetData[\s\S]*?<\/sheetData>/);
+                            if (sheetMatch) {
+                                const rowMatches = sheetMatch[0].match(/<row[^>]*>[\s\S]*?<\/row>/g) || [];
+                                const rows = [];
+                                rowMatches.forEach(rXml => {
+                                    const cellMatches = Array.from(rXml.matchAll(/<c[^>]*>(?:<is><t>([^<]*)<\/t><\/is>|<v>([^<]*)<\/v>)?<\/c>/g));
+                                    const rowVals = cellMatches.map(m => m[1] !== undefined ? m[1] : (m[2] !== undefined ? m[2] : ''));
+                                    if (rowVals.length > 0) rows.push(rowVals);
+                                });
+                                if (rows.length > 0) {
+                                    return resolve(this.parse(rows, { title: name }));
+                                }
+                            }
+                            resolve(this.parse([], { title: name }));
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    reader.onerror = () => reject(reader.error);
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const text = e.target.result;
+                            resolve(this.parse(text, { title: name }));
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    reader.onerror = () => reject(reader.error);
+                    reader.readAsText(file);
+                }
+            });
+        },
+
+        convert(input, targetFormat, options = {}) {
+            const ds = this.parse(input, options);
+            const fmt = String(targetFormat || 'csv').trim().toLowerCase();
+            let content;
+            let ext;
+            let mime;
+
+            switch (fmt) {
+                case 'csv':
+                    content = this.toCSV(ds, options);
+                    ext = 'csv';
+                    mime = 'text/csv;charset=utf-8';
+                    break;
+                case 'json':
+                    content = this.toJSON(ds, options);
+                    ext = 'json';
+                    mime = 'application/json';
+                    break;
+                case 'xml':
+                    content = this.toXML(ds, options);
+                    ext = 'xml';
+                    mime = 'application/xml';
+                    break;
+                case 'xls':
+                    content = this.toXLS(ds, options);
+                    ext = 'xls';
+                    mime = 'application/vnd.ms-excel';
+                    break;
+                case 'xlsx':
+                    content = this.toXLSX(ds, options);
+                    ext = 'xlsx';
+                    mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                    break;
+                case 'pdf':
+                    content = this.toPDF(ds, options);
+                    ext = 'pdf';
+                    mime = 'application/pdf';
+                    break;
+                default:
+                    throw new Error(`Formato de destino "${targetFormat}" não suportado. Use: csv, json, xml, xls, xlsx ou pdf.`);
+            }
+
+            const baseName = (options.filename || ds.title || 'dados').replace(/\.[a-zA-Z0-9]+$/, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
+            const filename = `${baseName}.${ext}`;
+
+            if (options.autoDownload !== false && typeof document !== 'undefined') {
+                this.download(filename, content, mime);
+            }
+
+            return {
+                dataset: ds,
+                format: fmt,
+                filename,
+                content,
+                mime,
+                download: () => this.download(filename, content, mime)
+            };
+        }
+    };
+    FramePER.Converter = Converter;
+
+    document.addEventListener("DOMContentLoaded", () => {
         if (FramePER.Tour && FramePER.Tour.init) {
             FramePER.Tour.init();
         }
@@ -8185,7 +9144,12 @@
     window.FramePERBottomSheet = FramePER.BottomSheet;
     window.FramePEROtpInput = FramePER.OtpInput;
     window.FramePERConfetti = FramePER.Confetti;
+    window.FramePERConverter = FramePER.Converter;
 
-})(window, document);
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = FramePER;
+    }
+
+})(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? (global.window || global) : this), typeof document !== 'undefined' ? document : (typeof global !== 'undefined' ? (global.document || {}) : {}));
 
 

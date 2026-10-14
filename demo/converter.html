@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversor Universal de Dados (XLSX, XLS, CSV, PDF, JSON, XML) | Frame PER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../dist/framePER.min.css?v=2.26.0">
+  <link rel="stylesheet" href="demo.css?v=2.26.0">
+  <style>
+    .converter-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg, 12px);
+      transition: all 0.2s ease;
+    }
+    .converter-hero-badge {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: var(--primary);
+    }
+    .export-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md, 8px);
+      padding: 1.25rem;
+      background: var(--bg-surface);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+    .export-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border-color: var(--primary);
+    }
+    .export-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+    }
+    .export-icon-xlsx { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .export-icon-xls  { background: rgba(5, 150, 105, 0.15); color: #059669; }
+    .export-icon-csv  { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .export-icon-pdf  { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .export-icon-json { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .export-icon-xml  { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .table-preview-scroll {
+      max-height: 440px;
+      overflow-y: auto;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md, 8px);
+    }
+    .stat-pill {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+    }
+    .code-preview {
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 0.85rem;
+      background: var(--bg-subtle);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar navbar-sticky navbar-glass">
+    <div class="container-fluid d-flex justify-content-between align-items-center" style="padding-inline: clamp(1rem, 3vw, 2.5rem);">
+      <a class="navbar-brand" href="index.html">
+        <span class="icon-box"><i class="icon icon-activity text-primary"></i></span>
+        <span>Frame PER</span>
+      </a>
+
+      <nav class="navbar-nav d-none d-lg-flex align-items-center gap-3">
+        <a class="nav-link" href="index.html">Início</a>
+        <a class="nav-link" href="charts.html">Gráficos SVG</a>
+        <a class="nav-link" href="dashboard.html">Admin Suite</a>
+        <a class="nav-link" href="social.html">Rede Social</a>
+        <a class="nav-link" href="components.html">Componentes</a>
+        <a class="nav-link active text-primary f-w-semibold" href="converter.html">
+          <i class="icon icon-layers m-r-1"></i> Conversor <span class="badge badge-primary badge-sm m-l-1">Universal</span>
+        </a>
+        <a class="nav-link" href="icons.html">Ícones <span class="badge badge-success badge-xs">280</span></a>
+        <a class="nav-link" href="manual.html">Manual API</a>
+      </nav>
+
+      <div class="navbar-actions">
+        <button class="btn btn-outline btn-sm d-none d-sm-inline-flex align-items-center gap-2" data-command-palette aria-label="Busca rápida">
+          <i class="icon icon-search"></i>
+          <span>Buscar</span>
+          <kbd style="font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border);">Ctrl K</kbd>
+        </button>
+        <a class="btn btn-ghost btn-sm" href="https://github.com/OrlanRocha/FramePER" target="_blank" rel="noopener">
+          GitHub <i class="icon icon-external"></i>
+        </a>
+        <button class="btn btn-ghost btn-icon theme-toggle" data-theme-toggle aria-label="Alternar Tema">
+          <i class="icon icon-moon"></i><i class="icon icon-sun"></i>
+        </button>
+        <button class="navbar-toggler d-lg-none" data-toggle="collapse" data-target="#mobileMenu" aria-label="Menu Mobile">
+          <i class="icon icon-menu"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="navbar-nav d-lg-none p-3 border-top">
+      <a class="nav-link" href="index.html">Início</a>
+      <a class="nav-link" href="charts.html">Gráficos SVG</a>
+      <a class="nav-link" href="dashboard.html">Admin Suite</a>
+      <a class="nav-link" href="components.html">Componentes</a>
+      <a class="nav-link active text-primary" href="converter.html">Conversor Universal</a>
+      <a class="nav-link" href="icons.html">Ícones</a>
+      <a class="nav-link" href="manual.html">Manual API</a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container-fluid py-5" style="max-width: 1360px; padding-inline: clamp(1rem, 3vw, 2.5rem);">
+
+    <!-- Hero Header -->
+    <section class="txt-center m-b-5">
+      <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill converter-hero-badge m-b-3 f-s-2 font-medium">
+        <i class="icon icon-layers text-primary"></i>
+        <span>Novidade FramePER v2.26.0 · Motor de Dados 100% Client-Side · Zero Dependências</span>
+      </div>
+      <h1 class="display-3 font-bold m-b-2">Conversor Universal de Dados</h1>
+      <p class="lead text-muted max-w-lg m-x-auto m-b-4">
+        Importe planilhas e arquivos tabulares em <strong>XLSX, XLS, CSV, JSON ou XML</strong> e converta instantaneamente para qualquer formato (incluindo <strong>PDF Vetorial Nativo</strong>) direto no seu navegador com privacidade e segurança absoluta.
+      </p>
+
+      <div class="cluster justify-content-center gap-2">
+        <span class="badge badge-subtle badge-pill"><i class="icon icon-check text-success m-r-1"></i> Sem servidor / 100% Offline</span>
+        <span class="badge badge-subtle badge-pill"><i class="icon icon-check text-success m-r-1"></i> Sem SheetJS / Sem jsPDF / Sem PapaParse</span>
+        <span class="badge badge-subtle badge-pill"><i class="icon icon-check text-success m-r-1"></i> Motor ZIP PKZIP & PDF 1.4 Nativos</span>
+      </div>
+    </section>
+
+    <!-- Workspace Grid -->
+    <div class="grid grid-lg-12 gap-4 m-b-5">
+
+      <!-- Left Column: Source Input Area (5 Cols on Large) -->
+      <div class="grid-col-lg-5 stack gap-4">
+
+        <!-- Input Source Card -->
+        <div class="converter-card p-4 shadow-sm">
+          <div class="d-flex align-items-center justify-content-between m-b-3">
+            <h2 class="h5 m-0 d-flex align-items-center gap-2">
+              <i class="icon icon-folder text-primary"></i> 1. Entrada de Dados
+            </h2>
+            <span class="badge badge-primary badge-sm" id="badge-source-type">Aguardando dados</span>
+          </div>
+
+          <!-- Tabs: File / Paste / Sample -->
+          <ul class="tabs m-b-3">
+            <li class="tab-item"><a class="tab-link active" data-target="#tab-upload"><i class="icon icon-upload m-r-1"></i> Upload</a></li>
+            <li class="tab-item"><a class="tab-link" data-target="#tab-paste"><i class="icon icon-edit m-r-1"></i> Colar Texto</a></li>
+            <li class="tab-item"><a class="tab-link" data-target="#tab-presets"><i class="icon icon-star m-r-1"></i> Exemplos</a></li>
+          </ul>
+
+          <div>
+            <!-- Tab 1: File Upload (Drag & Drop) -->
+            <div id="tab-upload" class="tab-content active">
+              <div class="upload-dropzone" id="converter-dropzone">
+                <input type="file" id="converter-file-input" accept=".xlsx,.xls,.csv,.json,.xml,text/csv,application/json,application/xml,text/xml">
+                <div class="upload-icon">
+                  <i class="icon icon-upload"></i>
+                </div>
+                <h3 class="upload-title">Arraste ou selecione seu arquivo</h3>
+                <p class="text-muted f-s-2 m-t-1 m-b-3">Suporta planilhas XLSX, XLS, arquivos CSV, JSON ou XML</p>
+                <div class="cluster justify-content-center gap-1">
+                  <span class="badge badge-subtle badge-xs">.xlsx</span>
+                  <span class="badge badge-subtle badge-xs">.xls</span>
+                  <span class="badge badge-subtle badge-xs">.csv</span>
+                  <span class="badge badge-subtle badge-xs">.json</span>
+                  <span class="badge badge-subtle badge-xs">.xml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Paste Raw Data -->
+            <div id="tab-paste" class="tab-content">
+              <div class="stack gap-3">
+                <div class="d-flex align-items-center justify-content-between">
+                  <label for="paste-input" class="f-s-2 text-muted font-medium">Cole conteúdo CSV, JSON ou XML:</label>
+                  <select id="paste-format" class="form-select form-select-sm" style="width: auto;">
+                    <option value="auto">Auto-detectar</option>
+                    <option value="csv">Formato CSV</option>
+                    <option value="json">Formato JSON</option>
+                    <option value="xml">Formato XML</option>
+                  </select>
+                </div>
+                <textarea id="paste-input" class="form-control" rows="8" placeholder="Exemplo CSV:&#10;Nome,Cargo,Departamento,Salário&#10;Mariana Silva,Arquiteta de Software,Tecnologia,15000&#10;Carlos Souza,Tech Lead,Engenharia,16500" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.85rem;"></textarea>
+                <button type="button" class="btn btn-primary btn-sm w-100" id="btn-parse-paste">
+                  <i class="icon icon-check m-r-1"></i> Processar Dados Colados
+                </button>
+              </div>
+            </div>
+
+            <!-- Tab 3: Ready Presets -->
+            <div id="tab-presets" class="tab-content">
+              <p class="f-s-2 text-muted m-b-3">Selecione um dataset pronto para experimentar as conversões instantaneamente:</p>
+              <div class="stack gap-2">
+                <button type="button" class="btn btn-outline btn-sm text-start d-flex align-items-center gap-3 p-3 w-100" id="btn-preset-sales">
+                  <span class="avatar avatar-sm bg-primary text-white"><i class="icon icon-activity"></i></span>
+                  <div class="flex-grow-1">
+                    <strong class="d-block f-s-3">Vendas & Pedidos E-commerce</strong>
+                    <span class="text-muted f-s-1">6 registros · Pedido, Cliente, Produto, Quantidade, Valor, Status</span>
+                  </div>
+                  <i class="icon icon-arrow-right text-muted"></i>
+                </button>
+
+                <button type="button" class="btn btn-outline btn-sm text-start d-flex align-items-center gap-3 p-3 w-100" id="btn-preset-team">
+                  <span class="avatar avatar-sm bg-success text-white"><i class="icon icon-user"></i></span>
+                  <div class="flex-grow-1">
+                    <strong class="d-block f-s-3">Quadro de Colaboradores (RH)</strong>
+                    <span class="text-muted f-s-1">6 registros · Matrícula, Nome, Cargo, Departamento, Salário, Admissão</span>
+                  </div>
+                  <i class="icon icon-arrow-right text-muted"></i>
+                </button>
+
+                <button type="button" class="btn btn-outline btn-sm text-start d-flex align-items-center gap-3 p-3 w-100" id="btn-preset-finance">
+                  <span class="avatar avatar-sm bg-purple text-white"><i class="icon icon-star"></i></span>
+                  <div class="flex-grow-1">
+                    <strong class="d-block f-s-3">Demonstrativo Financeiro Trimestral</strong>
+                    <span class="text-muted f-s-1">4 trimestres · Período, Receita Bruta, Despesas, Lucro Líquido, Margem</span>
+                  </div>
+                  <i class="icon icon-arrow-right text-muted"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Overview Cards -->
+        <div class="grid grid-2 gap-3" id="dataset-metrics">
+          <div class="stat-pill">
+            <span class="d-block f-s-1 text-muted font-medium">FORMATO ATUAL</span>
+            <strong class="f-s-4 text-primary" id="metric-format">—</strong>
+          </div>
+          <div class="stat-pill">
+            <span class="d-block f-s-1 text-muted font-medium">TOTAL REGISTROS</span>
+            <strong class="f-s-4" id="metric-rows">0</strong>
+          </div>
+          <div class="stat-pill">
+            <span class="d-block f-s-1 text-muted font-medium">TOTAL COLUNAS</span>
+            <strong class="f-s-4" id="metric-cols">0</strong>
+          </div>
+          <div class="stat-pill">
+            <span class="d-block f-s-1 text-muted font-medium">TAMANHO ESTIMADO</span>
+            <strong class="f-s-4" id="metric-size">—</strong>
+          </div>
+        </div>
+
+        <!-- Developer Quick Usage -->
+        <div class="converter-card p-4 shadow-sm">
+          <h3 class="h6 text-muted font-semibold text-uppercase m-b-2 d-flex align-items-center gap-2">
+            <i class="icon icon-code text-primary"></i> Como usar no JavaScript
+          </h3>
+          <pre class="code-preview m-0"><code>// 100% Client-side / Zero dependências
+const dataset = await FramePER.Converter.readFile(file);
+
+// Exportar para qualquer formato com 1 linha:
+FramePER.Converter.toPDF(dataset, { title: 'Relatório' });
+FramePER.Converter.toXLSX(dataset, { filename: 'dados.xlsx' });
+FramePER.Converter.toCSV(dataset);</code></pre>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Data Preview & Export Actions (7 Cols on Large) -->
+      <div class="grid-col-lg-7 stack gap-4">
+
+        <!-- Table Preview Card -->
+        <div class="converter-card p-4 shadow-sm">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 m-b-3">
+            <div>
+              <h2 class="h5 m-0 d-flex align-items-center gap-2">
+                <i class="icon icon-activity text-primary"></i> 2. Pré-visualização da Tabela
+              </h2>
+              <span class="text-muted f-s-2" id="preview-subtitle">Carregue dados para visualizar a tabela</span>
+            </div>
+            <div class="cluster gap-2 align-items-center">
+              <button type="button" class="btn btn-ghost btn-sm text-danger" id="btn-clear-dataset" style="display: none;">
+                <i class="icon icon-trash m-r-1"></i> Limpar Dados
+              </button>
+            </div>
+          </div>
+
+          <!-- Table Filter & Rows per page -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 m-b-3">
+            <div class="input-group input-group-sm" style="max-width: 300px;">
+              <span class="input-group-text"><i class="icon icon-search"></i></span>
+              <input type="text" id="table-search" class="form-control" placeholder="Filtrar dados na tabela..." disabled>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="f-s-2 text-muted">Exibir:</span>
+              <select id="table-page-size" class="form-select form-select-sm" style="width: auto;">
+                <option value="5">5 linhas</option>
+                <option value="10" selected>10 linhas</option>
+                <option value="25">25 linhas</option>
+                <option value="50">50 linhas</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="table-preview-scroll m-b-3" id="table-scroll-container">
+            <table class="table table-hover table-striped m-0" id="preview-table">
+              <thead id="preview-thead">
+                <tr>
+                  <th class="txt-center text-muted py-4">Nenhum dado carregado ainda. Faça upload ou selecione um exemplo ao lado.</th>
+                </tr>
+              </thead>
+              <tbody id="preview-tbody">
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="d-flex align-items-center justify-content-between f-s-2 text-muted" id="table-pagination-bar" style="display: none;">
+            <span id="pagination-info">Mostrando 0 de 0</span>
+            <div class="cluster gap-2">
+              <button type="button" class="btn btn-outline btn-xs" id="btn-page-prev" disabled>
+                <i class="icon icon-arrow-left"></i> Anterior
+              </button>
+              <button type="button" class="btn btn-outline btn-xs" id="btn-page-next" disabled>
+                Próxima <i class="icon icon-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Actions Grid (6 Formats) -->
+        <div class="converter-card p-4 shadow-sm">
+          <div class="d-flex align-items-center justify-content-between m-b-3">
+            <div>
+              <h2 class="h5 m-0 d-flex align-items-center gap-2">
+                <i class="icon icon-download text-primary"></i> 3. Exportar nos 6 Formatos
+              </h2>
+              <p class="text-muted f-s-2 m-0">Clique no formato desejado para converter e baixar imediatamente com comemoração festiva:</p>
+            </div>
+          </div>
+
+          <div class="grid grid-sm-2 grid-md-3 gap-3">
+
+            <!-- Format 1: XLSX -->
+            <div class="export-card">
+              <div>
+                <div class="export-icon-box export-icon-xlsx">
+                  <span>XLSX</span>
+                </div>
+                <h3 class="h6 font-bold m-b-1">Excel Moderno</h3>
+                <p class="text-muted f-s-1 m-b-3">Pasta de trabalho OpenXML PKZIP nativa com estilos e células tipadas.</p>
+              </div>
+              <button type="button" class="btn btn-success btn-sm w-100 btn-export" data-format="xlsx" disabled>
+                <i class="icon icon-download m-r-1"></i> Baixar .xlsx
+              </button>
+            </div>
+
+            <!-- Format 2: XLS -->
+            <div class="export-card">
+              <div>
+                <div class="export-icon-box export-icon-xls">
+                  <span>XLS</span>
+                </div>
+                <h3 class="h6 font-bold m-b-1">Excel Legado</h3>
+                <p class="text-muted f-s-1 m-b-3">Planilha XML Spreadsheet 2003 nativa com zebra striping.</p>
+              </div>
+              <button type="button" class="btn btn-outline-success btn-sm w-100 btn-export" data-format="xls" disabled>
+                <i class="icon icon-download m-r-1"></i> Baixar .xls
+              </button>
+            </div>
+
+            <!-- Format 3: CSV -->
+            <div class="export-card">
+              <div>
+                <div class="export-icon-box export-icon-csv">
+                  <span>CSV</span>
+                </div>
+                <h3 class="h6 font-bold m-b-1">CSV Universal</h3>
+                <p class="text-muted f-s-1 m-b-3">RFC 4180 padronizado com UTF-8 BOM para acentuação perfeita no Excel.</p>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm w-100 btn-export" data-format="csv" disabled>
+                <i class="icon icon-download m-r-1"></i> Baixar .csv
+              </button>
+            </div>
+
+            <!-- Format 4: PDF -->
+            <div class="export-card">
+              <div>
+                <div class="export-icon-box export-icon-pdf">
+                  <span>PDF</span>
+                </div>
+                <h3 class="h6 font-bold m-b-1">Documento PDF</h3>
+                <p class="text-muted f-s-1 m-b-3">PDF 1.4 vetorial paginado, com cabeçalho primário, colunas e rodapé.</p>
+              </div>
+              <button type="button" class="btn btn-danger btn-sm w-100 btn-export" data-format="pdf" disabled>
+                <i class="icon icon-download m-r-1"></i> Baixar .pdf
+              </button>
+            </div>
+
+            <!-- Format 5: JSON -->
+            <div class="export-card">
+              <div>
+                <div class="export-icon-box export-icon-json">
+                  <span>JSON</span>
+                </div>
+                <h3 class="h6 font-bold m-b-1">JSON Estruturado</h3>
+                <p class="text-muted f-s-1 m-b-3">Array de objetos com indentação limpa de 2 espaços pronto para APIs.</p>
+              </div>
+              <button type="button" class="btn btn-warning btn-sm w-100 btn-export" data-format="json" disabled>
+                <i class="icon icon-download m-r-1"></i> Baixar .json
+              </button>
+            </div>
+
+            <!-- Format 6: XML -->
+            <div class="export-card">
+              <div>
+                <div class="export-icon-box export-icon-xml">
+                  <span>XML</span>
+                </div>
+                <h3 class="h6 font-bold m-b-1">XML Semântico</h3>
+                <p class="text-muted f-s-1 m-b-3">Árvore hierárquica &lt;dataset&gt;&lt;record&gt; com escape seguro.</p>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm w-100 btn-export" data-format="xml" disabled>
+                <i class="icon icon-download m-r-1"></i> Baixar .xml
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Features Comparison Footer -->
+    <section class="converter-card p-4 shadow-sm m-b-5">
+      <h2 class="h5 m-b-3 d-flex align-items-center gap-2">
+        <i class="icon icon-info text-primary"></i> Capacidades Técnicas do FramePER.Converter
+      </h2>
+      <div class="grid grid-md-3 gap-4">
+        <div class="stack gap-1">
+          <strong class="text-primary f-s-3">⚡ 100% Client-Side</strong>
+          <p class="text-muted f-s-2 m-0">Todo o processamento ocorre no motor V8 do navegador do usuário. Nenhum dado transita por rede ou servidores em nuvem.</p>
+        </div>
+        <div class="stack gap-1">
+          <strong class="text-success f-s-3">📦 Zero Dependências</strong>
+          <p class="text-muted f-s-2 m-0">Construído do zero em puro Vanilla JS. Motor PKZIP e gerador vetorial PDF 1.4 proprietários sem pacotes externos.</p>
+        </div>
+        <div class="stack gap-1">
+          <strong class="text-purple f-s-3">🔄 Conversão Bidirecional</strong>
+          <p class="text-muted f-s-2 m-0">Faça o upload em qualquer formato e exporte para qualquer um dos outros 5 formatos com integridade de dados e tipos preservada.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="txt-center f-s-2 text-muted p-y-4">
+      Frame PER v2.26.0 · Framework UI Moderno, Responsivo e Gráficos Vetoriais sem dependências.
+    </footer>
+
+  </main>
+
+  <script src="../dist/framePER.js"></script>
+  <script src="demo.js"></script>
+  <script>
+    (function () {
+      const Converter = window.FramePER ? window.FramePER.Converter : window.FramePERConverter;
+      const Confetti = window.FramePER ? window.FramePER.Confetti : null;
+      const Notify = window.FramePER ? window.FramePER.Notify : null;
+
+      // Presets Data
+      const PRESETS = {
+        sales: {
+          title: 'Vendas E-Commerce 2026',
+          headers: ['Pedido', 'Data', 'Cliente', 'Produto', 'Qtd', 'Preço Unitário', 'Total', 'Status'],
+          rows: [
+            ['#10821', '2026-10-01', 'Ana Costa', 'Notebook Dell XPS', 1, 8500.00, 8500.00, 'Entregue'],
+            ['#10822', '2026-10-02', 'Bruno Lima', 'Monitor Ultrawide 34', 2, 2800.00, 5600.00, 'Enviado'],
+            ['#10823', '2026-10-03', 'Carla Dias', 'Teclado Mecânico RGB', 3, 450.00, 1350.00, 'Processando'],
+            ['#10824', '2026-10-04', 'Diego Rocha', 'Mouse Sem Fio Master', 2, 350.00, 700.00, 'Entregue'],
+            ['#10825', '2026-10-05', 'Elena Martins', 'Headset Noise-Cancelling', 1, 1200.00, 1200.00, 'Aguardando Pagamento'],
+            ['#10826', '2026-10-06', 'Fabio Alencar', 'Cadeira Ergonômica Pro', 1, 2400.00, 2400.00, 'Entregue']
+          ]
+        },
+        team: {
+          title: 'Quadro de Colaboradores RH',
+          headers: ['Matrícula', 'Nome Completo', 'Cargo', 'Departamento', 'Salário', 'Admissão', 'Nível'],
+          rows: [
+            ['COL-001', 'Mariana Albuquerque', 'Engenheira de Software Principal', 'Engenharia', 18500.00, '2021-03-15', 'Senior III'],
+            ['COL-002', 'Rodrigo Fagundes', 'Product Manager Lead', 'Produto', 16000.00, '2022-01-10', 'Especialista'],
+            ['COL-003', 'Juliana Rezende', 'UI/UX Designer Senior', 'Design', 12500.00, '2022-08-01', 'Senior I'],
+            ['COL-004', 'Lucas Meirelles', 'DevOps & Cloud Architect', 'Infraestrutura', 17000.00, '2020-11-20', 'Senior II'],
+            ['COL-005', 'Beatriz Nogueira', 'Data Analyst Pleno', 'Dados & BI', 9500.00, '2023-05-02', 'Pleno II'],
+            ['COL-006', 'Thiago Camargo', 'Frontend Engineer Pleno', 'Engenharia', 10500.00, '2024-02-15', 'Pleno I']
+          ]
+        },
+        finance: {
+          title: 'Balanço Financeiro Trimestral 2026',
+          headers: ['Trimestre', 'Receita Bruta (R$)', 'Custos Operacionais (R$)', 'Lucro Operacional (R$)', 'Lucro Líquido (R$)', 'Margem (%)'],
+          rows: [
+            ['1º Trimestre (Q1)', 1250000.00, 780000.00, 470000.00, 395000.00, 31.6],
+            ['2º Trimestre (Q2)', 1420000.00, 840000.00, 580000.00, 485000.00, 34.1],
+            ['3º Trimestre (Q3)', 1680000.00, 920000.00, 760000.00, 640000.00, 38.0],
+            ['4º Trimestre (Q4 Proj.)', 1950000.00, 1050000.00, 900000.00, 765000.00, 39.2]
+          ]
+        }
+      };
+
+      // State
+      let currentDataset = null;
+      let filteredRows = [];
+      let currentPage = 1;
+      let pageSize = 10;
+      let rawSourceBytes = 0;
+
+      // DOM Elements
+      const dropzone = document.getElementById('converter-dropzone');
+      const fileInput = document.getElementById('converter-file-input');
+      const badgeSourceType = document.getElementById('badge-source-type');
+      const pasteInput = document.getElementById('paste-input');
+      const pasteFormat = document.getElementById('paste-format');
+      const btnParsePaste = document.getElementById('btn-parse-paste');
+      const btnPresetSales = document.getElementById('btn-preset-sales');
+      const btnPresetTeam = document.getElementById('btn-preset-team');
+      const btnPresetFinance = document.getElementById('btn-preset-finance');
+      const btnClearDataset = document.getElementById('btn-clear-dataset');
+
+      // Metric Elements
+      const metricFormat = document.getElementById('metric-format');
+      const metricRows = document.getElementById('metric-rows');
+      const metricCols = document.getElementById('metric-cols');
+      const metricSize = document.getElementById('metric-size');
+
+      // Table Elements
+      const previewSubtitle = document.getElementById('preview-subtitle');
+      const tableSearch = document.getElementById('table-search');
+      const tablePageSize = document.getElementById('table-page-size');
+      const previewThead = document.getElementById('preview-thead');
+      const previewTbody = document.getElementById('preview-tbody');
+      const paginationBar = document.getElementById('table-pagination-bar');
+      const paginationInfo = document.getElementById('pagination-info');
+      const btnPagePrev = document.getElementById('btn-page-prev');
+      const btnPageNext = document.getElementById('btn-page-next');
+      const exportButtons = document.querySelectorAll('.btn-export');
+
+      // Helper to format bytes
+      function formatBytes(bytes) {
+        if (!bytes || bytes <= 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      }
+
+      // Load Dataset
+      function loadDataset(dataset, formatLabel, byteSize) {
+        if (!dataset || !dataset.headers || !dataset.rows) return;
+        currentDataset = dataset;
+        rawSourceBytes = byteSize || JSON.stringify(dataset).length;
+
+        // Update metrics
+        badgeSourceType.textContent = formatLabel || 'Dataset Ativo';
+        badgeSourceType.className = 'badge badge-success badge-sm';
+        metricFormat.textContent = formatLabel || 'Tabela';
+        metricRows.textContent = dataset.rows.length;
+        metricCols.textContent = dataset.headers.length;
+        metricSize.textContent = formatBytes(rawSourceBytes);
+
+        previewSubtitle.textContent = (dataset.title || 'Dados Carregados') + ' · ' + dataset.rows.length + ' linha(s) e ' + dataset.headers.length + ' coluna(s)';
+        tableSearch.disabled = false;
+        tableSearch.value = '';
+        btnClearDataset.style.display = 'inline-flex';
+
+        // Enable Export Buttons
+        exportButtons.forEach(btn => btn.disabled = false);
+
+        // Filter and Render
+        applyFilter();
+
+        if (Notify) {
+          Notify.success('Dados Carregados!', `${dataset.rows.length} registros e ${dataset.headers.length} colunas importados.`);
+        }
+      }
+
+      // Clear Dataset
+      function clearDataset() {
+        currentDataset = null;
+        filteredRows = [];
+        currentPage = 1;
+
+        badgeSourceType.textContent = 'Aguardando dados';
+        badgeSourceType.className = 'badge badge-primary badge-sm';
+        metricFormat.textContent = '—';
+        metricRows.textContent = '0';
+        metricCols.textContent = '0';
+        metricSize.textContent = '—';
+
+        previewSubtitle.textContent = 'Carregue dados para visualizar a tabela';
+        tableSearch.value = '';
+        tableSearch.disabled = true;
+        btnClearDataset.style.display = 'none';
+
+        exportButtons.forEach(btn => btn.disabled = true);
+
+        previewThead.innerHTML = '<tr><th class="txt-center text-muted py-4">Nenhum dado carregado ainda. Faça upload ou selecione um exemplo ao lado.</th></tr>';
+        previewTbody.innerHTML = '';
+        paginationBar.style.display = 'none';
+        if (fileInput) fileInput.value = '';
+      }
+
+      // Filter and Pagination
+      function applyFilter() {
+        if (!currentDataset) return;
+        const q = (tableSearch.value || '').toLowerCase().trim();
+        if (!q) {
+          filteredRows = currentDataset.rows.slice();
+        } else {
+          filteredRows = currentDataset.rows.filter(row => {
+            return row.some(cell => String(cell != null ? cell : '').toLowerCase().includes(q));
+          });
+        }
+        currentPage = 1;
+        renderTable();
+      }
+
+      function renderTable() {
+        if (!currentDataset) return;
+
+        // Render Header
+        let theadHtml = '<tr><th style="width: 50px;" class="txt-center text-muted">#</th>';
+        currentDataset.headers.forEach(h => {
+          theadHtml += `<th class="font-semibold">${escapeHTML(h)}</th>`;
+        });
+        theadHtml += '</tr>';
+        previewThead.innerHTML = theadHtml;
+
+        // Calculate slice
+        const total = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        if (currentPage > totalPages) currentPage = totalPages;
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, total);
+        const pageRows = filteredRows.slice(startIdx, endIdx);
+
+        // Render Body
+        if (pageRows.length === 0) {
+          previewTbody.innerHTML = `<tr><td colspan="${currentDataset.headers.length + 1}" class="txt-center text-muted py-4">Nenhum registro encontrado para o filtro digitado.</td></tr>`;
+        } else {
+          let tbodyHtml = '';
+          pageRows.forEach((row, rIdx) => {
+            const rowNumber = startIdx + rIdx + 1;
+            tbodyHtml += `<tr><td class="txt-center text-muted f-s-1">${rowNumber}</td>`;
+            row.forEach(cell => {
+              const val = cell != null ? String(cell) : '';
+              tbodyHtml += `<td class="f-s-2 text-truncate" style="max-width: 220px;" title="${escapeHTML(val)}">${escapeHTML(val)}</td>`;
+            });
+            tbodyHtml += '</tr>';
+          });
+          previewTbody.innerHTML = tbodyHtml;
+        }
+
+        // Update Pagination controls
+        if (total > 0) {
+          paginationBar.style.display = 'flex';
+          paginationInfo.textContent = `Mostrando ${startIdx + 1} a ${endIdx} de ${total} registro(s)` + (total !== currentDataset.rows.length ? ` (filtrado de ${currentDataset.rows.length})` : '');
+          btnPagePrev.disabled = currentPage <= 1;
+          btnPageNext.disabled = currentPage >= totalPages;
+        } else {
+          paginationBar.style.display = 'none';
+        }
+      }
+
+      function escapeHTML(str) {
+        return String(str).replace(/[&<>'"]/g, tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag] || tag));
+      }
+
+      // Drag & Drop Handlers
+      if (dropzone) {
+        dropzone.addEventListener('click', () => fileInput && fileInput.click());
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+          dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('is-dragover');
+          });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('is-dragover');
+          });
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+          const files = e.dataTransfer.files;
+          if (files && files.length > 0) {
+            handleFileUpload(files[0]);
+          }
+        });
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', () => {
+          if (fileInput.files && fileInput.files.length > 0) {
+            handleFileUpload(fileInput.files[0]);
+          }
+        });
+      }
+
+      // Handle File Upload via Converter.readFile()
+      async function handleFileUpload(file) {
+        if (!file || !Converter) return;
+        try {
+          const ext = file.name.split('.').pop().toUpperCase();
+          const dataset = await Converter.readFile(file);
+          loadDataset(dataset, `${ext} (${file.name})`, file.size);
+        } catch (err) {
+          console.error(err);
+          if (Notify) {
+            Notify.error('Falha ao Ler Arquivo', err.message || 'Formato não suportado ou arquivo corrompido.');
+          } else {
+            alert('Falha ao ler arquivo: ' + err.message);
+          }
+        }
+      }
+
+      // Handle Paste
+      if (btnParsePaste) {
+        btnParsePaste.addEventListener('click', () => {
+          const text = (pasteInput.value || '').trim();
+          if (!text) {
+            if (Notify) Notify.show('Atenção', 'Cole algum texto CSV, JSON ou XML primeiro.', 'warning');
+            return;
+          }
+
+          let fmt = pasteFormat.value;
+          if (fmt === 'auto') {
+            if (text.startsWith('{') || text.startsWith('[')) fmt = 'json';
+            else if (text.startsWith('<')) fmt = 'xml';
+            else fmt = 'csv';
+          }
+
+          try {
+            let dataset;
+            if (fmt === 'json') {
+              dataset = Converter.fromJSON(text);
+            } else if (fmt === 'xml') {
+              dataset = Converter.fromXML(text);
+            } else {
+              dataset = Converter.fromCSV(text);
+            }
+            loadDataset(dataset, `Texto (${fmt.toUpperCase()})`, new Blob([text]).size);
+          } catch (err) {
+            if (Notify) Notify.error('Erro de Processamento', 'Não foi possível interpretar o texto colado: ' + err.message);
+          }
+        });
+      }
+
+      // Presets
+      if (btnPresetSales) {
+        btnPresetSales.addEventListener('click', () => {
+          const ds = JSON.parse(JSON.stringify(PRESETS.sales));
+          loadDataset(ds, 'Preset (Vendas E-commerce)');
+        });
+      }
+      if (btnPresetTeam) {
+        btnPresetTeam.addEventListener('click', () => {
+          const ds = JSON.parse(JSON.stringify(PRESETS.team));
+          loadDataset(ds, 'Preset (Quadro RH)');
+        });
+      }
+      if (btnPresetFinance) {
+        btnPresetFinance.addEventListener('click', () => {
+          const ds = JSON.parse(JSON.stringify(PRESETS.finance));
+          loadDataset(ds, 'Preset (Finanças)');
+        });
+      }
+
+      // Clear
+      if (btnClearDataset) {
+        btnClearDataset.addEventListener('click', clearDataset);
+      }
+
+      // Table Search & Pagination events
+      if (tableSearch) {
+        tableSearch.addEventListener('input', applyFilter);
+      }
+      if (tablePageSize) {
+        tablePageSize.addEventListener('change', () => {
+          pageSize = parseInt(tablePageSize.value, 10) || 10;
+          currentPage = 1;
+          renderTable();
+        });
+      }
+      if (btnPagePrev) {
+        btnPagePrev.addEventListener('click', () => {
+          if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+          }
+        });
+      }
+      if (btnPageNext) {
+        btnPageNext.addEventListener('click', () => {
+          const totalPages = Math.ceil(filteredRows.length / pageSize);
+          if (currentPage < totalPages) {
+            currentPage++;
+            renderTable();
+          }
+        });
+      }
+
+      // Export Buttons Handler with Confetti Celebration
+      exportButtons.forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!currentDataset || !Converter) return;
+          const fmt = btn.getAttribute('data-format');
+          const baseName = (currentDataset.title || 'dados_exportados').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+          const filename = `${baseName}.${fmt}`;
+
+          try {
+            btn.disabled = true;
+            await Converter.convert(currentDataset, fmt, {
+              filename: filename,
+              title: currentDataset.title || 'Relatório de Dados'
+            });
+
+            // Celebration Confetti
+            if (Confetti) {
+              Confetti.burst({ count: 90, spread: 85 });
+            }
+
+            // Success Toast
+            if (Notify) {
+              Notify.success('Exportação Concluída!', `Arquivo "${filename}" baixado com sucesso.`);
+            }
+          } catch (err) {
+            console.error(err);
+            if (Notify) {
+              Notify.error('Erro na Exportação', err.message || 'Falha ao gerar arquivo.');
+            }
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      // Auto-load Sales Preset on initial visit for instant gratification
+      setTimeout(() => {
+        if (!currentDataset && btnPresetSales) {
+          btnPresetSales.click();
+        }
+      }, 200);
+
+    })();
+  </script>
+</body>
+</html>
