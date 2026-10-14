@@ -7639,6 +7639,8 @@
         if (FramePER.Timeline && FramePER.Timeline.init) {
             FramePER.Timeline.init();
         }
+    });
+
     // ==========================================
     // SEGMENTED CONTROL COMPONENT
     // ==========================================
@@ -8133,6 +8135,273 @@
     };
     FramePER.Confetti = Confetti;
 
+    // ==========================================
+    // DATA CONVERTER ENGINE (v2.26)
+    // ==========================================
+    const Converter = {
+        parse(input, options = {}) {
+            if (!input) {
+                return { headers: [], rows: [], metadata: { totalRows: 0, totalCols: 0 } };
+            }
+            if (Array.isArray(input)) {
+                if (input.length === 0) {
+                    return { headers: [], rows: [], metadata: { totalRows: 0, totalCols: 0 } };
+                }
+                if (Array.isArray(input[0])) {
+                    return this._from2DArray(input, options);
+                }
+                if (typeof input[0] === 'object' && input[0] !== null) {
+                    return this._fromArrayOfObjects(input, options);
+                }
+            }
+            if (typeof input === 'string') {
+                const trimmed = input.trim();
+                if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+                    try {
+                        return this._parseJSON(trimmed, options);
+                    } catch (e) {
+                        // fallback se não for JSON válido
+                    }
+                }
+                if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
+                    try {
+                        return this._parseXML(trimmed, options);
+                    } catch (e) {
+                        // fallback se não for XML válido
+                    }
+                }
+                return this._parseCSV(trimmed, options);
+            }
+            if (typeof input === 'object' && input !== null) {
+                if (input.headers && Array.isArray(input.rows)) {
+                    return {
+                        title: input.title || options.title || 'Dataset',
+                        headers: [...input.headers],
+                        rows: input.rows.map(r => Array.isArray(r) ? [...r] : Object.values(r)),
+                        metadata: {
+                            totalRows: input.rows.length,
+                            totalCols: input.headers.length,
+                            detectedType: 'dataset'
+                        }
+                    };
+                }
+                return this._fromArrayOfObjects([input], options);
+            }
+            throw new Error('Formato de entrada não reconhecido pelo FramePER.Converter.');
+        },
+
+        _fromArrayOfObjects(arr, options = {}) {
+            const headerSet = new Set();
+            arr.forEach(obj => {
+                if (obj && typeof obj === 'object') {
+                    Object.keys(obj).forEach(k => headerSet.add(k));
+                }
+            });
+            const headers = Array.from(headerSet);
+            const rows = arr.map(obj => {
+                return headers.map(h => (obj && obj[h] !== undefined && obj[h] !== null) ? obj[h] : '');
+            });
+            return {
+                title: options.title || 'Dataset',
+                headers,
+                rows,
+                metadata: {
+                    totalRows: rows.length,
+                    totalCols: headers.length,
+                    detectedType: 'array-of-objects'
+                }
+            };
+        },
+
+        _from2DArray(matrix, options = {}) {
+            const headers = (matrix[0] || []).map(h => String(h != null ? h : ''));
+            const rows = matrix.slice(1).map(r => Array.isArray(r) ? r : [r]);
+            return {
+                title: options.title || 'Dataset',
+                headers,
+                rows,
+                metadata: {
+                    totalRows: rows.length,
+                    totalCols: headers.length,
+                    detectedType: '2d-array'
+                }
+            };
+        },
+
+        _parseCSV(text, options = {}) {
+            let clean = text;
+            if (clean.charCodeAt(0) === 0xFEFF) {
+                clean = clean.slice(1);
+            }
+            let delimiter = options.delimiter;
+            if (!delimiter) {
+                const firstLine = clean.split(/\r\n|\n|\r/)[0] || '';
+                const counts = {
+                    ';': (firstLine.match(/;/g) || []).length,
+                    ',': (firstLine.match(/,/g) || []).length,
+                    '\t': (firstLine.match(/\t/g) || []).length,
+                    '|': (firstLine.match(/\|/g) || []).length
+                };
+                delimiter = Object.keys(counts).reduce((a, b) => counts[a] >= counts[b] ? a : b, ',');
+                if (counts[delimiter] === 0) delimiter = ',';
+            }
+
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < clean.length; i++) {
+                const c = clean[i];
+                const next = clean[i + 1];
+
+                if (inQuotes) {
+                    if (c === '"') {
+                        if (next === '"') {
+                            currentField += '"';
+                            i++;
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        currentField += c;
+                    }
+                } else {
+                    if (c === '"') {
+                        inQuotes = true;
+                    } else if (c === delimiter) {
+                        currentRow.push(currentField.trim());
+                        currentField = '';
+                    } else if (c === '\r') {
+                        if (next === '\n') i++;
+                        currentRow.push(currentField.trim());
+                        if (currentRow.length > 1 || currentRow[0] !== '') {
+                            rows.push(currentRow);
+                        }
+                        currentRow = [];
+                        currentField = '';
+                    } else if (c === '\n') {
+                        currentRow.push(currentField.trim());
+                        if (currentRow.length > 1 || currentRow[0] !== '') {
+                            rows.push(currentRow);
+                        }
+                        currentRow = [];
+                        currentField = '';
+                    } else {
+                        currentField += c;
+                    }
+                }
+            }
+
+            if (currentField !== '' || currentRow.length > 0) {
+                currentRow.push(currentField.trim());
+                if (currentRow.length > 1 || currentRow[0] !== '') {
+                    rows.push(currentRow);
+                }
+            }
+
+            if (rows.length === 0) {
+                return { headers: [], rows: [], metadata: { totalRows: 0, totalCols: 0, detectedType: 'csv' } };
+            }
+
+            const rawHeaders = rows[0].map(h => String(h || '').trim());
+            const dataRows = rows.slice(1).map(r => {
+                const row = [...r];
+                while (row.length < rawHeaders.length) row.push('');
+                return row.map(val => {
+                    if (val === '') return '';
+                    const num = Number(val);
+                    return (!isNaN(num) && !isNaN(parseFloat(val)) && String(num) === val.trim()) ? num : val;
+                });
+            });
+
+            return {
+                title: options.title || 'Dados CSV',
+                headers: rawHeaders,
+                rows: dataRows,
+                metadata: {
+                    totalRows: dataRows.length,
+                    totalCols: rawHeaders.length,
+                    delimiter,
+                    detectedType: 'csv'
+                }
+            };
+        },
+
+        _parseJSON(text, options = {}) {
+            const data = JSON.parse(text);
+            const dataset = this.parse(data, options);
+            dataset.metadata.detectedType = 'json';
+            return dataset;
+        },
+
+        _parseXML(text, options = {}) {
+            let headers = [];
+            let rows = [];
+
+            if (typeof DOMParser !== 'undefined') {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'application/xml');
+                const root = doc.documentElement;
+                if (root && root.children && root.children.length > 0) {
+                    const headerSet = new Set();
+                    const records = Array.from(root.children);
+                    records.forEach(rec => {
+                        Array.from(rec.children).forEach(child => headerSet.add(child.tagName));
+                    });
+                    headers = Array.from(headerSet);
+                    rows = records.map(rec => {
+                        return headers.map(h => {
+                            const child = rec.querySelector(h);
+                            return child ? child.textContent.trim() : '';
+                        });
+                    });
+                }
+            }
+
+            // Fallback para Node.js ou caso DOMParser retorne vazio
+            if (headers.length === 0) {
+                const cleanXml = text.replace(/<\?xml[\s\S]*?\?>/i, '').trim();
+                const rootMatch = cleanXml.match(/<([a-zA-Z0-9_\-]+)[^>]*>([\s\S]*?)<\/\1>/);
+                const inner = rootMatch ? rootMatch[2].trim() : cleanXml;
+                
+                const recordMatches = inner.match(/<([a-zA-Z0-9_\-]+)[^>]*>([\s\S]*?)<\/\1>/g);
+                if (recordMatches) {
+                    const headerSet = new Set();
+                    const parsedRecords = [];
+                    recordMatches.forEach(recStr => {
+                        const recInnerMatch = recStr.match(/<([a-zA-Z0-9_\-]+)[^>]*>([\s\S]*?)<\/\1>/);
+                        const recBody = recInnerMatch ? recInnerMatch[2] : recStr;
+                        const fieldMatches = Array.from(recBody.matchAll(/<([a-zA-Z0-9_\-]+)[^>]*>([^<]*)<\/\1>/g));
+                        if (fieldMatches.length > 0) {
+                            const recObj = {};
+                            fieldMatches.forEach(m => {
+                                headerSet.add(m[1]);
+                                recObj[m[1]] = m[2].trim();
+                            });
+                            parsedRecords.push(recObj);
+                        }
+                    });
+                    headers = Array.from(headerSet);
+                    rows = parsedRecords.map(obj => headers.map(h => obj[h] !== undefined ? obj[h] : ''));
+                }
+            }
+
+            return {
+                title: options.title || 'Dados XML',
+                headers,
+                rows,
+                metadata: {
+                    totalRows: rows.length,
+                    totalCols: headers.length,
+                    detectedType: 'xml'
+                }
+            };
+        }
+    };
+    FramePER.Converter = Converter;
+
+    document.addEventListener("DOMContentLoaded", () => {
         if (FramePER.Tour && FramePER.Tour.init) {
             FramePER.Tour.init();
         }
@@ -8185,7 +8454,12 @@
     window.FramePERBottomSheet = FramePER.BottomSheet;
     window.FramePEROtpInput = FramePER.OtpInput;
     window.FramePERConfetti = FramePER.Confetti;
+    window.FramePERConverter = FramePER.Converter;
 
-})(window, document);
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = FramePER;
+    }
+
+})(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? (global.window || global) : this), typeof document !== 'undefined' ? document : (typeof global !== 'undefined' ? (global.document || {}) : {}));
 
 
