@@ -10547,6 +10547,153 @@ ${worksheetsXML}
                 zip: zipResult,
                 download: () => zipResult.download()
             };
+        },
+
+        _parseSortValue(val) {
+            if (val === null || val === undefined) return { isNull: true, val: null, type: 'null' };
+            if (typeof val === 'number') {
+                if (isNaN(val)) return { isNull: true, val: null, type: 'null' };
+                return { isNull: false, val: val, type: 'number' };
+            }
+            if (typeof val === 'boolean') {
+                return { isNull: false, val: val ? 1 : 0, type: 'number' };
+            }
+            const s = String(val).trim();
+            if (s === '') return { isNull: true, val: null, type: 'null' };
+
+            // Check Brazilian/European date DD/MM/YYYY or DD/MM/YYYY HH:mm:ss
+            const brDateMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+            if (brDateMatch) {
+                const day = parseInt(brDateMatch[1], 10);
+                const month = parseInt(brDateMatch[2], 10) - 1;
+                const year = parseInt(brDateMatch[3], 10);
+                const hour = brDateMatch[4] ? parseInt(brDateMatch[4], 10) : 0;
+                const min = brDateMatch[5] ? parseInt(brDateMatch[5], 10) : 0;
+                const sec = brDateMatch[6] ? parseInt(brDateMatch[6], 10) : 0;
+                const d = new Date(year, month, day, hour, min, sec);
+                if (!isNaN(d.getTime())) {
+                    return { isNull: false, val: d.getTime(), type: 'date', raw: s };
+                }
+            }
+
+            // Check ISO date format YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss...
+            if (/^\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2}(?::\d{2})?)?/.test(s)) {
+                const timestamp = Date.parse(s);
+                if (!isNaN(timestamp)) {
+                    return { isNull: false, val: timestamp, type: 'date', raw: s };
+                }
+            }
+
+            // Check Currency or Formatted Number
+            // Clean common prefixes (R$, $, €, £, etc.) and suffixes (%)
+            const numCleaned = s.replace(/^[R$\s€£¥]+/, '').replace(/%$/, '').trim();
+            // European / Brazilian number format: 1.234,56 or 1234,56
+            if (/^-?\d{1,3}(?:\.\d{3})*,\d+$/.test(numCleaned) || /^-?\d+,\d+$/.test(numCleaned)) {
+                const num = parseFloat(numCleaned.replace(/\./g, '').replace(',', '.'));
+                if (!isNaN(num)) {
+                    return { isNull: false, val: num, type: 'number', raw: s };
+                }
+            }
+            // US format with thousand separator: 1,234.56
+            if (/^-?\d{1,3}(?:,\d{3})*\.\d+$/.test(numCleaned)) {
+                const num = parseFloat(numCleaned.replace(/,/g, ''));
+                if (!isNaN(num)) {
+                    return { isNull: false, val: num, type: 'number', raw: s };
+                }
+            }
+            // Standard number string: 1234 or 1234.56
+            if (/^-?\d+(?:\.\d+)?$/.test(numCleaned)) {
+                const num = parseFloat(numCleaned);
+                if (!isNaN(num)) {
+                    return { isNull: false, val: num, type: 'number', raw: s };
+                }
+            }
+
+            // Default to string / text
+            return { isNull: false, val: s, type: 'text', raw: s };
+        },
+
+        sort(dataset, sortRules, options = {}) {
+            if (!dataset || !Array.isArray(dataset.rows)) {
+                return dataset;
+            }
+            const headers = dataset.headers || [];
+            const rawRules = Array.isArray(sortRules) ? sortRules : (sortRules ? [sortRules] : []);
+            const rules = rawRules.map(r => {
+                let ruleObj = (typeof r === 'object' && r !== null) ? { ...r } : { column: r, order: 'asc' };
+                let colIdx = -1;
+                if (typeof ruleObj.column === 'number') {
+                    colIdx = ruleObj.column;
+                } else if (typeof ruleObj.column === 'string') {
+                    const targetName = ruleObj.column.trim().toLowerCase();
+                    colIdx = headers.findIndex(h => String(h).trim().toLowerCase() === targetName);
+                }
+                const order = (ruleObj.order || 'asc').toLowerCase() === 'desc' ? 'desc' : 'asc';
+                return { colIdx, order };
+            }).filter(r => r.colIdx >= 0 && r.colIdx < headers.length);
+
+            if (rules.length === 0) {
+                return {
+                    ...dataset,
+                    headers: [...headers],
+                    rows: dataset.rows.map(r => [...r]),
+                    metadata: { ...(dataset.metadata || {}) }
+                };
+            }
+
+            // Clone dataset
+            const clonedRows = dataset.rows.map(r => [...r]);
+
+            clonedRows.sort((rowA, rowB) => {
+                for (const rule of rules) {
+                    const parsedA = this._parseSortValue(rowA[rule.colIdx]);
+                    const parsedB = this._parseSortValue(rowB[rule.colIdx]);
+
+                    // Nulls/empty values are always sent to the bottom regardless of asc/desc
+                    if (parsedA.isNull && parsedB.isNull) continue;
+                    if (parsedA.isNull) return 1;
+                    if (parsedB.isNull) return -1;
+
+                    let cmp = 0;
+                    if (parsedA.type === 'number' && parsedB.type === 'number') {
+                        cmp = parsedA.val - parsedB.val;
+                    } else if (parsedA.type === 'date' && parsedB.type === 'date') {
+                        cmp = parsedA.val - parsedB.val;
+                    } else {
+                        // Compare strings with locale pt-BR
+                        const strA = parsedA.raw !== undefined ? String(parsedA.raw) : String(parsedA.val);
+                        const strB = parsedB.raw !== undefined ? String(parsedB.raw) : String(parsedB.val);
+                        cmp = strA.localeCompare(strB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+                    }
+
+                    if (cmp !== 0) {
+                        return rule.order === 'desc' ? -cmp : cmp;
+                    }
+                }
+                return 0;
+            });
+
+            const result = {
+                ...dataset,
+                headers: [...headers],
+                rows: clonedRows,
+                metadata: {
+                    ...(dataset.metadata || {}),
+                    totalRows: clonedRows.length,
+                    totalCols: headers.length,
+                    sortedBy: rules
+                }
+            };
+
+            if (result.sheets && result.activeSheet && result.sheets[result.activeSheet]) {
+                result.sheets[result.activeSheet] = {
+                    ...result.sheets[result.activeSheet],
+                    headers: [...headers],
+                    rows: clonedRows
+                };
+            }
+
+            return result;
         }
     };
     FramePER.Converter = Converter;
