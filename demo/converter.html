@@ -1113,6 +1113,10 @@ FramePER.Converter.toCSV(dataset);</code></pre>
               <input type="text" id="table-search" class="form-control" placeholder="Filtrar dados na tabela..." disabled>
             </div>
             <div class="d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-outline btn-sm btn-formatting-rules" id="btn-formatting-rules" title="Gerenciar regras de formatação condicional e alertas visuais">
+                <i class="icon icon-sliders"></i> <span id="btn-formatting-rules-text">Formatação</span>
+                <span class="badge badge-primary badge-rules m-l-1" id="badge-rules-count" style="display: none;">0</span>
+              </button>
               <button type="button" class="btn btn-outline btn-sm btn-toggle-summary active" id="btn-toggle-summary" title="Exibir ou ocultar linha de totais e agregações no rodapé">
                 <i class="icon icon-activity"></i> <span id="btn-toggle-summary-text">Linha de Totais</span>
               </button>
@@ -1352,6 +1356,172 @@ FramePER.Converter.toCSV(dataset);</code></pre>
 
   </main>
 
+  <!-- Modal de Formatação Condicional e Alertas Visuais -->
+  <div id="modal-formatting-rules" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-fmt-title">
+    <div class="modal-formatting-container">
+      <div class="modal-formatting-header">
+        <div class="d-flex align-items-center gap-2">
+          <span class="icon-box icon-box-primary"><i class="icon icon-sliders"></i></span>
+          <div>
+            <h3 class="modal-title m-0" id="modal-fmt-title" style="font-size: 1.15rem;">Formatação Condicional</h3>
+            <p class="text-muted f-s-2 m-0">Destaque células, defina alertas visuais e escalas de cores</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-close-fmt-modal" aria-label="Fechar">&times;</button>
+      </div>
+
+      <div class="modal-formatting-body">
+        <!-- Card: Criar Nova Regra -->
+        <div class="rule-builder-card">
+          <h4 class="f-s-3 f-w-semibold m-b-3 d-flex align-items-center gap-2 text-primary">
+            <i class="icon icon-plus"></i> <span id="fmt-builder-title">Criar Nova Regra</span>
+          </h4>
+
+          <div class="grid grid-sm-2 gap-3 m-b-3">
+            <div class="form-group m-0">
+              <label class="form-label f-s-2 text-muted m-b-1" for="fmt-rule-column">Coluna Alvo</label>
+              <select id="fmt-rule-column" class="form-select form-select-sm">
+                <!-- Preenchido dinamicamente com as colunas do dataset -->
+              </select>
+            </div>
+
+            <div class="form-group m-0">
+              <label class="form-label f-s-2 text-muted m-b-1" for="fmt-rule-type">Tipo de Regra / Condição</label>
+              <select id="fmt-rule-type" class="form-select form-select-sm">
+                <optgroup label="Comparações Numéricas">
+                  <option value="greater_than">Maior que (&gt;)</option>
+                  <option value="less_than">Menor que (&lt;)</option>
+                  <option value="between">Entre dois valores (Faixa)</option>
+                  <option value="equal_to">Igual a (=)</option>
+                  <option value="not_equal">Diferente de (≠)</option>
+                </optgroup>
+                <optgroup label="Texto / Sequência">
+                  <option value="contains">Contém o texto</option>
+                  <option value="not_contains">Não contém o texto</option>
+                  <option value="starts_with">Começa com</option>
+                  <option value="ends_with">Termina com</option>
+                  <option value="empty">Célula Vazia</option>
+                  <option value="not_empty">Célula Não Vazia</option>
+                </optgroup>
+                <optgroup label="Estatísticas &amp; Frequência">
+                  <option value="above_average">Acima da Média</option>
+                  <option value="below_average">Abaixo da Média</option>
+                  <option value="top_n">Top N Maiores</option>
+                  <option value="bottom_n">Bottom N Menores</option>
+                  <option value="duplicates">Valores Duplicados</option>
+                  <option value="unique">Valores Únicos</option>
+                </optgroup>
+                <optgroup label="Gradiente Visual">
+                  <option value="color_scale">Escala de Cores (Gradiente)</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <!-- Campos de Valor Condicionais -->
+          <div id="fmt-values-container" class="grid grid-sm-2 gap-3 m-b-3">
+            <div class="form-group m-0" id="fmt-val1-group">
+              <label class="form-label f-s-2 text-muted m-b-1" id="fmt-val1-label" for="fmt-rule-val1">Valor / Critério</label>
+              <input type="text" id="fmt-rule-val1" class="form-control form-control-sm" placeholder="Ex: 100, Esgotado...">
+            </div>
+            <div class="form-group m-0" id="fmt-val2-group" style="display: none;">
+              <label class="form-label f-s-2 text-muted m-b-1" for="fmt-rule-val2">Valor Final (Entre)</label>
+              <input type="text" id="fmt-rule-val2" class="form-control form-control-sm" placeholder="Ex: 500">
+            </div>
+          </div>
+
+          <!-- Estilo & Paleta Visual -->
+          <div class="m-b-3">
+            <label class="form-label f-s-2 text-muted m-b-1">Paletas Rápidas (Estilo em 1 Clique)</label>
+            <div class="d-flex flex-wrap gap-2 m-b-2">
+              <button type="button" class="color-palette-btn palette-success" data-bg="#dcfce7" data-color="#15803d" data-icon="✓">
+                ✓ Sucesso (Verde)
+              </button>
+              <button type="button" class="color-palette-btn palette-danger" data-bg="#fee2e2" data-color="#b91c1c" data-icon="⚠">
+                ⚠ Crítico (Vermelho)
+              </button>
+              <button type="button" class="color-palette-btn palette-warning" data-bg="#fef3c7" data-color="#b45309" data-icon="⚡">
+                ⚡ Atenção (Amarelo)
+              </button>
+              <button type="button" class="color-palette-btn palette-info" data-bg="#dbeafe" data-color="#1d4ed8" data-icon="★">
+                ★ Destaque (Azul)
+              </button>
+              <button type="button" class="color-palette-btn palette-purple" data-bg="#f3e8ff" data-color="#7e22ce" data-icon="●">
+                ● Roxo
+              </button>
+            </div>
+          </div>
+
+          <!-- Customização Manual de Cores e Ícones -->
+          <div class="d-flex flex-wrap align-items-center gap-3 m-b-3 p-2" style="background: rgba(0,0,0,0.15); border-radius: 6px;">
+            <div class="d-flex align-items-center gap-2">
+              <label class="f-s-2 text-muted m-0" for="fmt-custom-bg">Fundo:</label>
+              <input type="color" id="fmt-custom-bg" value="#fee2e2" style="width: 32px; height: 28px; padding: 0; border: none; cursor: pointer; border-radius: 4px;">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <label class="f-s-2 text-muted m-0" for="fmt-custom-color">Texto:</label>
+              <input type="color" id="fmt-custom-color" value="#b91c1c" style="width: 32px; height: 28px; padding: 0; border: none; cursor: pointer; border-radius: 4px;">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <label class="f-s-2 text-muted m-0" for="fmt-custom-icon">Ícone:</label>
+              <select id="fmt-custom-icon" class="form-select form-select-sm" style="width: auto; min-width: 80px;">
+                <option value="">Nenhum</option>
+                <option value="✓" selected>✓ Check</option>
+                <option value="⚠">⚠ Alerta</option>
+                <option value="⚡">⚡ Raio</option>
+                <option value="★">★ Estrela</option>
+                <option value="●">● Ponto</option>
+                <option value="↑">↑ Alta</option>
+                <option value="↓">↓ Baixa</option>
+              </select>
+            </div>
+            <div class="form-check d-flex align-items-center gap-1 m-0">
+              <input class="form-check-input" type="checkbox" id="fmt-custom-bold" checked>
+              <label class="form-check-label f-s-2 text-muted cursor-pointer" for="fmt-custom-bold">Negrito</label>
+            </div>
+            <div class="m-l-auto d-flex align-items-center gap-2">
+              <span class="f-s-2 text-muted">Prévia:</span>
+              <div id="fmt-preview-box" class="rule-preview-box" style="background: #fee2e2; color: #b91c1c; font-weight: bold;">
+                <span id="fmt-preview-icon" class="rule-icon-badge">⚠</span> <span id="fmt-preview-text">Amostra</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-cancel-edit-rule" style="display: none;">Cancelar Edição</button>
+            <button type="button" class="btn btn-primary btn-sm d-flex align-items-center gap-1" id="btn-save-rule">
+              <i class="icon icon-plus"></i> <span id="btn-save-rule-text">Adicionar Regra</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Seção: Regras Ativas -->
+        <div>
+          <div class="d-flex align-items-center justify-content-between m-b-2">
+            <h4 class="f-s-3 f-w-semibold m-0 text-main d-flex align-items-center gap-2">
+              <i class="icon icon-layers text-primary"></i> Regras Cadastradas
+              <span class="badge badge-secondary badge-xs" id="modal-rules-badge">0</span>
+            </h4>
+            <button type="button" class="btn btn-ghost btn-xs text-danger" id="btn-clear-all-rules" style="display: none;">
+              <i class="icon icon-trash"></i> Limpar Todas
+            </button>
+          </div>
+          <div id="formatting-rules-list" class="d-flex flex-column gap-2">
+            <!-- Preenchido dinamicamente via JS -->
+            <div class="formatting-rules-empty">
+              Nenhuma regra de formatação configurada ainda. Crie uma regra acima para destacar células automaticamente na tabela e nas exportações.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-formatting-footer">
+        <span class="f-s-2 text-muted">Dica: Regras no topo têm maior prioridade. Use as setas para reordenar.</span>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-finish-fmt-modal">Concluir</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../dist/framePER.min.js?v=2.26.0"></script>
   <script src="demo.js?v=2.26.0"></script>
   <script>
@@ -1476,6 +1646,39 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       // Table Footer Summary Row State
       let showSummaryRow = true;
       let columnAggregations = {};
+
+      // Conditional Formatting State & Elements
+      let activeFormattingRules = [];
+      let activeCellStylesMap = null;
+      let editingRuleId = null;
+
+      const btnFormattingRules = document.getElementById('btn-formatting-rules');
+      const badgeRulesCount = document.getElementById('badge-rules-count');
+      const modalFormattingRules = document.getElementById('modal-formatting-rules');
+      const btnCloseFmtModal = document.getElementById('btn-close-fmt-modal');
+      const btnFinishFmtModal = document.getElementById('btn-finish-fmt-modal');
+      const fmtRuleColumn = document.getElementById('fmt-rule-column');
+      const fmtRuleType = document.getElementById('fmt-rule-type');
+      const fmtValuesContainer = document.getElementById('fmt-values-container');
+      const fmtVal1Group = document.getElementById('fmt-val1-group');
+      const fmtVal1Label = document.getElementById('fmt-val1-label');
+      const fmtRuleVal1 = document.getElementById('fmt-rule-val1');
+      const fmtVal2Group = document.getElementById('fmt-val2-group');
+      const fmtRuleVal2 = document.getElementById('fmt-rule-val2');
+      const fmtCustomBg = document.getElementById('fmt-custom-bg');
+      const fmtCustomColor = document.getElementById('fmt-custom-color');
+      const fmtCustomIcon = document.getElementById('fmt-custom-icon');
+      const fmtCustomBold = document.getElementById('fmt-custom-bold');
+      const fmtPreviewBox = document.getElementById('fmt-preview-box');
+      const fmtPreviewIcon = document.getElementById('fmt-preview-icon');
+      const fmtPreviewText = document.getElementById('fmt-preview-text');
+      const btnSaveRule = document.getElementById('btn-save-rule');
+      const btnSaveRuleText = document.getElementById('btn-save-rule-text');
+      const btnCancelEditRule = document.getElementById('btn-cancel-edit-rule');
+      const formattingRulesList = document.getElementById('formatting-rules-list');
+      const modalRulesBadge = document.getElementById('modal-rules-badge');
+      const btnClearAllRules = document.getElementById('btn-clear-all-rules');
+      const fmtBuilderTitle = document.getElementById('fmt-builder-title');
 
       // Worksheet Elements (Multi-Sheet)
       const worksheetTabsBar = document.getElementById('worksheet-tabs-bar');
@@ -1729,6 +1932,32 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         // Enable Export Buttons
         exportButtons.forEach(btn => btn.disabled = false);
 
+        // Configure formatting rules (preserve dataset rules, or set initial demo rules for sales, or reset)
+        if (Array.isArray(dataset.formattingRules) && dataset.formattingRules.length > 0) {
+          activeFormattingRules = JSON.parse(JSON.stringify(dataset.formattingRules));
+        } else if (dataset === PRESETS.sales || (dataset.title && dataset.title.includes('Vendas'))) {
+          activeFormattingRules = [
+            {
+              id: 'rule_status_entregue',
+              column: 'Status',
+              type: 'equal_to',
+              value: 'Entregue',
+              style: { bg: '#dcfce7', color: '#15803d', bold: true, icon: '✓' },
+              enabled: true
+            },
+            {
+              id: 'rule_total_alto',
+              column: 'Total',
+              type: 'greater_than',
+              value: 5000,
+              style: { bg: '#dbeafe', color: '#1d4ed8', bold: true, icon: '★' },
+              enabled: true
+            }
+          ];
+        } else {
+          activeFormattingRules = [];
+        }
+
         // Reset sort, filters and aggregations for new dataset
         activeSortRules = [];
         activeColumnFilters = {};
@@ -1751,6 +1980,10 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         activeSortRules = [];
         activeColumnFilters = {};
         columnAggregations = {};
+        activeFormattingRules = [];
+        activeCellStylesMap = null;
+        if (badgeRulesCount) badgeRulesCount.style.display = 'none';
+        if (btnFormattingRules) btnFormattingRules.classList.remove('has-rules');
         closeFilterPopover();
         if (previewTfoot) {
           previewTfoot.style.display = 'none';
@@ -2100,6 +2333,25 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       function renderTable() {
         if (!currentDataset) return;
 
+        // Evaluate conditional formatting rules on currentDataset
+        const enabledRules = activeFormattingRules.filter(r => r.enabled !== false);
+        if (enabledRules.length > 0 && Converter && typeof Converter.evaluateConditionalFormatting === 'function') {
+          activeCellStylesMap = Converter.evaluateConditionalFormatting(currentDataset, enabledRules);
+        } else {
+          activeCellStylesMap = null;
+        }
+
+        if (badgeRulesCount && btnFormattingRules) {
+          if (enabledRules.length > 0) {
+            badgeRulesCount.style.display = 'inline-block';
+            badgeRulesCount.textContent = enabledRules.length;
+            btnFormattingRules.classList.add('has-rules');
+          } else {
+            badgeRulesCount.style.display = 'none';
+            btnFormattingRules.classList.remove('has-rules');
+          }
+        }
+
         // Render Header with Sort and Filter Buttons
         let theadHtml = '<tr><th style="width: 50px;" class="txt-center text-muted">#</th>';
         currentDataset.headers.forEach((h, cIdx) => {
@@ -2163,7 +2415,22 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             tbodyHtml += `<tr><td class="txt-center text-muted f-s-1">${rowNumber}</td>`;
             row.forEach((cell, cIdx) => {
               const val = cell != null ? String(cell) : '';
-              tbodyHtml += `<td class="f-s-2 text-truncate cell-editable" tabindex="0" contenteditable="true" data-row="${realRowIndex}" data-col="${cIdx}" style="max-width: 240px;" title="Clique para editar">${escapeHTML(val)}</td>`;
+              let condClass = '';
+              let inlineStyle = 'max-width: 240px;';
+              let iconBadgeHtml = '';
+
+              const condStyle = (activeCellStylesMap && activeCellStylesMap[realRowIndex]) ? activeCellStylesMap[realRowIndex][cIdx] : null;
+              if (condStyle) {
+                condClass = ' cell-cond-formatted';
+                if (condStyle.bg) inlineStyle += ` background-color: ${condStyle.bg} !important;`;
+                if (condStyle.color) inlineStyle += ` color: ${condStyle.color} !important;`;
+                if (condStyle.bold) inlineStyle += ` font-weight: bold !important;`;
+                if (condStyle.icon) {
+                  iconBadgeHtml = `<span class="rule-icon-badge" contenteditable="false" style="user-select: none;">${escapeHTML(condStyle.icon)}</span>`;
+                }
+              }
+
+              tbodyHtml += `<td class="f-s-2 text-truncate cell-editable${condClass}" tabindex="0" contenteditable="true" data-row="${realRowIndex}" data-col="${cIdx}" data-raw-val="${escapeHTML(val)}" style="${inlineStyle}" title="Clique para editar">${iconBadgeHtml}<span class="cell-val-text">${escapeHTML(val)}</span></td>`;
             });
             tbodyHtml += `<td class="txt-center">
               <button type="button" class="btn btn-ghost btn-xs text-danger btn-row-delete" data-row="${realRowIndex}" title="Excluir esta linha">
@@ -2359,7 +2626,13 @@ FramePER.Converter.toCSV(dataset);</code></pre>
       let initialCellText = '';
       previewTbody.addEventListener('focusin', (e) => {
         if (e.target.classList.contains('cell-editable')) {
-          initialCellText = e.target.textContent;
+          const raw = e.target.getAttribute('data-raw-val');
+          if (raw !== null) {
+            initialCellText = raw;
+          } else {
+            const valSpan = e.target.querySelector('.cell-val-text');
+            initialCellText = (valSpan ? valSpan.textContent : e.target.textContent).trim();
+          }
         }
       });
 
@@ -2370,14 +2643,20 @@ FramePER.Converter.toCSV(dataset);</code></pre>
           e.target.blur();
         } else if (e.key === 'Escape') {
           e.preventDefault();
-          e.target.textContent = initialCellText;
+          const valSpan = e.target.querySelector('.cell-val-text');
+          if (valSpan) {
+            valSpan.textContent = initialCellText;
+          } else {
+            e.target.textContent = initialCellText;
+          }
           e.target.blur();
         }
       });
 
       previewTbody.addEventListener('focusout', (e) => {
         if (!e.target.classList.contains('cell-editable') || !currentDataset) return;
-        const newText = e.target.textContent;
+        const valSpan = e.target.querySelector('.cell-val-text');
+        const newText = (valSpan ? valSpan.textContent : e.target.textContent).trim();
         if (newText !== initialCellText) {
           const rowIdx = parseInt(e.target.getAttribute('data-row'), 10);
           const colIdx = parseInt(e.target.getAttribute('data-col'), 10);
@@ -2891,6 +3170,421 @@ FramePER.Converter.toCSV(dataset);</code></pre>
         });
       }
 
+      // --- Conditional Formatting Modal & Rule Manager Logic ---
+      function resetRuleBuilderForm() {
+        editingRuleId = null;
+        if (fmtBuilderTitle) fmtBuilderTitle.textContent = 'Criar Nova Regra';
+        if (btnSaveRuleText) btnSaveRuleText.textContent = 'Adicionar Regra';
+        if (btnCancelEditRule) btnCancelEditRule.style.display = 'none';
+        if (fmtRuleType) {
+          fmtRuleType.value = 'greater_than';
+          handleRuleTypeChange();
+        }
+        if (fmtRuleVal1) fmtRuleVal1.value = '';
+        if (fmtRuleVal2) fmtRuleVal2.value = '';
+        if (fmtCustomBg) fmtCustomBg.value = '#fee2e2';
+        if (fmtCustomColor) fmtCustomColor.value = '#b91c1c';
+        if (fmtCustomIcon) fmtCustomIcon.value = '⚠';
+        if (fmtCustomBold) fmtCustomBold.checked = true;
+        document.querySelectorAll('.color-palette-btn').forEach(b => b.classList.remove('active'));
+        updateFmtPreview();
+      }
+
+      function cancelEditingRule() {
+        resetRuleBuilderForm();
+      }
+
+      function handleRuleTypeChange() {
+        if (!fmtRuleType) return;
+        const t = fmtRuleType.value;
+        const noValTypes = ['empty', 'not_empty', 'above_average', 'below_average', 'duplicates', 'unique', 'color_scale'];
+        if (noValTypes.includes(t)) {
+          if (fmtVal1Group) fmtVal1Group.style.display = 'none';
+          if (fmtVal2Group) fmtVal2Group.style.display = 'none';
+        } else if (t === 'between') {
+          if (fmtVal1Group) {
+            fmtVal1Group.style.display = 'block';
+            fmtVal1Label.textContent = 'Valor Inicial (Mínimo)';
+            fmtRuleVal1.placeholder = 'Ex: 100';
+          }
+          if (fmtVal2Group) {
+            fmtVal2Group.style.display = 'block';
+          }
+        } else if (t === 'top_n' || t === 'bottom_n') {
+          if (fmtVal1Group) {
+            fmtVal1Group.style.display = 'block';
+            fmtVal1Label.textContent = 'Quantidade N';
+            fmtRuleVal1.placeholder = 'Ex: 5, 10';
+          }
+          if (fmtVal2Group) fmtVal2Group.style.display = 'none';
+        } else {
+          if (fmtVal1Group) {
+            fmtVal1Group.style.display = 'block';
+            fmtVal1Label.textContent = 'Valor / Critério';
+            fmtRuleVal1.placeholder = 'Ex: 100, Esgotado...';
+          }
+          if (fmtVal2Group) fmtVal2Group.style.display = 'none';
+        }
+        updateFmtPreview();
+      }
+
+      function updateFmtPreview() {
+        if (!fmtPreviewBox) return;
+        const bg = fmtCustomBg.value;
+        const color = fmtCustomColor.value;
+        const icon = fmtCustomIcon.value;
+        const bold = fmtCustomBold.checked;
+
+        fmtPreviewBox.style.backgroundColor = bg;
+        fmtPreviewBox.style.color = color;
+        fmtPreviewBox.style.fontWeight = bold ? 'bold' : 'normal';
+
+        if (icon) {
+          fmtPreviewIcon.style.display = 'inline-flex';
+          fmtPreviewIcon.textContent = icon;
+        } else {
+          fmtPreviewIcon.style.display = 'none';
+          fmtPreviewIcon.textContent = '';
+        }
+
+        const val = (fmtRuleVal1 ? fmtRuleVal1.value.trim() : '');
+        fmtPreviewText.textContent = val || 'Amostra';
+      }
+
+      function describeRule(rule) {
+        const t = rule.type;
+        const v = rule.value != null ? `"${rule.value}"` : '';
+        const v2 = rule.value2 != null ? ` e "${rule.value2}"` : '';
+        switch (t) {
+          case 'greater_than': return `Maior que ${v}`;
+          case 'less_than': return `Menor que ${v}`;
+          case 'between': return `Entre ${v}${v2}`;
+          case 'equal_to': return `Igual a ${v}`;
+          case 'not_equal': return `Diferente de ${v}`;
+          case 'contains': return `Contém ${v}`;
+          case 'not_contains': return `Não contém ${v}`;
+          case 'starts_with': return `Começa com ${v}`;
+          case 'ends_with': return `Termina com ${v}`;
+          case 'empty': return `Célula Vazia`;
+          case 'not_empty': return `Célula Não Vazia`;
+          case 'above_average': return `Acima da Média`;
+          case 'below_average': return `Abaixo da Média`;
+          case 'top_n': return `Top ${rule.value || 10} Maiores`;
+          case 'bottom_n': return `Bottom ${rule.value || 10} Menores`;
+          case 'duplicates': return `Valores Duplicados`;
+          case 'unique': return `Valores Únicos`;
+          case 'color_scale': return `Escala de Cores (Gradiente)`;
+          default: return `${t} ${v}`;
+        }
+      }
+
+      function renderFormattingRulesList() {
+        if (!formattingRulesList) return;
+        if (modalRulesBadge) modalRulesBadge.textContent = activeFormattingRules.length;
+
+        if (activeFormattingRules.length === 0) {
+          formattingRulesList.innerHTML = `<div class="formatting-rules-empty">
+            Nenhuma regra de formatação configurada ainda. Crie uma regra acima para destacar células automaticamente na tabela e nas exportações.
+          </div>`;
+          if (btnClearAllRules) btnClearAllRules.style.display = 'none';
+          return;
+        }
+
+        if (btnClearAllRules) btnClearAllRules.style.display = 'inline-flex';
+        let html = '';
+        activeFormattingRules.forEach((rule, idx) => {
+          const isEnabled = rule.enabled !== false;
+          const chipBg = (rule.style && rule.style.bg) || '#334155';
+          const chipColor = (rule.style && rule.style.color) || '#f8fafc';
+          const chipBold = rule.style && rule.style.bold;
+          const chipIcon = (rule.style && rule.style.icon) ? `${escapeHTML(rule.style.icon)} ` : '';
+
+          html += `
+            <div class="formatting-rule-item ${isEnabled ? '' : 'disabled'}" data-id="${rule.id}">
+              <div class="d-flex align-items-center gap-2" style="min-width: 0; flex: 1;">
+                <span class="rule-chip-preview" style="background: ${chipBg}; color: ${chipColor}; font-weight: ${chipBold ? 'bold' : 'normal'};">
+                  ${chipIcon}Amostra
+                </span>
+                <div class="text-truncate">
+                  <strong class="f-s-2 text-main">${escapeHTML(rule.column)}</strong>
+                  <span class="f-s-1 text-muted d-block">${describeRule(rule)}</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-ghost btn-xs btn-toggle-rule" data-id="${rule.id}" title="${isEnabled ? 'Desativar regra' : 'Ativar regra'}">
+                  <i class="icon ${isEnabled ? 'icon-eye text-primary' : 'icon-eye-off text-muted'}"></i>
+                </button>
+                <button type="button" class="btn btn-ghost btn-xs btn-edit-rule" data-id="${rule.id}" title="Editar regra">
+                  <i class="icon icon-edit"></i>
+                </button>
+                <button type="button" class="btn btn-ghost btn-xs btn-move-rule-up" data-id="${rule.id}" title="Aumentar prioridade" ${idx === 0 ? 'disabled' : ''}>
+                  <i class="icon icon-arrow-up"></i>
+                </button>
+                <button type="button" class="btn btn-ghost btn-xs btn-move-rule-down" data-id="${rule.id}" title="Diminuir prioridade" ${idx === activeFormattingRules.length - 1 ? 'disabled' : ''}>
+                  <i class="icon icon-arrow-down"></i>
+                </button>
+                <button type="button" class="btn btn-ghost btn-xs text-danger btn-delete-rule" data-id="${rule.id}" title="Excluir regra">
+                  <i class="icon icon-trash"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        formattingRulesList.innerHTML = html;
+      }
+
+      function openFormattingRulesModal() {
+        if (!currentDataset) {
+          if (Notify) Notify.warning('Sem Dados', 'Carregue ou selecione um dataset antes de configurar regras.');
+          return;
+        }
+
+        if (fmtRuleColumn) {
+          fmtRuleColumn.innerHTML = currentDataset.headers.map(h => {
+            return `<option value="${escapeHTML(h)}">${escapeHTML(h)}</option>`;
+          }).join('');
+        }
+
+        if (!editingRuleId) {
+          resetRuleBuilderForm();
+        }
+
+        renderFormattingRulesList();
+        if (modalFormattingRules) modalFormattingRules.classList.add('show');
+      }
+
+      function closeFormattingRulesModal() {
+        if (modalFormattingRules) modalFormattingRules.classList.remove('show');
+        cancelEditingRule();
+      }
+
+      // Wire Modal Controls
+      if (btnFormattingRules) {
+        btnFormattingRules.addEventListener('click', openFormattingRulesModal);
+      }
+      if (btnCloseFmtModal) {
+        btnCloseFmtModal.addEventListener('click', closeFormattingRulesModal);
+      }
+      if (btnFinishFmtModal) {
+        btnFinishFmtModal.addEventListener('click', closeFormattingRulesModal);
+      }
+      if (modalFormattingRules) {
+        modalFormattingRules.addEventListener('click', (e) => {
+          if (e.target === modalFormattingRules) {
+            closeFormattingRulesModal();
+          }
+        });
+      }
+
+      if (fmtRuleType) {
+        fmtRuleType.addEventListener('change', handleRuleTypeChange);
+      }
+      if (fmtRuleVal1) {
+        fmtRuleVal1.addEventListener('input', updateFmtPreview);
+      }
+      if (fmtCustomBg) {
+        fmtCustomBg.addEventListener('input', updateFmtPreview);
+      }
+      if (fmtCustomColor) {
+        fmtCustomColor.addEventListener('input', updateFmtPreview);
+      }
+      if (fmtCustomIcon) {
+        fmtCustomIcon.addEventListener('change', updateFmtPreview);
+      }
+      if (fmtCustomBold) {
+        fmtCustomBold.addEventListener('change', updateFmtPreview);
+      }
+
+      document.querySelectorAll('.color-palette-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.color-palette-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const bg = btn.getAttribute('data-bg');
+          const color = btn.getAttribute('data-color');
+          const icon = btn.getAttribute('data-icon');
+          if (bg && fmtCustomBg) fmtCustomBg.value = bg;
+          if (color && fmtCustomColor) fmtCustomColor.value = color;
+          if (icon && fmtCustomIcon) fmtCustomIcon.value = icon;
+          if (fmtCustomBold) fmtCustomBold.checked = true;
+          updateFmtPreview();
+        });
+      });
+
+      if (btnCancelEditRule) {
+        btnCancelEditRule.addEventListener('click', cancelEditingRule);
+      }
+
+      if (btnSaveRule) {
+        btnSaveRule.addEventListener('click', () => {
+          if (!currentDataset) return;
+          const col = fmtRuleColumn.value;
+          const type = fmtRuleType.value;
+          const noValTypes = ['empty', 'not_empty', 'above_average', 'below_average', 'duplicates', 'unique', 'color_scale'];
+          let val1 = fmtRuleVal1.value.trim();
+          let val2 = fmtRuleVal2.value.trim();
+
+          if (!noValTypes.includes(type) && val1 === '') {
+            if (Notify) Notify.warning('Atenção', 'Informe o valor para a condição da regra.');
+            return;
+          }
+
+          if (type === 'between' && val2 === '') {
+            if (Notify) Notify.warning('Atenção', 'Informe o valor final para a faixa de valores.');
+            return;
+          }
+
+          if (val1 !== '' && !isNaN(Number(val1)) && ['greater_than', 'less_than', 'between', 'top_n', 'bottom_n'].includes(type)) {
+            val1 = Number(val1);
+          }
+          if (val2 !== '' && !isNaN(Number(val2)) && type === 'between') {
+            val2 = Number(val2);
+          }
+
+          const style = {
+            bg: fmtCustomBg.value,
+            color: fmtCustomColor.value,
+            bold: fmtCustomBold.checked,
+            icon: fmtCustomIcon.value || undefined
+          };
+
+          if (editingRuleId) {
+            const r = activeFormattingRules.find(x => x.id === editingRuleId);
+            if (r) {
+              r.column = col;
+              r.type = type;
+              r.value = val1;
+              r.value2 = val2;
+              r.style = style;
+            }
+            if (Notify) Notify.success('Regra Atualizada', 'A regra foi alterada com sucesso.');
+            cancelEditingRule();
+          } else {
+            const newRule = {
+              id: 'rule_' + Date.now(),
+              column: col,
+              type: type,
+              value: val1,
+              value2: val2,
+              style: style,
+              enabled: true
+            };
+            activeFormattingRules.push(newRule);
+            if (Notify) Notify.success('Regra Criada', 'Nova regra de formatação adicionada.');
+            resetRuleBuilderForm();
+          }
+
+          renderFormattingRulesList();
+          renderTable();
+        });
+      }
+
+      if (formattingRulesList) {
+        formattingRulesList.addEventListener('click', (e) => {
+          const itemEl = e.target.closest('.formatting-rule-item');
+          if (!itemEl) return;
+          const id = itemEl.getAttribute('data-id');
+          if (!id) return;
+
+          // Alternar Ativar / Desativar
+          const toggleBtn = e.target.closest('.btn-toggle-rule');
+          if (toggleBtn) {
+            const r = activeFormattingRules.find(x => x.id === id);
+            if (r) {
+              r.enabled = r.enabled === false ? true : false;
+              renderFormattingRulesList();
+              renderTable();
+            }
+            return;
+          }
+
+          // Editar Regra
+          const editBtn = e.target.closest('.btn-edit-rule');
+          if (editBtn) {
+            const r = activeFormattingRules.find(x => x.id === id);
+            if (r) {
+              editingRuleId = id;
+              if (fmtBuilderTitle) fmtBuilderTitle.textContent = 'Editar Regra';
+              if (btnSaveRuleText) btnSaveRuleText.textContent = 'Salvar Alterações';
+              if (btnCancelEditRule) btnCancelEditRule.style.display = 'inline-flex';
+              if (fmtRuleColumn) fmtRuleColumn.value = r.column;
+              if (fmtRuleType) fmtRuleType.value = r.type;
+              handleRuleTypeChange();
+              if (fmtRuleVal1) fmtRuleVal1.value = r.value != null ? r.value : '';
+              if (fmtRuleVal2) fmtRuleVal2.value = r.value2 != null ? r.value2 : '';
+              if (r.style) {
+                if (r.style.bg && fmtCustomBg) fmtCustomBg.value = r.style.bg;
+                if (r.style.color && fmtCustomColor) fmtCustomColor.value = r.style.color;
+                if (r.style.icon != null && fmtCustomIcon) fmtCustomIcon.value = r.style.icon;
+                if (fmtCustomBold) fmtCustomBold.checked = !!r.style.bold;
+              }
+              updateFmtPreview();
+            }
+            return;
+          }
+
+          // Mover para Cima (Aumentar prioridade)
+          const upBtn = e.target.closest('.btn-move-rule-up');
+          if (upBtn) {
+            const idx = activeFormattingRules.findIndex(x => x.id === id);
+            if (idx > 0) {
+              const temp = activeFormattingRules[idx];
+              activeFormattingRules[idx] = activeFormattingRules[idx - 1];
+              activeFormattingRules[idx - 1] = temp;
+              renderFormattingRulesList();
+              renderTable();
+            }
+            return;
+          }
+
+          // Mover para Baixo (Diminuir prioridade)
+          const downBtn = e.target.closest('.btn-move-rule-down');
+          if (downBtn) {
+            const idx = activeFormattingRules.findIndex(x => x.id === id);
+            if (idx >= 0 && idx < activeFormattingRules.length - 1) {
+              const temp = activeFormattingRules[idx];
+              activeFormattingRules[idx] = activeFormattingRules[idx + 1];
+              activeFormattingRules[idx + 1] = temp;
+              renderFormattingRulesList();
+              renderTable();
+            }
+            return;
+          }
+
+          // Excluir Regra
+          const delBtn = e.target.closest('.btn-delete-rule');
+          if (delBtn) {
+            activeFormattingRules = activeFormattingRules.filter(x => x.id !== id);
+            if (editingRuleId === id) cancelEditingRule();
+            renderFormattingRulesList();
+            renderTable();
+            if (Notify) Notify.info('Regra Removida', 'A regra foi excluída com sucesso.');
+            return;
+          }
+        });
+      }
+
+      if (btnClearAllRules) {
+        btnClearAllRules.addEventListener('click', async () => {
+          let confirmed = false;
+          if (Dialog) {
+            confirmed = await Dialog.confirm({
+              title: 'Limpar Todas as Regras',
+              message: 'Tem certeza de que deseja remover todas as regras de formatação condicional?',
+              confirmText: 'Limpar Todas'
+            });
+          } else {
+            confirmed = true;
+          }
+          if (confirmed) {
+            activeFormattingRules = [];
+            cancelEditingRule();
+            renderFormattingRulesList();
+            renderTable();
+            if (Notify) Notify.info('Regras Limpas', 'Todas as regras de formatação foram removidas.');
+          }
+        });
+      }
+
       // Export Buttons Handler with Confetti Celebration
       exportButtons.forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -2907,6 +3601,11 @@ FramePER.Converter.toCSV(dataset);</code></pre>
             const summaryRow = getActiveSummaryRowForExport();
             if (summaryRow) {
               exportOptions.summaryRow = summaryRow;
+            }
+
+            const enabledFormattingRules = activeFormattingRules.filter(r => r.enabled !== false);
+            if (enabledFormattingRules.length > 0) {
+              exportOptions.formattingRules = enabledFormattingRules;
             }
 
             await Converter.convert(currentDataset, fmt, exportOptions);
