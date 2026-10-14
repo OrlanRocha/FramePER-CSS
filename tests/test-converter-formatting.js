@@ -278,6 +278,43 @@ async function runTests() {
     console.log('  ✓ Passou');
 
     console.log('\n🎉 TODOS OS TESTES DA TASK 1 PASSARAM COM SUCESSO!\n');
+
+    // ▶ Teste 7: toXLS com formattingRules / cellStyles
+    console.log('▶ Teste 7: Converter.toXLS com formatação condicional');
+    const exportRules = [
+        {
+            id: 'r_esgotado',
+            column: 'Status',
+            type: 'equal_to',
+            value: 'Esgotado',
+            style: { bg: '#fee2e2', color: '#b91c1c', bold: true },
+            enabled: true
+        }
+    ];
+    const xlsOutput = Converter.toXLS(sampleData, { formattingRules: exportRules });
+    assert.ok(xlsOutput.includes('#fee2e2') || xlsOutput.includes('#FEE2E2'), 'XLS deve conter cor de fundo da regra em Styles');
+    assert.ok(xlsOutput.includes('Esgotado'), 'XLS deve conter a célula com Status Esgotado');
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 8: toXLSX com formattingRules / cellStyles e round-trip com fromXLSX
+    console.log('▶ Teste 8: Converter.toXLSX com formatação condicional');
+    const xlsxBuffer = Converter.toXLSX(sampleData, { formattingRules: exportRules, asBlob: false });
+    assert.ok(xlsxBuffer instanceof Uint8Array, 'Deve retornar buffer XLSX válido');
+    const readBack = await Converter.fromXLSX(xlsxBuffer);
+    assert.strictEqual(readBack.rows.length, sampleData.rows.length, 'XLSX lido de volta deve ter mesmo número de linhas');
+    console.log('  ✓ Passou');
+
+    // ▶ Teste 9: toPDF com formattingRules / cellStyles
+    console.log('▶ Teste 9: Converter.toPDF com formatação condicional');
+    const pdfBytes = Converter.toPDF(sampleData, { formattingRules: exportRules, asBuffer: true });
+    assert.ok(pdfBytes instanceof Uint8Array, 'Deve retornar buffer PDF válido');
+    const pdfText = Buffer.from(pdfBytes).toString('latin1');
+    assert.ok(pdfText.includes('%PDF-1.4'), 'PDF deve ter cabeçalho 1.4');
+    // #fee2e2 em RGB normalizado: 254/255 = 0.996, 226/255 = 0.886, 226/255 = 0.886
+    assert.ok(pdfText.includes('0.996 0.886 0.886 rg'), 'PDF deve conter comando de preenchimento com a cor da regra (#fee2e2)');
+    console.log('  ✓ Passou');
+
+    console.log('\n🎉 TODOS OS TESTES DE FORMATAÇÃO E EXPORTAÇÃO PASSARAM COM SUCESSO!\n');
 }
 
 runTests().catch(err => {
