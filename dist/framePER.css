@@ -2383,25 +2383,25 @@ th.sortable.sorted-desc::after {
   border-radius: 999px;
 }
 
-.badge-blue {
+.badge-blue, .badge-primary {
   --badge-color: color-mix(in srgb, var(--blue) 80%, var(--text-main));
   background-color: color-mix(in srgb, var(--blue) 12%, transparent);
   border-color: color-mix(in srgb, var(--blue) 25%, transparent);
 }
 
-.badge-green {
+.badge-green, .badge-success {
   --badge-color: color-mix(in srgb, var(--green) 80%, var(--text-main));
   background-color: color-mix(in srgb, var(--green) 12%, transparent);
   border-color: color-mix(in srgb, var(--green) 25%, transparent);
 }
 
-.badge-red {
+.badge-red, .badge-danger {
   --badge-color: color-mix(in srgb, var(--red) 80%, var(--text-main));
   background-color: color-mix(in srgb, var(--red) 12%, transparent);
   border-color: color-mix(in srgb, var(--red) 25%, transparent);
 }
 
-.badge-yellow {
+.badge-yellow, .badge-warning {
   --badge-color: color-mix(in srgb, var(--yellow) 80%, var(--text-main));
   background-color: color-mix(in srgb, var(--yellow) 12%, transparent);
   border-color: color-mix(in srgb, var(--yellow) 25%, transparent);
@@ -2421,6 +2421,30 @@ th.sortable.sorted-desc::after {
 
 .badge-outline {
   background-color: transparent;
+}
+
+.badge-secondary {
+  --badge-color: var(--text-muted);
+  background-color: var(--bg-subtle);
+  border-color: var(--border-color);
+}
+
+.badge-xs {
+  padding: 0.05rem 0.375rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.badge-sm {
+  padding: 0.1rem 0.45rem;
+  font-size: 0.725rem;
+  line-height: 1.125rem;
+}
+
+.badge-lg {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.375rem;
 }
 
 .badge-dot::before {
@@ -3340,8 +3364,28 @@ th.sortable.sorted-desc::after {
   transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
+.modal-sm .modal-content {
+  max-width: 24rem;
+}
+
 .modal-lg .modal-content {
   max-width: 44rem;
+}
+
+.modal-xl .modal-content {
+  max-width: 56rem;
+}
+
+.modal-fullscreen {
+  padding: 0;
+}
+.modal-fullscreen .modal-content {
+  max-width: 100vw;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+  border: 0;
 }
 
 .modal-header {
@@ -3389,16 +3433,21 @@ th.sortable.sorted-desc::after {
   background-color: var(--bg-hover);
 }
 
-/* Side Modal & Bottom Drawer Variants ------------------------------------ */
+/* Side Modal / Drawers (Laterais Direita e Esquerda) ---------------------- */
 .modal.modal-side,
-.modal.modal-drawer {
+.modal.modal-drawer,
+.modal.modal-side-right,
+.modal.modal-side-left {
   padding: 0;
   justify-content: flex-end;
 }
 .modal.modal-side .modal-content,
-.modal.modal-drawer .modal-content {
+.modal.modal-drawer .modal-content,
+.modal.modal-side-right .modal-content,
+.modal.modal-side-left .modal-content {
   height: 100vh;
   max-height: 100vh;
+  width: 100%;
   max-width: 28rem;
   margin: 0;
   border-radius: 0;
@@ -3412,44 +3461,256 @@ th.sortable.sorted-desc::after {
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s var(--ease);
 }
 .modal.modal-side.modal-side-left,
-.modal.modal-drawer.modal-side-left {
+.modal.modal-drawer.modal-side-left,
+.modal.modal-side-right.modal-side-left,
+.modal.modal-side-left.modal-side-left {
   justify-content: flex-start;
 }
 .modal.modal-side.modal-side-left .modal-content,
-.modal.modal-drawer.modal-side-left .modal-content {
+.modal.modal-drawer.modal-side-left .modal-content,
+.modal.modal-side-right.modal-side-left .modal-content,
+.modal.modal-side-left.modal-side-left .modal-content {
   border-right: 1px solid var(--border-color);
   border-left: 0;
   transform: translateX(-100%);
 }
-.modal.modal-side.modal-bottom,
-.modal.modal-drawer.modal-bottom {
+.modal.modal-side.modal-sm .modal-content,
+.modal.modal-drawer.modal-sm .modal-content,
+.modal.modal-side-right.modal-sm .modal-content,
+.modal.modal-side-left.modal-sm .modal-content {
+  max-width: 22rem;
+}
+.modal.modal-side.modal-lg .modal-content,
+.modal.modal-drawer.modal-lg .modal-content,
+.modal.modal-side-right.modal-lg .modal-content,
+.modal.modal-side-left.modal-lg .modal-content {
+  max-width: 38rem;
+}
+.modal.modal-side.modal-xl .modal-content,
+.modal.modal-drawer.modal-xl .modal-content,
+.modal.modal-side-right.modal-xl .modal-content,
+.modal.modal-side-left.modal-xl .modal-content {
+  max-width: 48rem;
+}
+.modal.modal-side.show,
+.modal.modal-drawer.show,
+.modal.modal-side-right.show,
+.modal.modal-side-left.show {
+  opacity: 1;
+  visibility: visible;
+}
+.modal.modal-side.show .modal-content,
+.modal.modal-drawer.show .modal-content,
+.modal.modal-side-right.show .modal-content,
+.modal.modal-side-left.show .modal-content {
+  transform: translate(0, 0) !important;
+  opacity: 1 !important;
+}
+
+/* Header Modal / Top Banner (Desliza do Topo) ---------------------------- */
+.modal.modal-top,
+.modal.modal-header-banner {
+  padding: 0;
+  align-items: flex-start;
+  justify-content: center;
+}
+.modal.modal-top .modal-content,
+.modal.modal-header-banner .modal-content {
+  width: 100%;
+  max-width: 48rem;
+  max-height: 80vh;
+  margin: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-top: 0;
+  border-right: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s var(--ease);
+}
+.modal.modal-top.modal-full .modal-content,
+.modal.modal-header-banner.modal-full .modal-content {
+  max-width: 100%;
+  border-radius: 0;
+  border-right: 0;
+  border-left: 0;
+}
+.modal.modal-top.show,
+.modal.modal-header-banner.show {
+  opacity: 1;
+  visibility: visible;
+}
+.modal.modal-top.show .modal-content,
+.modal.modal-header-banner.show .modal-content {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+}
+
+/* Footer Modal / Bottom Sheet (Desliza da Base) --------------------------- */
+.modal.modal-bottom,
+.modal.modal-footer-sheet {
+  padding: 0;
   align-items: flex-end;
   justify-content: center;
 }
-.modal.modal-side.modal-bottom .modal-content,
-.modal.modal-drawer.modal-bottom .modal-content {
+.modal.modal-bottom .modal-content,
+.modal.modal-footer-sheet .modal-content {
   width: 100%;
-  max-width: 100%;
+  max-width: 48rem;
   max-height: 85vh;
   height: auto;
+  margin: 0;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   border-bottom: 0;
   border-right: 1px solid var(--border-color);
   border-left: 1px solid var(--border-color);
   border-top: 1px solid var(--border-color);
+  box-shadow: var(--shadow-xl);
   transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s var(--ease);
 }
-.modal.modal-side.show,
-.modal.modal-drawer.show {
+.modal.modal-bottom.modal-full .modal-content,
+.modal.modal-footer-sheet.modal-full .modal-content {
+  max-width: 100%;
+  border-radius: 0;
+  border-right: 0;
+  border-left: 0;
+}
+.modal.modal-bottom.show,
+.modal.modal-footer-sheet.show {
   opacity: 1;
   visibility: visible;
 }
-.modal.modal-side.show .modal-content,
-.modal.modal-drawer.show .modal-content {
-  transform: translate(0, 0) !important;
+.modal.modal-bottom.show .modal-content,
+.modal.modal-footer-sheet.show .modal-content {
+  transform: translateY(0) !important;
   opacity: 1 !important;
 }
 
+/* Floating / Flutter Modals (Cantos Flutuantes / Widgets) ----------------- */
+.modal.modal-float,
+.modal.modal-float-bottom-right,
+.modal.modal-float-bottom-left,
+.modal.modal-float-top-right,
+.modal.modal-float-top-left {
+  padding: 1.5rem;
+  pointer-events: none;
+}
+.modal.modal-float .modal-content,
+.modal.modal-float-bottom-right .modal-content,
+.modal.modal-float-bottom-left .modal-content,
+.modal.modal-float-top-right .modal-content,
+.modal.modal-float-top-left .modal-content {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 26rem;
+  max-height: calc(100vh - 3rem);
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border-color);
+  border-radius: var(--radius-xl, 16px);
+  transform: scale(0.92) translateY(12px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s var(--ease);
+}
+.modal.modal-float.modal-float-bottom-right,
+.modal.modal-float-bottom-right.modal-float-bottom-right,
+.modal.modal-float-bottom-left.modal-float-bottom-right,
+.modal.modal-float-top-right.modal-float-bottom-right,
+.modal.modal-float-top-left.modal-float-bottom-right {
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+.modal.modal-float.modal-float-bottom-left,
+.modal.modal-float-bottom-right.modal-float-bottom-left,
+.modal.modal-float-bottom-left.modal-float-bottom-left,
+.modal.modal-float-top-right.modal-float-bottom-left,
+.modal.modal-float-top-left.modal-float-bottom-left {
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+.modal.modal-float.modal-float-top-right,
+.modal.modal-float-bottom-right.modal-float-top-right,
+.modal.modal-float-bottom-left.modal-float-top-right,
+.modal.modal-float-top-right.modal-float-top-right,
+.modal.modal-float-top-left.modal-float-top-right {
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.modal.modal-float.modal-float-top-left,
+.modal.modal-float-bottom-right.modal-float-top-left,
+.modal.modal-float-bottom-left.modal-float-top-left,
+.modal.modal-float-top-right.modal-float-top-left,
+.modal.modal-float-top-left.modal-float-top-left {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.modal.modal-float.show,
+.modal.modal-float-bottom-right.show,
+.modal.modal-float-bottom-left.show,
+.modal.modal-float-top-right.show,
+.modal.modal-float-top-left.show {
+  opacity: 1;
+  visibility: visible;
+}
+.modal.modal-float.show .modal-content,
+.modal.modal-float-bottom-right.show .modal-content,
+.modal.modal-float-bottom-left.show .modal-content,
+.modal.modal-float-top-right.show .modal-content,
+.modal.modal-float-top-left.show .modal-content {
+  transform: scale(1) translateY(0) !important;
+  opacity: 1 !important;
+}
+
+/* Sticky Modal (Header e Footer Fixos com Scroll Interno) ---------------- */
+.modal.modal-sticky .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: min(85vh, 640px);
+  padding: 0;
+  overflow: hidden;
+}
+.modal.modal-sticky .modal-content .modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.modal.modal-sticky .modal-content .modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1.5rem;
+  color: var(--text-main);
+}
+.modal.modal-sticky .modal-content .modal-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Static Modal Shake Animation -------------------------------------------- */
+.modal-shake {
+  animation: modalShake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes modalShake {
+  0%, 100% {
+    transform: scale(1) translateX(0);
+  }
+  20%, 60% {
+    transform: scale(1.02) translateX(-6px);
+  }
+  40%, 80% {
+    transform: scale(1.02) translateX(6px);
+  }
+}
 .offcanvas {
   position: fixed;
   top: 0;
