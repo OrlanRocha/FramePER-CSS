@@ -2012,22 +2012,116 @@ tour.<span class="tok-f">start</span>();</code></pre>
 <span class="tok-k">&lt;/div&gt;</span></code></pre>
       </section>
 
-      <!-- Modals & Side Modals -->
+      <!-- Modals & Overlays Subsystem (v2.26) -->
       <section id="sec-overlays" class="docs-section">
-        <h2>Modais & Side Modals (Drawers)</h2>
-        <p class="lead">Camadas sobrepostas centrais e modais laterais (Side Modal / Drawer) deslizantes.</p>
-
-        <div class="preview cluster gap-3">
-          <button class="btn btn-primary" data-toggle="modal" data-target="#demoModal">Modal Central</button>
-          <button class="btn btn-secondary" data-toggle="modal" data-target="#demoSideModal">Side Modal Direita</button>
-          <button class="btn btn-outline" data-toggle="offcanvas" data-target="#demoOffcanvas">Menu Offcanvas</button>
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Modais & Overlays Avançados</h2>
+          <span class="badge badge-primary badge-sm">v2.26</span>
         </div>
-        <pre><code><span class="tok-k">&lt;!-- Side Modal / Drawer Lateral --&gt;</span>
-<span class="tok-k">&lt;div</span> <span class="tok-f">id</span>=<span class="tok-s">"meuSideModal"</span> <span class="tok-f">class</span>=<span class="tok-s">"modal modal-side modal-side-right"</span><span class="tok-k">&gt;</span>
+        <p class="lead">Subsistema completo de modais do FramePER: modais centrais com múltiplos tamanhos, painéis laterais deslizantes (Drawers), modais de topo (Header) e rodapé (Bottom Sheet), modais flutuantes de canto, modais com rolagem sticky e proteção estática com animação elástica <em>Shake</em>.</p>
+
+        <!-- Grade de Demonstração Interativa de Variantes -->
+        <div class="card p-4 m-b-4">
+          <h4 class="m-t-0 m-b-3 f-s-3">Experimente as Variantes de Modal:</h4>
+          
+          <div class="stack gap-3">
+            <div>
+              <span class="d-block f-s-2 text-muted m-b-2 font-medium">1. Modais Centrais & Tamanhos:</span>
+              <div class="cluster gap-2">
+                <button class="btn btn-primary" data-toggle="modal" data-target="#demoModal">Padrão (32rem)</button>
+                <button class="btn btn-secondary" data-toggle="modal" data-target="#demoModalSm">Pequeno (.modal-sm)</button>
+                <button class="btn btn-secondary" data-toggle="modal" data-target="#demoModalLg">Grande (.modal-lg)</button>
+                <button class="btn btn-outline" data-toggle="modal" data-target="#demoModalFullscreen">Tela Cheia (.modal-fullscreen)</button>
+              </div>
+            </div>
+
+            <div>
+              <span class="d-block f-s-2 text-muted m-b-2 font-medium">2. Painéis Laterais Deslizantes (Drawers):</span>
+              <div class="cluster gap-2">
+                <button class="btn btn-secondary" data-toggle="modal" data-target="#demoSideModal">Side Modal Direita (.modal-side-right)</button>
+                <button class="btn btn-secondary" data-toggle="modal" data-target="#demoSideModalLeft">Side Modal Esquerda (.modal-side-left)</button>
+                <button class="btn btn-ghost" data-toggle="offcanvas" data-target="#demoOffcanvas">Menu Offcanvas</button>
+              </div>
+            </div>
+
+            <div>
+              <span class="d-block f-s-2 text-muted m-b-2 font-medium">3. Modais Topo, Rodapé & Flutuantes:</span>
+              <div class="cluster gap-2">
+                <button class="btn btn-warning" data-toggle="modal" data-target="#demoModalTop">Header / Top Banner (.modal-top)</button>
+                <button class="btn btn-info" data-toggle="modal" data-target="#demoModalBottom">Footer / Bottom Sheet (.modal-bottom)</button>
+                <button class="btn btn-primary" data-toggle="modal" data-target="#demoModalFloat">Flutuante Canto (.modal-float)</button>
+              </div>
+            </div>
+
+            <div>
+              <span class="d-block f-s-2 text-muted m-b-2 font-medium">4. Modais Especializados & Interativos:</span>
+              <div class="cluster gap-2">
+                <button class="btn btn-danger" data-toggle="modal" data-target="#demoModalStatic">Static Modal (Shake ao Clicar Fora)</button>
+                <button class="btn btn-success" data-toggle="modal" data-target="#demoModalSticky">Sticky Modal (Header/Footer Fixos + Scroll)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exemplos de Código -->
+        <div class="tabs-wrapper m-b-4">
+          <div class="tabs" role="tablist">
+            <button class="tab-item active" data-tab="tab-modal-html">HTML Declarativo</button>
+            <button class="tab-item" data-tab="tab-modal-js">API JavaScript (FramePER.Modal)</button>
+            <button class="tab-item" data-tab="tab-modal-classes">Classes Disponíveis</button>
+          </div>
+          
+          <div id="tab-modal-html" class="tab-pane active p-3">
+            <pre><code><span class="tok-k">&lt;!-- Modal Estático com Efeito Shake ao Clicar no Fundo --&gt;</span>
+<span class="tok-k">&lt;div</span> <span class="tok-f">id</span>=<span class="tok-s">"meuModal"</span> <span class="tok-f">class</span>=<span class="tok-s">"modal modal-static"</span> <span class="tok-f">data-backdrop</span>=<span class="tok-s">"static"</span> <span class="tok-f">data-keyboard</span>=<span class="tok-s">"false"</span><span class="tok-k">&gt;</span>
   <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"modal-content"</span><span class="tok-k">&gt;</span>
-    <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"modal-header"</span><span class="tok-k">&gt;</span>...<span class="tok-k">&lt;/div&gt;</span>
+    <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"modal-header"</span><span class="tok-k">&gt;</span>
+      <span class="tok-k">&lt;h3</span> <span class="tok-f">class</span>=<span class="tok-s">"modal-title"</span><span class="tok-k">&gt;</span>Ação Obrigatória<span class="tok-k">&lt;/h3&gt;</span>
+      <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"modal-close"</span> <span class="tok-f">data-dismiss</span>=<span class="tok-s">"modal"</span><span class="tok-k">&gt;</span>&amp;times;<span class="tok-k">&lt;/button&gt;</span>
+    <span class="tok-k">&lt;/div&gt;</span>
+    <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"modal-body"</span><span class="tok-k">&gt;</span>Você precisa confirmar ou cancelar antes de continuar.<span class="tok-k">&lt;/div&gt;</span>
+    <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"modal-footer"</span><span class="tok-k">&gt;</span>
+      <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"btn btn-secondary"</span> <span class="tok-f">data-dismiss</span>=<span class="tok-s">"modal"</span><span class="tok-k">&gt;</span>Cancelar<span class="tok-k">&lt;/button&gt;</span>
+      <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"btn btn-primary"</span> <span class="tok-f">data-dismiss</span>=<span class="tok-s">"modal"</span><span class="tok-k">&gt;</span>Confirmar<span class="tok-k">&lt;/button&gt;</span>
+    <span class="tok-k">&lt;/div&gt;</span>
   <span class="tok-k">&lt;/div&gt;</span>
 <span class="tok-k">&lt;/div&gt;</span></code></pre>
+          </div>
+
+          <div id="tab-modal-js" class="tab-pane p-3">
+            <pre><code><span class="tok-c">// Abertura, fechamento e alternância programática</span>
+<span class="tok-v">FramePER</span>.<span class="tok-f">Modal</span>.<span class="tok-f">show</span>(<span class="tok-s">'#meuModal'</span>, { <span class="tok-v">backdrop</span>: <span class="tok-s">'static'</span>, <span class="tok-v">keyboard</span>: <span class="tok-s">false</span> });
+<span class="tok-v">FramePER</span>.<span class="tok-f">Modal</span>.<span class="tok-f">hide</span>(<span class="tok-s">'#meuModal'</span>);
+<span class="tok-v">FramePER</span>.<span class="tok-f">Modal</span>.<span class="tok-f">toggle</span>(<span class="tok-s">'#meuModal'</span>);
+
+<span class="tok-c">// Eventos de ciclo de vida nativos</span>
+<span class="tok-k">const</span> modal = <span class="tok-v">document</span>.<span class="tok-f">querySelector</span>(<span class="tok-s">'#meuModal'</span>);
+modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:show'</span>, (e) => console.log(<span class="tok-s">'Modal abrindo...'</span>));
+modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:shown'</span>, (e) => console.log(<span class="tok-s">'Modal visível!'</span>));
+modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hide'</span>, (e) => console.log(<span class="tok-s">'Modal fechando...'</span>));
+modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hidden'</span>, (e) => console.log(<span class="tok-s">'Modal totalmente fechado!'</span>));</code></pre>
+          </div>
+
+          <div id="tab-modal-classes" class="tab-pane p-3">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr><th>Classe</th><th>Posição / Comportamento</th><th>Propósito</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>.modal-sm</code> / <code>.modal-lg</code> / <code>.modal-xl</code></td><td>Central</td><td>Tamanhos reduzido (24rem), expandido (44rem) e extragrande (56rem).</td></tr>
+                  <tr><td><code>.modal-fullscreen</code></td><td>Central / Tela Cheia</td><td>Ocupa 100vw e 100vh com bordas zeradas, ideal para editores ou wizards.</td></tr>
+                  <tr><td><code>.modal-side-right</code> / <code>.modal-side-left</code></td><td>Laterais (Direita/Esquerda)</td><td>Drawers de 100vh deslizando da lateral correspondente.</td></tr>
+                  <tr><td><code>.modal-top</code></td><td>Topo Superior</td><td>Banner deslizante superior (estilo notificação ou anúncio centralizado).</td></tr>
+                  <tr><td><code>.modal-bottom</code></td><td>Rodapé Inferior</td><td>Painel deslizante de baixo para cima (estilo mobile bottom sheet).</td></tr>
+                  <tr><td><code>.modal-float</code> / <code>.modal-float-bottom-right</code></td><td>Canto da Tela</td><td>Diálogo flutuante nos cantos, excelente para chats ou assistentes.</td></tr>
+                  <tr><td><code>.modal-sticky</code></td><td>Estrutural</td><td>Fixa <code>.modal-header</code> e <code>.modal-footer</code> com rolagem suave no corpo.</td></tr>
+                  <tr><td><code>data-backdrop="static"</code> / <code>.modal-shake</code></td><td>Interativo</td><td>Impede fechamento ao clicar fora e aciona animação de sacudida (shake).</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Advanced Tables -->
@@ -2118,7 +2212,7 @@ tour.<span class="tok-f">start</span>();</code></pre>
   <div id="demoSideModal" class="modal modal-side modal-side-right">
     <div class="modal-content stack gap-4">
       <div class="modal-header">
-        <h3 class="modal-title">Side Modal (Painel Deslizante)</h3>
+        <h3 class="modal-title">Side Modal Direita (.modal-side-right)</h3>
         <button class="modal-close" data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body stack gap-3">
@@ -2130,6 +2224,188 @@ tour.<span class="tok-f">start</span>();</code></pre>
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary w-100" data-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal Small Target -->
+  <div id="demoModalSm" class="modal modal-sm">
+    <div class="modal-content stack gap-4">
+      <div class="modal-header">
+        <h3 class="modal-title">Modal Pequeno (.modal-sm)</h3>
+        <button class="modal-close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        Com largura máxima de 24rem, este modal é perfeito para diálogos rápidos, confirmações diretas ou alertas compactos.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-sm w-100" data-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal Large Target -->
+  <div id="demoModalLg" class="modal modal-lg">
+    <div class="modal-content stack gap-4">
+      <div class="modal-header">
+        <h3 class="modal-title">Modal Grande (.modal-lg)</h3>
+        <button class="modal-close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body stack gap-3">
+        <p class="m-0 text-muted">Com 44rem de largura máxima, oferece espaço ideal para formulários com múltiplas colunas, dashboards compactos ou visualizações de relatórios detalhados.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="card p-3 bg-subtle"><strong class="d-block f-s-2">Coluna 1</strong><p class="f-s-2 text-muted m-0">Informações complementares e parâmetros.</p></div>
+          <div class="card p-3 bg-subtle"><strong class="d-block f-s-2">Coluna 2</strong><p class="f-s-2 text-muted m-0">Ações, opções e configurações adicionais.</p></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" data-dismiss="modal">Salvar Dados</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal Fullscreen Target -->
+  <div id="demoModalFullscreen" class="modal modal-fullscreen">
+    <div class="modal-content stack gap-4 p-5">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title m-0">Modal em Tela Cheia (.modal-fullscreen)</h2>
+          <span class="text-muted f-s-2">Experiência imersiva total ocupando 100% da viewport</span>
+        </div>
+        <button class="modal-close" data-dismiss="modal" style="font-size: 1.5rem;">&times;</button>
+      </div>
+      <div class="modal-body stack gap-4 flex-1">
+        <div class="alert alert-info">Ideal para fluxos complexos como editores de documentos, visualizadores multimídia ou assistentes passo-a-passo (wizards).</div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="card p-4"><h4 class="m-0 m-b-2">Painel de Configuração</h4><p class="text-muted f-s-2">Ajuste todos os parâmetros globais da aplicação.</p></div>
+          <div class="card p-4"><h4 class="m-0 m-b-2">Área de Trabalho</h4><p class="text-muted f-s-2">Espaço amplo sem distrações externas.</p></div>
+          <div class="card p-4"><h4 class="m-0 m-b-2">Resultados em Tempo Real</h4><p class="text-muted f-s-2">Visualização instantânea de métricas e gráficos.</p></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" data-dismiss="modal">Voltar</button>
+        <button class="btn btn-primary" data-dismiss="modal">Concluir Processo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Side Modal Left Target -->
+  <div id="demoSideModalLeft" class="modal modal-side modal-side-left">
+    <div class="modal-content stack gap-4">
+      <div class="modal-header">
+        <h3 class="modal-title">Side Modal Esquerdo (.modal-side-left)</h3>
+        <button class="modal-close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body stack gap-3">
+        <p class="text-muted m-0">Painel lateral deslizante acoplado à esquerda da tela. Perfeito para menus de navegação densos, seletores de filtros analíticos ou perfis de usuário.</p>
+        <ul class="list-group">
+          <li class="list-group-item"><i class="icon icon-user m-r-2"></i> Perfil do Usuário</li>
+          <li class="list-group-item"><i class="icon icon-settings m-r-2"></i> Preferências do Sistema</li>
+          <li class="list-group-item"><i class="icon icon-bell m-r-2"></i> Notificações Recentes</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary w-100" data-dismiss="modal">Fechar Drawer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal Top Target -->
+  <div id="demoModalTop" class="modal modal-top">
+    <div class="modal-content stack gap-3">
+      <div class="modal-header">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge badge-warning">Aviso Importante</span>
+          <h4 class="modal-title m-0">Header Modal Superior (.modal-top)</h4>
+        </div>
+        <button class="modal-close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        Desliza a partir do topo da tela. Excelente para alertas de manutenção programada, avisos críticos do sistema ou notificações que exigem ciência do operador.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" data-dismiss="modal">Lembrar Mais Tarde</button>
+        <button class="btn btn-primary btn-sm" data-dismiss="modal">Estou Ciente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal Bottom Target -->
+  <div id="demoModalBottom" class="modal modal-bottom">
+    <div class="modal-content stack gap-3">
+      <div class="modal-header">
+        <h4 class="modal-title m-0">Footer Modal / Bottom Sheet (.modal-bottom)</h4>
+        <button class="modal-close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        Emerge suavemente da base da tela. Oferece padrão ergonômico moderno inspirado em interfaces móveis para seleção de opções, compartilhamento ou menus de contexto.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary w-100" data-dismiss="modal">Dispensar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal Float Target -->
+  <div id="demoModalFloat" class="modal modal-float modal-float-bottom-right">
+    <div class="modal-content stack gap-3" style="max-width: 22rem;">
+      <div class="modal-header">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge badge-success badge-dot">Online</span>
+          <h4 class="modal-title m-0 f-s-3">Assistente Virtual (.modal-float)</h4>
+        </div>
+        <button class="modal-close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        Modal flutuante fixado no canto inferior direito da tela. Ideal para widgets de suporte, mini chats e popups de ajuda contextual.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-sm w-100" data-dismiss="modal">Iniciar Conversa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal Static with Shake Target -->
+  <div id="demoModalStatic" class="modal modal-static" data-backdrop="static">
+    <div class="modal-content stack gap-4">
+      <div class="modal-header">
+        <h3 class="modal-title text-danger">Modal Estático com Efeito Shake</h3>
+        <button class="modal-close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body stack gap-2">
+        <p class="m-0">Este modal possui <code>data-backdrop="static"</code>. <strong>Experimente clicar no fundo escuro fora deste cartão!</strong></p>
+        <p class="text-muted f-s-2 m-0">O modal não fechará acidentalmente e apresentará uma resposta visual elástica (sacudida/shake) indicando que uma decisão explícita é necessária.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Cancelar Operação</button>
+        <button class="btn btn-danger" data-dismiss="modal">Confirmar Ação Crítica</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal Sticky Target -->
+  <div id="demoModalSticky" class="modal modal-sticky">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title m-0">Sticky Modal (.modal-sticky)</h3>
+          <span class="text-muted f-s-1">Cabeçalho e rodapé sempre visíveis</span>
+        </div>
+        <button class="modal-close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body stack gap-3" style="max-height: 280px;">
+        <p>Este modal mantém o <code>.modal-header</code> e o <code>.modal-footer</code> fixados enquanto o conteúdo interno do <code>.modal-body</code> possui rolagem suave independente.</p>
+        <p>Perfeito para termos de uso, licenças longas, logs de auditoria e listas extensas de registros sem perder os botões de ação de vista.</p>
+        <div class="card p-3 bg-subtle">Item de verificação 1: Políticas de privacidade confirmadas.</div>
+        <div class="card p-3 bg-subtle">Item de verificação 2: Criptografia de ponta-a-ponta habilitada.</div>
+        <div class="card p-3 bg-subtle">Item de verificação 3: Auditoria de logs ativada para todas as sessões.</div>
+        <div class="card p-3 bg-subtle">Item de verificação 4: Conformidade com normas de conformidade de dados.</div>
+        <div class="card p-3 bg-subtle">Item de verificação 5: Backup automático incremental diário.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Recusar</button>
+        <button class="btn btn-success" data-dismiss="modal">Aceitar Termos</button>
       </div>
     </div>
   </div>
