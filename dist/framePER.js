@@ -248,53 +248,15 @@
             initKeyboard: function() {
                 document.addEventListener("keydown", (e) => {
                     if (e.key !== "Escape") return;
-                    document.querySelectorAll(".modal.show").forEach(m => m.classList.remove("show"));
                     document.querySelectorAll(".offcanvas.show").forEach(o => o.classList.remove("show"));
                     document.querySelectorAll(".offcanvas-backdrop.show, .sidebar.show, .sidebar-backdrop.show").forEach(el => el.classList.remove("show"));
                     document.querySelectorAll(".dropdown-menu.show").forEach(m => m.classList.remove("show"));
-                    document.body.style.overflow = "";
                 });
             },
             initModals: function() {
-                document.addEventListener("click", (e) => {
-                    const toggleBtn = e.target.closest("[data-toggle='modal']");
-                    const dismissBtn = e.target.closest("[data-dismiss='modal']");
-
-                    if (toggleBtn) {
-                        e.preventDefault();
-                        const targetSelector = toggleBtn.getAttribute("data-target") || toggleBtn.getAttribute("href");
-                        if (targetSelector && targetSelector.startsWith("#")) {
-                            const targetModal = document.querySelector(targetSelector);
-                            if (targetModal) {
-                                document.querySelectorAll(".modal.show").forEach(m => {
-                                    if (m !== targetModal) m.classList.remove("show");
-                                });
-                                targetModal.classList.add("show");
-                                document.body.style.overflow = "hidden";
-                                return;
-                            }
-                        }
-                    }
-
-                    if (dismissBtn) {
-                        e.preventDefault();
-                        const currentModal = dismissBtn.closest(".modal");
-                        if (currentModal) {
-                            currentModal.classList.remove("show");
-                            if (!document.querySelector(".modal.show")) {
-                                document.body.style.overflow = "";
-                            }
-                        }
-                        return;
-                    }
-
-                    if (e.target.classList && e.target.classList.contains("modal") && e.target.classList.contains("show")) {
-                        e.target.classList.remove("show");
-                        if (!document.querySelector(".modal.show")) {
-                            document.body.style.overflow = "";
-                        }
-                    }
-                });
+                if (FramePER.Modal && FramePER.Modal.init) {
+                    FramePER.Modal.init();
+                }
             },
             initDropdowns: function() {
                 function checkSubmenuPosition(item) {
@@ -672,6 +634,160 @@
                         if (e.target === modal) cleanup();
                     });
                     setTimeout(() => { if (confirmBtn && confirmBtn.focus) confirmBtn.focus(); }, 50);
+                });
+            }
+        },
+
+        // --- 2.2 Modal Management Subsystem ---
+        Modal: {
+            _initialized: false,
+
+            _resolveElement: function(target) {
+                if (!target) return null;
+                if (typeof target === 'string') {
+                    return document.querySelector ? document.querySelector(target) : null;
+                }
+                if (target.nodeType || target.tagName) {
+                    return target;
+                }
+                return null;
+            },
+
+            _dispatch: function(element, eventName, detail = {}) {
+                if (typeof CustomEvent === 'function' && element && element.dispatchEvent) {
+                    const event = new CustomEvent(eventName, {
+                        bubbles: true,
+                        cancelable: true,
+                        detail: detail
+                    });
+                    return element.dispatchEvent(event);
+                }
+                return true;
+            },
+
+            show: function(target, options = {}) {
+                const modal = this._resolveElement(target);
+                if (!modal) return false;
+
+                if (options.backdrop !== undefined) modal._modalBackdrop = options.backdrop;
+                if (options.keyboard !== undefined) modal._modalKeyboard = options.keyboard;
+
+                const proceed = this._dispatch(modal, 'modal:show', { modal: modal, options: options });
+                if (proceed === false) return false;
+
+                if (document.querySelectorAll) {
+                    const openModals = document.querySelectorAll('.modal.show');
+                    openModals.forEach(m => {
+                        if (m !== modal) {
+                            m.classList.remove('show');
+                        }
+                    });
+                }
+
+                modal.classList.add('show');
+                if (document.body && document.body.style) {
+                    document.body.style.overflow = 'hidden';
+                }
+
+                this._dispatch(modal, 'modal:shown', { modal: modal });
+                return true;
+            },
+
+            hide: function(target) {
+                const modal = this._resolveElement(target);
+                if (!modal) return false;
+
+                const proceed = this._dispatch(modal, 'modal:hide', { modal: modal });
+                if (proceed === false) return false;
+
+                modal.classList.remove('show');
+                modal.classList.remove('modal-shake');
+
+                let remainingOpen = false;
+                if (document.querySelectorAll) {
+                    const openModals = document.querySelectorAll('.modal.show');
+                    remainingOpen = openModals.length > 0;
+                }
+                if (!remainingOpen && document.body && document.body.style) {
+                    document.body.style.overflow = '';
+                }
+
+                this._dispatch(modal, 'modal:hidden', { modal: modal });
+                return true;
+            },
+
+            toggle: function(target, options = {}) {
+                const modal = this._resolveElement(target);
+                if (!modal) return false;
+                if (modal.classList.contains('show')) {
+                    return this.hide(modal);
+                } else {
+                    return this.show(modal, options);
+                }
+            },
+
+            init: function() {
+                if (this._initialized) return;
+                this._initialized = true;
+                if (typeof document === 'undefined' || !document.addEventListener) return;
+
+                document.addEventListener('click', (e) => {
+                    const toggleBtn = (e.target && e.target.closest) ? e.target.closest("[data-toggle='modal']") : null;
+                    const dismissBtn = (e.target && e.target.closest) ? e.target.closest("[data-dismiss='modal']") : null;
+
+                    if (toggleBtn) {
+                        if (e.preventDefault) e.preventDefault();
+                        const targetSelector = toggleBtn.getAttribute("data-target") || toggleBtn.getAttribute("href");
+                        if (targetSelector && targetSelector.startsWith("#")) {
+                            FramePER.Modal.show(targetSelector);
+                            return;
+                        }
+                    }
+
+                    if (dismissBtn) {
+                        if (e.preventDefault) e.preventDefault();
+                        const currentModal = dismissBtn.closest ? dismissBtn.closest(".modal") : null;
+                        if (currentModal) {
+                            FramePER.Modal.hide(currentModal);
+                        }
+                        return;
+                    }
+
+                    if (e.target && e.target.classList && e.target.classList.contains("modal") && e.target.classList.contains("show")) {
+                        const modal = e.target;
+                        const isStatic = (modal._modalBackdrop === 'static') ||
+                                         (modal.getAttribute && modal.getAttribute('data-backdrop') === 'static') ||
+                                         (modal.dataset && modal.dataset.backdrop === 'static') ||
+                                         modal.classList.contains('modal-static');
+
+                        if (isStatic) {
+                            modal.classList.remove('modal-shake');
+                            if (typeof window !== 'undefined' && modal.offsetWidth) {
+                                void modal.offsetWidth;
+                            }
+                            modal.classList.add('modal-shake');
+                            if (modal._shakeTimeout) clearTimeout(modal._shakeTimeout);
+                            modal._shakeTimeout = setTimeout(() => {
+                                modal.classList.remove('modal-shake');
+                                modal._shakeTimeout = null;
+                            }, 300);
+                            return;
+                        }
+
+                        FramePER.Modal.hide(modal);
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key !== 'Escape') return;
+                    const openModals = document.querySelectorAll ? document.querySelectorAll('.modal.show') : [];
+                    openModals.forEach(m => {
+                        const keyboardOpt = m._modalKeyboard !== undefined ? m._modalKeyboard : (m.getAttribute ? m.getAttribute('data-keyboard') : null);
+                        if (keyboardOpt === false || keyboardOpt === 'false' || (m.dataset && m.dataset.keyboard === 'false')) {
+                            return;
+                        }
+                        FramePER.Modal.hide(m);
+                    });
                 });
             }
         },
@@ -11688,6 +11804,9 @@ ${worksheetsXML}
         if (FramePER.OtpInput && FramePER.OtpInput.init) {
             FramePER.OtpInput.init();
         }
+        if (FramePER.Modal && FramePER.Modal.init) {
+            FramePER.Modal.init();
+        }
         
         // Hide global page loader if exists
         const staticLoader = document.querySelector('.page-loader-overlay');
@@ -11697,8 +11816,14 @@ ${worksheetsXML}
         }
     });
 
+    // Auto-init Modal immediately if document is available
+    if (typeof document !== 'undefined' && document.addEventListener && FramePER.Modal && FramePER.Modal.init) {
+        FramePER.Modal.init();
+    }
+
     // Expose globally
     window.FramePER = FramePER;
+    window.FramePERModal = FramePER.Modal;
     window.FramePERChart = FramePER.Chart;
     window.FramePERUpload = FramePER.Upload;
     window.FramePERTabs = FramePER.Tabs;
