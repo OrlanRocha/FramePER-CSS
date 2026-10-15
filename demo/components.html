@@ -100,6 +100,7 @@
       <a href="#sec-stepper">Steppers de Progresso</a>
       <a href="#sec-skeleton">Skeleton Loading</a>
       <a href="#sec-tabs">Abas & Navegação</a>
+      <a href="#sec-pagination"><span class="badge badge-primary badge-xs">Novo</span> Paginação</a>
       <a href="#sec-accordions">Acordeão Fluido</a>
       <a href="#sec-tables">Tabelas Interativas</a>
       <a href="#sec-overlays">Modais & Offcanvas</a>
@@ -1983,6 +1984,227 @@ tour.<span class="tok-f">start</span>();</code></pre>
 <span class="tok-k">&lt;/ul&gt;</span></code></pre>
       </section>
 
+      <!-- Paginação & Pagers -->
+      <section id="sec-pagination" class="docs-section">
+        <div class="d-flex align-items-center gap-2 m-b-2">
+          <h2 class="m-0">Paginação & Pagers</h2>
+          <span class="badge badge-primary badge-xs">Designers v2.26</span>
+        </div>
+        <p class="lead">Padrões visuais completos de paginação: Primary, Pills arredondado, Bordered conectado, Ghost minimalista, Pagers rápidos, Dots e Barra Integrada para Tabelas.</p>
+
+        <!-- 1. Estilos Visuais -->
+        <h3 class="h5 m-b-3">1. Estilos & Variantes Visuais</h3>
+        <div class="preview stack gap-4">
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-2">Padrão Neutro (<code>.pagination</code>):</span>
+            <nav class="pagination" aria-label="Paginação Neutra">
+              <button class="page-link" disabled aria-label="Anterior"><i class="icon icon-arrow-left"></i></button>
+              <button class="page-link active">1</button>
+              <button class="page-link">2</button>
+              <button class="page-link">3</button>
+              <span class="page-link page-ellipsis">&hellip;</span>
+              <button class="page-link">24</button>
+              <button class="page-link" aria-label="Próximo"><i class="icon icon-arrow-right"></i></button>
+            </nav>
+          </div>
+
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-2">Destaque Primário (<code>.pagination.pagination-primary</code>):</span>
+            <nav class="pagination pagination-primary" aria-label="Paginação Primária">
+              <button class="page-link" disabled aria-label="Anterior"><i class="icon icon-arrow-left"></i></button>
+              <button class="page-link active">1</button>
+              <button class="page-link">2</button>
+              <button class="page-link">3</button>
+              <span class="page-link page-ellipsis">&hellip;</span>
+              <button class="page-link">15</button>
+              <button class="page-link" aria-label="Próximo"><i class="icon icon-arrow-right"></i></button>
+            </nav>
+          </div>
+
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-2">Pills / Cápsula Arredondada (<code>.pagination.pagination-pills.pagination-primary</code>):</span>
+            <nav class="pagination pagination-pills pagination-primary" aria-label="Paginação Pills">
+              <button class="page-link" aria-label="Anterior"><i class="icon icon-arrow-left"></i></button>
+              <button class="page-link">1</button>
+              <button class="page-link active">2</button>
+              <button class="page-link">3</button>
+              <span class="page-link page-ellipsis">&hellip;</span>
+              <button class="page-link">8</button>
+              <button class="page-link" aria-label="Próximo"><i class="icon icon-arrow-right"></i></button>
+            </nav>
+          </div>
+
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-2">Bordered / Conectada sem Gap (<code>.pagination.pagination-bordered.pagination-primary</code>):</span>
+            <nav class="pagination pagination-bordered pagination-primary" aria-label="Paginação Conectada">
+              <button class="page-link" aria-label="Anterior"><i class="icon icon-arrow-left"></i></button>
+              <button class="page-link">1</button>
+              <button class="page-link">2</button>
+              <button class="page-link active">3</button>
+              <button class="page-link">4</button>
+              <button class="page-link" aria-label="Próximo"><i class="icon icon-arrow-right"></i></button>
+            </nav>
+          </div>
+
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-2">Ghost / Minimalista (<code>.pagination.pagination-ghost</code>):</span>
+            <nav class="pagination pagination-ghost" aria-label="Paginação Ghost">
+              <button class="page-link" disabled aria-label="Anterior"><i class="icon icon-arrow-left"></i></button>
+              <button class="page-link active">1</button>
+              <button class="page-link">2</button>
+              <button class="page-link">3</button>
+              <span class="page-link page-ellipsis">&hellip;</span>
+              <button class="page-link">12</button>
+              <button class="page-link" aria-label="Próximo"><i class="icon icon-arrow-right"></i></button>
+            </nav>
+          </div>
+        </div>
+        <pre><code><span class="tok-k">&lt;!-- Paginação Primária com Pills --&gt;</span>
+<span class="tok-k">&lt;nav</span> <span class="tok-f">class</span>=<span class="tok-s">"pagination pagination-pills pagination-primary"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"page-link"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-arrow-left"</span><span class="tok-k">&gt;&lt;/i&gt;&lt;/button&gt;</span>
+  <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"page-link active"</span><span class="tok-k">&gt;</span>1<span class="tok-k">&lt;/button&gt;</span>
+  <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"page-link"</span><span class="tok-k">&gt;</span>2<span class="tok-k">&lt;/button&gt;</span>
+  <span class="tok-k">&lt;span</span> <span class="tok-f">class</span>=<span class="tok-s">"page-link page-ellipsis"</span><span class="tok-k">&gt;</span>&amp;hellip;<span class="tok-k">&lt;/span&gt;</span>
+  <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"page-link"</span><span class="tok-k">&gt;&lt;i</span> <span class="tok-f">class</span>=<span class="tok-s">"icon icon-arrow-right"</span><span class="tok-k">&gt;&lt;/i&gt;&lt;/button&gt;</span>
+<span class="tok-k">&lt;/nav&gt;</span></code></pre>
+
+        <!-- 2. Escala de Tamanhos -->
+        <h3 class="h5 m-t-5 m-b-3">2. Escala de Tamanhos</h3>
+        <div class="preview stack gap-4">
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-1">Compacta (<code>.pagination-sm</code> - 28px):</span>
+            <nav class="pagination pagination-sm pagination-primary">
+              <button class="page-link"><i class="icon icon-arrow-left"></i></button>
+              <button class="page-link active">1</button>
+              <button class="page-link">2</button>
+              <button class="page-link">3</button>
+              <button class="page-link"><i class="icon icon-arrow-right"></i></button>
+            </nav>
+          </div>
+
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-1">Padrão (36px):</span>
+            <nav class="pagination pagination-primary">
+              <button class="page-link"><i class="icon icon-arrow-left"></i></button>
+              <button class="page-link active">1</button>
+              <button class="page-link">2</button>
+              <button class="page-link">3</button>
+              <button class="page-link"><i class="icon icon-arrow-right"></i></button>
+            </nav>
+          </div>
+
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-1">Grande / Touch (<code>.pagination-lg</code> - 44px):</span>
+            <nav class="pagination pagination-lg pagination-primary">
+              <button class="page-link"><i class="icon icon-arrow-left"></i></button>
+              <button class="page-link active">1</button>
+              <button class="page-link">2</button>
+              <button class="page-link">3</button>
+              <button class="page-link"><i class="icon icon-arrow-right"></i></button>
+            </nav>
+          </div>
+        </div>
+
+        <!-- 3. Pagers Rápidos & Dots -->
+        <h3 class="h5 m-t-5 m-b-3">3. Pagers Simples & Indicadores Dots</h3>
+        <div class="preview stack gap-4">
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-2">Pager Justificado (<code>.pager</code>):</span>
+            <div class="pager">
+              <a href="#" class="pager-link" onclick="event.preventDefault();"><i class="icon icon-arrow-left"></i> Artigo Anterior</a>
+              <a href="#" class="pager-link" onclick="event.preventDefault();">Próximo Artigo <i class="icon icon-arrow-right"></i></a>
+            </div>
+          </div>
+
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-2">Pager Centralizado em Cápsula (<code>.pager.pager-center.pager-pills</code>):</span>
+            <div class="pager pager-center pager-pills">
+              <a href="#" class="pager-link" onclick="event.preventDefault();"><i class="icon icon-arrow-left"></i> Anterior</a>
+              <a href="#" class="pager-link" onclick="event.preventDefault();">Próximo <i class="icon icon-arrow-right"></i></a>
+            </div>
+          </div>
+
+          <div>
+            <span class="f-s-2 text-muted d-block m-b-2">Indicadores Dots (<code>.pagination-dots</code>):</span>
+            <div class="cluster gap-4 align-items-center">
+              <div class="pagination-dots dots-sm">
+                <button class="pagination-dot active" aria-label="Slide 1"></button>
+                <button class="pagination-dot" aria-label="Slide 2"></button>
+                <button class="pagination-dot" aria-label="Slide 3"></button>
+                <button class="pagination-dot" aria-label="Slide 4"></button>
+              </div>
+
+              <div class="pagination-dots">
+                <button class="pagination-dot active" aria-label="Slide 1"></button>
+                <button class="pagination-dot" aria-label="Slide 2"></button>
+                <button class="pagination-dot" aria-label="Slide 3"></button>
+                <button class="pagination-dot" aria-label="Slide 4"></button>
+              </div>
+
+              <div class="pagination-dots dots-lg">
+                <button class="pagination-dot" aria-label="Slide 1"></button>
+                <button class="pagination-dot active" aria-label="Slide 2"></button>
+                <button class="pagination-dot" aria-label="Slide 3"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Barra Integrada para Tabelas e Dashboards -->
+        <h3 class="h5 m-t-5 m-b-3">4. Barra Integrada para Tabelas e Dashboards (<code>.pagination-bar</code>)</h3>
+        <div class="preview p-0 border rounded overflow-hidden">
+          <div class="p-4 bg-surface border-bottom">
+            <span class="badge badge-primary badge-sm m-b-2">Demonstração ao Vivo</span>
+            <h4 class="f-s-4 m-0">Tabela de Clientes e Faturamento</h4>
+            <p class="f-s-2 text-muted m-0">Exemplo de rodapé completo com seletor de linhas e salto de página.</p>
+          </div>
+          
+          <div class="pagination-bar">
+            <div class="pagination-info">
+              Exibindo <strong>1 a 10</strong> de <strong>1.480</strong> registros
+            </div>
+
+            <div class="pagination-controls">
+              <div class="pagination-size-select d-none d-sm-inline-flex">
+                <span>Por página:</span>
+                <select class="select" aria-label="Itens por página">
+                  <option selected>10</option>
+                  <option>25</option>
+                  <option>50</option>
+                  <option>100</option>
+                </select>
+              </div>
+
+              <nav class="pagination pagination-sm pagination-primary" aria-label="Paginação da Tabela">
+                <button class="page-link" disabled aria-label="Primeira Página"><i class="icon icon-arrow-left"></i></button>
+                <button class="page-link active">1</button>
+                <button class="page-link">2</button>
+                <button class="page-link">3</button>
+                <span class="page-link page-ellipsis">&hellip;</span>
+                <button class="page-link">148</button>
+                <button class="page-link" aria-label="Última Página"><i class="icon icon-arrow-right"></i></button>
+              </nav>
+
+              <div class="pagination-jump d-none d-md-inline-flex">
+                <span>Ir para:</span>
+                <input type="number" class="input" value="1" min="1" max="148" aria-label="Página alvo">
+              </div>
+            </div>
+          </div>
+        </div>
+        <pre><code><span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"pagination-bar"</span><span class="tok-k">&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"pagination-info"</span><span class="tok-k">&gt;</span>
+    Exibindo <span class="tok-k">&lt;strong&gt;</span>1 a 10<span class="tok-k">&lt;/strong&gt;</span> de <span class="tok-k">&lt;strong&gt;</span>1.480<span class="tok-k">&lt;/strong&gt;</span> registros
+  <span class="tok-k">&lt;/div&gt;</span>
+  <span class="tok-k">&lt;div</span> <span class="tok-f">class</span>=<span class="tok-s">"pagination-controls"</span><span class="tok-k">&gt;</span>
+    <span class="tok-k">&lt;nav</span> <span class="tok-f">class</span>=<span class="tok-s">"pagination pagination-sm pagination-primary"</span><span class="tok-k">&gt;</span>
+      <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"page-link"</span><span class="tok-k">&gt;</span>1<span class="tok-k">&lt;/button&gt;</span>
+      <span class="tok-k">&lt;button</span> <span class="tok-f">class</span>=<span class="tok-s">"page-link active"</span><span class="tok-k">&gt;</span>2<span class="tok-k">&lt;/button&gt;</span>
+    <span class="tok-k">&lt;/nav&gt;</span>
+  <span class="tok-k">&lt;/div&gt;</span>
+<span class="tok-k">&lt;/div&gt;</span></code></pre>
+      </section>
+
       <!-- Accordion -->
       <section id="sec-accordions" class="docs-section">
         <h2>Acordeão</h2>
@@ -2192,11 +2414,11 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Target -->
-  <div id="demoModal" class="modal">
+  <div id="demoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
     <div class="modal-content stack gap-4">
       <div class="modal-header">
-        <h3 class="modal-title">Exemplo de Modal Central</h3>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <h3 id="demoModalTitle" class="modal-title">Exemplo de Modal Central</h3>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body">
         Este modal possui desfoque de fundo (backdrop-filter) e pode ser fechado pressionando a tecla <strong>ESC</strong> ou clicando fora dele.
@@ -2209,11 +2431,11 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Side Modal Target -->
-  <div id="demoSideModal" class="modal modal-side modal-side-right">
+  <div id="demoSideModal" class="modal modal-side modal-side-right" role="dialog" aria-modal="true" aria-labelledby="demoSideModalTitle">
     <div class="modal-content stack gap-4">
       <div class="modal-header">
-        <h3 class="modal-title">Side Modal Direita (.modal-side-right)</h3>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <h3 id="demoSideModalTitle" class="modal-title">Side Modal Direita (.modal-side-right)</h3>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body stack gap-3">
         <p class="text-muted m-0">Os Modais Laterais (Side Modals) deslizam suavemente a partir do canto direito ou esquerdo da tela. Excelentes para carrinhos de compra, notificações e formulários secundários.</p>
@@ -2229,11 +2451,11 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Small Target -->
-  <div id="demoModalSm" class="modal modal-sm">
+  <div id="demoModalSm" class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="demoModalSmTitle">
     <div class="modal-content stack gap-4">
       <div class="modal-header">
-        <h3 class="modal-title">Modal Pequeno (.modal-sm)</h3>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <h3 id="demoModalSmTitle" class="modal-title">Modal Pequeno (.modal-sm)</h3>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body">
         Com largura máxima de 24rem, este modal é perfeito para diálogos rápidos, confirmações diretas ou alertas compactos.
@@ -2245,11 +2467,11 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Large Target -->
-  <div id="demoModalLg" class="modal modal-lg">
+  <div id="demoModalLg" class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="demoModalLgTitle">
     <div class="modal-content stack gap-4">
       <div class="modal-header">
-        <h3 class="modal-title">Modal Grande (.modal-lg)</h3>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <h3 id="demoModalLgTitle" class="modal-title">Modal Grande (.modal-lg)</h3>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body stack gap-3">
         <p class="m-0 text-muted">Com 44rem de largura máxima, oferece espaço ideal para formulários com múltiplas colunas, dashboards compactos ou visualizações de relatórios detalhados.</p>
@@ -2266,14 +2488,14 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Fullscreen Target -->
-  <div id="demoModalFullscreen" class="modal modal-fullscreen">
+  <div id="demoModalFullscreen" class="modal modal-fullscreen" role="dialog" aria-modal="true" aria-labelledby="demoModalFullscreenTitle">
     <div class="modal-content stack gap-4 p-5">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title m-0">Modal em Tela Cheia (.modal-fullscreen)</h2>
+          <h2 id="demoModalFullscreenTitle" class="modal-title m-0">Modal em Tela Cheia (.modal-fullscreen)</h2>
           <span class="text-muted f-s-2">Experiência imersiva total ocupando 100% da viewport</span>
         </div>
-        <button class="modal-close" data-dismiss="modal" style="font-size: 1.5rem;">&times;</button>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal" style="font-size: 1.5rem;">&times;</button>
       </div>
       <div class="modal-body stack gap-4 flex-1">
         <div class="alert alert-info">Ideal para fluxos complexos como editores de documentos, visualizadores multimídia ou assistentes passo-a-passo (wizards).</div>
@@ -2291,11 +2513,11 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Side Modal Left Target -->
-  <div id="demoSideModalLeft" class="modal modal-side modal-side-left">
+  <div id="demoSideModalLeft" class="modal modal-side modal-side-left" role="dialog" aria-modal="true" aria-labelledby="demoSideModalLeftTitle">
     <div class="modal-content stack gap-4">
       <div class="modal-header">
-        <h3 class="modal-title">Side Modal Esquerdo (.modal-side-left)</h3>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <h3 id="demoSideModalLeftTitle" class="modal-title">Side Modal Esquerdo (.modal-side-left)</h3>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body stack gap-3">
         <p class="text-muted m-0">Painel lateral deslizante acoplado à esquerda da tela. Perfeito para menus de navegação densos, seletores de filtros analíticos ou perfis de usuário.</p>
@@ -2312,14 +2534,14 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Top Target -->
-  <div id="demoModalTop" class="modal modal-top">
+  <div id="demoModalTop" class="modal modal-top" role="dialog" aria-modal="true" aria-labelledby="demoModalTopTitle">
     <div class="modal-content stack gap-3">
       <div class="modal-header">
         <div class="d-flex align-items-center gap-2">
           <span class="badge badge-warning">Aviso Importante</span>
-          <h4 class="modal-title m-0">Header Modal Superior (.modal-top)</h4>
+          <h4 id="demoModalTopTitle" class="modal-title m-0">Header Modal Superior (.modal-top)</h4>
         </div>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body">
         Desliza a partir do topo da tela. Excelente para alertas de manutenção programada, avisos críticos do sistema ou notificações que exigem ciência do operador.
@@ -2332,11 +2554,11 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Bottom Target -->
-  <div id="demoModalBottom" class="modal modal-bottom">
+  <div id="demoModalBottom" class="modal modal-bottom" role="dialog" aria-modal="true" aria-labelledby="demoModalBottomTitle">
     <div class="modal-content stack gap-3">
       <div class="modal-header">
-        <h4 class="modal-title m-0">Footer Modal / Bottom Sheet (.modal-bottom)</h4>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <h4 id="demoModalBottomTitle" class="modal-title m-0">Footer Modal / Bottom Sheet (.modal-bottom)</h4>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body">
         Emerge suavemente da base da tela. Oferece padrão ergonômico moderno inspirado em interfaces móveis para seleção de opções, compartilhamento ou menus de contexto.
@@ -2348,14 +2570,14 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Float Target -->
-  <div id="demoModalFloat" class="modal modal-float modal-float-bottom-right">
+  <div id="demoModalFloat" class="modal modal-float modal-float-bottom-right" role="dialog" aria-modal="true" aria-labelledby="demoModalFloatTitle">
     <div class="modal-content stack gap-3" style="max-width: 22rem;">
       <div class="modal-header">
         <div class="d-flex align-items-center gap-2">
           <span class="badge badge-success badge-dot">Online</span>
-          <h4 class="modal-title m-0 f-s-3">Assistente Virtual (.modal-float)</h4>
+          <h4 id="demoModalFloatTitle" class="modal-title m-0 f-s-3">Assistente Virtual (.modal-float)</h4>
         </div>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body">
         Modal flutuante fixado no canto inferior direito da tela. Ideal para widgets de suporte, mini chats e popups de ajuda contextual.
@@ -2367,11 +2589,11 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Static with Shake Target -->
-  <div id="demoModalStatic" class="modal modal-static" data-backdrop="static">
+  <div id="demoModalStatic" class="modal modal-static" data-backdrop="static" role="dialog" aria-modal="true" aria-labelledby="demoModalStaticTitle">
     <div class="modal-content stack gap-4">
       <div class="modal-header">
-        <h3 class="modal-title text-danger">Modal Estático com Efeito Shake</h3>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <h3 id="demoModalStaticTitle" class="modal-title text-danger">Modal Estático com Efeito Shake</h3>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body stack gap-2">
         <p class="m-0">Este modal possui <code>data-backdrop="static"</code>. <strong>Experimente clicar no fundo escuro fora deste cartão!</strong></p>
@@ -2385,14 +2607,14 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Modal Sticky Target -->
-  <div id="demoModalSticky" class="modal modal-sticky">
+  <div id="demoModalSticky" class="modal modal-sticky" role="dialog" aria-modal="true" aria-labelledby="demoModalStickyTitle">
     <div class="modal-content">
       <div class="modal-header">
         <div>
-          <h3 class="modal-title m-0">Sticky Modal (.modal-sticky)</h3>
+          <h3 id="demoModalStickyTitle" class="modal-title m-0">Sticky Modal (.modal-sticky)</h3>
           <span class="text-muted f-s-1">Cabeçalho e rodapé sempre visíveis</span>
         </div>
-        <button class="modal-close" data-dismiss="modal">&times;</button>
+        <button class="modal-close" data-dismiss="modal" aria-label="Fechar modal">&times;</button>
       </div>
       <div class="modal-body stack gap-3" style="max-height: 280px;">
         <p>Este modal mantém o <code>.modal-header</code> e o <code>.modal-footer</code> fixados enquanto o conteúdo interno do <code>.modal-body</code> possui rolagem suave independente.</p>
@@ -2411,10 +2633,10 @@ modal.<span class="tok-f">addEventListener</span>(<span class="tok-s">'modal:hid
   </div>
 
   <!-- Demo Offcanvas Target -->
-  <div id="demoOffcanvas" class="offcanvas offcanvas-right">
+  <div id="demoOffcanvas" class="offcanvas offcanvas-right" role="dialog" aria-modal="true" aria-labelledby="demoOffcanvasTitle">
     <div class="offcanvas-header">
-      <h3 class="offcanvas-title">Painel Offcanvas</h3>
-      <button class="btn btn-ghost btn-icon" data-dismiss="offcanvas"><i class="icon icon-close"></i></button>
+      <h3 id="demoOffcanvasTitle" class="offcanvas-title">Painel Offcanvas</h3>
+      <button class="btn btn-ghost btn-icon" data-dismiss="offcanvas" aria-label="Fechar painel offcanvas"><i class="icon icon-close"></i></button>
     </div>
     <div class="offcanvas-body stack gap-3">
       <p class="text-muted m-0">Você pode colocar filtros de busca, histórico ou carrinhos de compra dentro deste painel retrátil.</p>

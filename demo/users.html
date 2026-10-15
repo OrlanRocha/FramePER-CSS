@@ -336,16 +336,29 @@
           </div>
 
           <!-- Pagination Footer -->
-          <div class="card-footer d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <span class="f-s-2 text-muted">Exibindo <strong>1 a 6</strong> de <strong>24.592</strong> registros</span>
-            <div class="cluster gap-1">
-              <button class="btn btn-secondary btn-sm" disabled><i class="icon icon-arrow-left"></i> Anterior</button>
-              <button class="btn btn-primary btn-sm">1</button>
-              <button class="btn btn-ghost btn-sm">2</button>
-              <button class="btn btn-ghost btn-sm">3</button>
-              <span class="text-muted f-s-2 px-1">...</span>
-              <button class="btn btn-ghost btn-sm">410</button>
-              <button class="btn btn-secondary btn-sm">Próximo <i class="icon icon-arrow-right"></i></button>
+          <div class="pagination-bar">
+            <div class="pagination-info">
+              Exibindo <strong>1 a 6</strong> de <strong>24.592</strong> registros
+            </div>
+            <div class="pagination-controls">
+              <div class="pagination-size-select d-none d-sm-inline-flex">
+                <span>Por página:</span>
+                <select class="select" aria-label="Registros por página">
+                  <option selected>6</option>
+                  <option>10</option>
+                  <option>25</option>
+                  <option>50</option>
+                </select>
+              </div>
+              <nav class="pagination pagination-sm pagination-primary" aria-label="Navegação de Usuários">
+                <button class="page-link" disabled aria-label="Página anterior"><i class="icon icon-arrow-left"></i></button>
+                <button class="page-link active">1</button>
+                <button class="page-link">2</button>
+                <button class="page-link">3</button>
+                <span class="page-link page-ellipsis">&hellip;</span>
+                <button class="page-link">410</button>
+                <button class="page-link" aria-label="Próxima página"><i class="icon icon-arrow-right"></i></button>
+              </nav>
             </div>
           </div>
         </div>

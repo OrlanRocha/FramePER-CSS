@@ -2,9 +2,9 @@
   "name": "frame-per",
   "version": "2.26.0",
   "description": "Frame PER - Modern UI Framework (CSS & JS)",
-  "main": "index.js",
+  "main": "dist/framePER.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node scripts/run-all-tests.js",
     "build:sass": "sass src/scss/framePER.scss dist/framePER.css",
     "build:postcss": "postcss dist/framePER.css -o dist/framePER.min.css --config postcss.config.js",
     "build": "npm run build:sass && npm run build:postcss && npm run build:js-copy && npm run build:js",

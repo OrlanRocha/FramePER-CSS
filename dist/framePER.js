@@ -20,10 +20,11 @@
                 return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
             },
             init: function() {
+                if (typeof document === 'undefined' || !document.documentElement) return;
                 this._apply(this._stored() || this._systemTheme());
 
                 // Keep following the OS while the user has not chosen
-                if (window.matchMedia) {
+                if (typeof window !== 'undefined' && window.matchMedia) {
                     const mq = window.matchMedia('(prefers-color-scheme: dark)');
                     const onChange = () => { if (!this._stored()) this._apply(this._systemTheme()); };
                     if (mq.addEventListener) mq.addEventListener('change', onChange);
@@ -31,13 +32,17 @@
                 }
             },
             _apply: function(theme) {
+                if (typeof document === 'undefined' || !document.documentElement) return;
                 document.documentElement.setAttribute('data-theme', theme);
                 // Keep any [data-toggle="theme"] switches in sync
-                document.querySelectorAll('[data-toggle="theme"]').forEach(toggle => {
-                    if (toggle.type === 'checkbox') toggle.checked = (theme === 'dark');
-                });
+                if (document.querySelectorAll) {
+                    document.querySelectorAll('[data-toggle="theme"]').forEach(toggle => {
+                        if (toggle.type === 'checkbox') toggle.checked = (theme === 'dark');
+                    });
+                }
             },
             get: function() {
+                if (typeof document === 'undefined' || !document.documentElement) return this._systemTheme();
                 return document.documentElement.getAttribute('data-theme') || this._systemTheme();
             },
             // Explicit choice: persisted
@@ -401,6 +406,8 @@
                     if(!this.container) {
                         this.container = document.createElement('div');
                         this.container.className = 'toast-container';
+                        this.container.setAttribute('aria-live', 'polite');
+                        this.container.setAttribute('aria-atomic', 'true');
                         document.body.appendChild(this.container);
                     }
                 }
@@ -409,18 +416,23 @@
             show: function(title, message, type = 'info', duration = 3000) {
                 const container = this._getContainer();
                 const toast = document.createElement('div');
-                toast.className = `toast toast-${type}`; // Can use types like info, success, error
+                toast.className = `toast toast-${type}`;
+                toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
                 
                 let iconStr = '<i class="icon icon-info"></i>';
                 if(type === 'success') iconStr = '<i class="icon icon-check"></i>';
                 if(type === 'error') iconStr = '<i class="icon icon-close"></i>';
 
+                const esc = (s) => (FramePER.Security && FramePER.Security.escapeHTML) ? FramePER.Security.escapeHTML(String(s)) : String(s);
+                const safeTitle = esc(title || '');
+                const safeMessage = esc(message || '');
+
                 toast.innerHTML = `
                     <div class="toast-header">
-                        <span>${iconStr} ${title}</span>
-                        <button class="toast-close"><i class="icon icon-close"></i></button>
+                        <span>${iconStr} ${safeTitle}</span>
+                        <button class="toast-close" aria-label="Fechar notificação"><i class="icon icon-close"></i></button>
                     </div>
-                    <div class="toast-body">${message}</div>
+                    <div class="toast-body">${safeMessage}</div>
                 `;
                 container.appendChild(toast);
                 
@@ -451,12 +463,13 @@
             prompt: function(options = {}) {
                 if (typeof document === 'undefined' || !document.createElement) return Promise.resolve(null);
                 return new Promise((resolve) => {
-                    const title = options.title || 'Informação';
-                    const message = options.message || options.label || '';
-                    const defaultValue = options.defaultValue !== undefined ? options.defaultValue : '';
-                    const placeholder = options.placeholder || '';
-                    const confirmText = options.confirmText || 'Confirmar';
-                    const cancelText = options.cancelText || 'Cancelar';
+                    const esc = (s) => (FramePER.Security && FramePER.Security.escapeHTML) ? FramePER.Security.escapeHTML(String(s)) : String(s);
+                    const title = esc(options.title || 'Informação');
+                    const message = options.message || options.label ? esc(options.message || options.label) : '';
+                    const defaultValue = options.defaultValue !== undefined ? String(options.defaultValue) : '';
+                    const placeholder = esc(options.placeholder || '');
+                    const confirmText = esc(options.confirmText || 'Confirmar');
+                    const cancelText = esc(options.cancelText || 'Cancelar');
 
                     const modal = document.createElement('div');
                     modal.className = 'modal show';
@@ -473,7 +486,7 @@
                             <div class="modal-body">
                                 ${message ? `<p class="m-b-2" style="color: var(--text-main, #eee); font-size: 0.95rem;">${message}</p>` : ''}
                                 <div class="form-group m-0">
-                                    <input type="text" class="form-control form-control-md dialog-input" value="${String(defaultValue).replace(/"/g, '&quot;')}" placeholder="${placeholder}" />
+                                    <input type="text" class="form-control form-control-md dialog-input" value="${defaultValue.replace(/"/g, '&quot;')}" placeholder="${placeholder}" />
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -526,10 +539,11 @@
             confirm: function(options = {}) {
                 if (typeof document === 'undefined' || !document.createElement) return Promise.resolve(false);
                 return new Promise((resolve) => {
-                    const title = options.title || 'Confirmação';
-                    const message = options.message || 'Tem certeza que deseja prosseguir?';
-                    const confirmText = options.confirmText || 'Confirmar';
-                    const cancelText = options.cancelText || 'Cancelar';
+                    const esc = (s) => (FramePER.Security && FramePER.Security.escapeHTML) ? FramePER.Security.escapeHTML(String(s)) : String(s);
+                    const title = esc(options.title || 'Confirmação');
+                    const message = esc(options.message || 'Tem certeza que deseja prosseguir?');
+                    const confirmText = esc(options.confirmText || 'Confirmar');
+                    const cancelText = esc(options.cancelText || 'Cancelar');
                     const isDanger = options.danger !== false;
 
                     const modal = document.createElement('div');
@@ -560,9 +574,17 @@
                     const closeBtn = modal.querySelector('.modal-close');
 
                     let closed = false;
+                    const handleKey = (e) => {
+                        if (e.key === 'Escape') {
+                            e.preventDefault();
+                            cleanup(false);
+                        }
+                    };
+
                     const cleanup = (val) => {
                         if (closed) return;
                         closed = true;
+                        if (document.removeEventListener) document.removeEventListener('keydown', handleKey);
                         modal.classList.remove('show');
                         setTimeout(() => modal.remove(), 200);
                         resolve(val);
@@ -575,13 +597,6 @@
                         if (e.target === modal) cleanup(false);
                     });
 
-                    const handleKey = (e) => {
-                        if (e.key === 'Escape') {
-                            e.preventDefault();
-                            if (document.removeEventListener) document.removeEventListener('keydown', handleKey);
-                            cleanup(false);
-                        }
-                    };
                     if (document.addEventListener) document.addEventListener('keydown', handleKey);
                     setTimeout(() => { if (confirmBtn && confirmBtn.focus) confirmBtn.focus(); }, 50);
                 });
@@ -590,9 +605,12 @@
             alert: function(options = {}) {
                 if (typeof document === 'undefined' || !document.createElement) return Promise.resolve();
                 return new Promise((resolve) => {
-                    const title = typeof options === 'string' ? 'Aviso' : (options.title || 'Aviso');
-                    const message = typeof options === 'string' ? options : (options.message || '');
-                    const confirmText = options.confirmText || 'OK';
+                    const esc = (s) => (FramePER.Security && FramePER.Security.escapeHTML) ? FramePER.Security.escapeHTML(String(s)) : String(s);
+                    const rawTitle = typeof options === 'string' ? 'Aviso' : (options.title || 'Aviso');
+                    const rawMessage = typeof options === 'string' ? options : (options.message || '');
+                    const title = esc(rawTitle);
+                    const message = esc(rawMessage);
+                    const confirmText = esc(options.confirmText || 'OK');
 
                     const modal = document.createElement('div');
                     modal.className = 'modal show';
@@ -620,9 +638,17 @@
                     const closeBtn = modal.querySelector('.modal-close');
 
                     let closed = false;
+                    const handleKey = (e) => {
+                        if (e.key === 'Escape' || e.key === 'Enter') {
+                            e.preventDefault();
+                            cleanup();
+                        }
+                    };
+
                     const cleanup = () => {
                         if (closed) return;
                         closed = true;
+                        if (document.removeEventListener) document.removeEventListener('keydown', handleKey);
                         modal.classList.remove('show');
                         setTimeout(() => modal.remove(), 200);
                         resolve();
@@ -633,6 +659,8 @@
                     modal.addEventListener('click', (e) => {
                         if (e.target === modal) cleanup();
                     });
+
+                    if (document.addEventListener) document.addEventListener('keydown', handleKey);
                     setTimeout(() => { if (confirmBtn && confirmBtn.focus) confirmBtn.focus(); }, 50);
                 });
             }
@@ -817,11 +845,14 @@
             buttonLoading: function(btnElement, isLoading = true) {
                 if(isLoading) {
                     btnElement.setAttribute('disabled', 'true');
-                    btnElement.dataset.originalText = btnElement.innerHTML;
+                    if (!btnElement.dataset.originalText) {
+                        btnElement.dataset.originalText = btnElement.innerHTML;
+                    }
                     btnElement.innerHTML = '<span class="spinner spinner-sm"></span> Carregando...';
                 } else {
                     btnElement.removeAttribute('disabled');
                     btnElement.innerHTML = btnElement.dataset.originalText || '';
+                    delete btnElement.dataset.originalText;
                 }
             }
         },
@@ -846,18 +877,30 @@
         // --- 5. HTTP / AJAX Requests (Fetch API Wrapper) ---
         Http: {
             getCsrfToken: function() {
-                const meta = document.querySelector('meta[name="csrf-token"]');
+                const meta = document.querySelector ? document.querySelector('meta[name="csrf-token"]') : null;
                 return meta ? meta.content : '';
+            },
+
+            _formatBody: function(body, headers) {
+                if (typeof FormData !== 'undefined' && body instanceof FormData) {
+                    delete headers['Content-Type'];
+                    return body;
+                }
+                if (typeof body === 'object' && body !== null && !(body instanceof Blob) && !(body instanceof ArrayBuffer)) {
+                    if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
+                    return JSON.stringify(body);
+                }
+                return body;
             },
             
             _request: async function(url, options = {}) {
-                // Automatic offline detection
-                if (!navigator.onLine) {
-                    FramePER.Notify.error('Sem conexão', 'Você está offline. Verifique sua conexão com a internet.');
+                if (typeof navigator !== 'undefined' && navigator.onLine === false && !options.ignoreOffline) {
+                    if (!options.silent && FramePER.Notify) {
+                        FramePER.Notify.error('Sem conexão', 'Você está offline. Verifique sua conexão com a internet.');
+                    }
                     return { ok: false, error: 'Offline', status: 0 };
                 }
 
-                // Automatic CSRF protection for mutations
                 if (options.method && options.method !== 'GET' && options.method !== 'HEAD') {
                     if (!options.headers) options.headers = {};
                     const token = this.getCsrfToken();
@@ -870,28 +913,28 @@
                     const response = await fetch(url, options);
                     
                     let data = null;
-                    const contentType = response.headers.get("content-type");
+                    const contentType = response.headers && response.headers.get ? response.headers.get("content-type") : "";
                     if (contentType && contentType.indexOf("application/json") !== -1) {
                         data = await response.json();
-                    } else {
+                    } else if (response.text) {
                         data = await response.text();
                     }
 
-                    // Security: Automatic handling of common HTTP Status Errors
                     if (!response.ok) {
                         const errorMsg = (data && (data.message || data.error)) || 'Erro inesperado na requisição';
                         
-                        if (response.status === 401) {
-                            FramePER.Notify.error('Acesso Negado', 'Sua sessão expirou ou você precisa se autenticar.');
-                        } else if (response.status === 403) {
-                            FramePER.Notify.error('Proibido', 'Você não tem permissão para realizar esta ação.');
-                        } else if (response.status === 404) {
-                            FramePER.Notify.error('Não Encontrado', 'O recurso solicitado não existe no servidor.');
-                        } else if (response.status >= 500) {
-                            FramePER.Notify.error('Erro no Servidor', 'Ocorreu um erro interno. Tente novamente mais tarde.');
-                        } else {
-                            // General 4xx errors
-                            FramePER.Notify.error('Atenção', errorMsg);
+                        if (!options.silent && FramePER.Notify) {
+                            if (response.status === 401) {
+                                FramePER.Notify.error('Acesso Negado', 'Sua sessão expirou ou você precisa se autenticar.');
+                            } else if (response.status === 403) {
+                                FramePER.Notify.error('Proibido', 'Você não tem permissão para realizar esta ação.');
+                            } else if (response.status === 404) {
+                                FramePER.Notify.error('Não Encontrado', 'O recurso solicitado não existe no servidor.');
+                            } else if (response.status >= 500) {
+                                FramePER.Notify.error('Erro no Servidor', 'Ocorreu um erro interno. Tente novamente mais tarde.');
+                            } else {
+                                FramePER.Notify.error('Atenção', errorMsg);
+                            }
                         }
                         
                         return { ok: false, error: errorMsg, status: response.status, data };
@@ -899,21 +942,27 @@
                     
                     return { ok: true, data, status: response.status };
                 } catch(error) {
-                    FramePER.Notify.error('Erro de Rede', 'Não foi possível conectar ao servidor.');
+                    if (!options.silent && FramePER.Notify) {
+                        FramePER.Notify.error('Erro de Rede', 'Não foi possível conectar ao servidor.');
+                    }
                     return { ok: false, error: error.message, status: 0 };
                 }
             },
-            get: function(url, headers = {}) {
-                return this._request(url, { method: 'GET', headers: { 'Content-Type': 'application/json', ...headers } });
+            get: function(url, headers = {}, options = {}) {
+                return this._request(url, { method: 'GET', headers: { ...headers }, ...options });
             },
-            post: function(url, body, headers = {}) {
-                return this._request(url, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json', ...headers } });
+            post: function(url, body, headers = {}, options = {}) {
+                const hdrs = { ...headers };
+                const formattedBody = this._formatBody(body, hdrs);
+                return this._request(url, { method: 'POST', body: formattedBody, headers: hdrs, ...options });
             },
-            put: function(url, body, headers = {}) {
-                return this._request(url, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json', ...headers } });
+            put: function(url, body, headers = {}, options = {}) {
+                const hdrs = { ...headers };
+                const formattedBody = this._formatBody(body, hdrs);
+                return this._request(url, { method: 'PUT', body: formattedBody, headers: hdrs, ...options });
             },
-            delete: function(url, headers = {}) {
-                return this._request(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json', ...headers } });
+            delete: function(url, headers = {}, options = {}) {
+                return this._request(url, { method: 'DELETE', headers: { ...headers }, ...options });
             }
         },
 
@@ -2537,6 +2586,7 @@
 
             function createDOM() {
                 if (dialog) return;
+                if (typeof document === 'undefined' || !document.createElement || !document.body) return;
                 const backdrop = document.createElement('div');
                 backdrop.className = 'command-backdrop';
                 backdrop.innerHTML = `
@@ -2565,36 +2615,42 @@
                 backdrop.addEventListener('click', (e) => {
                     if (e.target === backdrop) close();
                 });
-                backdrop.querySelector('.command-close-btn').addEventListener('click', close);
+                const closeBtn = backdrop.querySelector('.command-close-btn');
+                if (closeBtn && closeBtn.addEventListener) {
+                    closeBtn.addEventListener('click', close);
+                }
 
-                input.addEventListener('input', (e) => {
-                    renderList(e.target.value.trim());
-                });
+                if (input && input.addEventListener) {
+                    input.addEventListener('input', (e) => {
+                        renderList(e.target.value.trim());
+                    });
 
-                input.addEventListener('keydown', (e) => {
-                    const visibleItems = body.querySelectorAll('.command-item');
-                    if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        if (visibleItems.length) {
-                            selectedIndex = (selectedIndex + 1) % visibleItems.length;
-                            updateSelection(visibleItems);
+                    input.addEventListener('keydown', (e) => {
+                        if (!body) return;
+                        const visibleItems = body.querySelectorAll ? body.querySelectorAll('.command-item') : [];
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            if (visibleItems.length) {
+                                selectedIndex = (selectedIndex + 1) % visibleItems.length;
+                                updateSelection(visibleItems);
+                            }
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            if (visibleItems.length) {
+                                selectedIndex = (selectedIndex - 1 + visibleItems.length) % visibleItems.length;
+                                updateSelection(visibleItems);
+                            }
+                        } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (visibleItems[selectedIndex]) {
+                                visibleItems[selectedIndex].click();
+                            }
+                        } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            close();
                         }
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        if (visibleItems.length) {
-                            selectedIndex = (selectedIndex - 1 + visibleItems.length) % visibleItems.length;
-                            updateSelection(visibleItems);
-                        }
-                    } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (visibleItems[selectedIndex]) {
-                            visibleItems[selectedIndex].click();
-                        }
-                    } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        close();
-                    }
-                });
+                    });
+                }
             }
 
             function updateSelection(visibleEls) {
@@ -2716,24 +2772,31 @@
                 }
             }
 
+            let _initialized = false;
             function init(customCommands = []) {
+                if (_initialized) return;
+                _initialized = true;
                 items = [...DEFAULT_COMMANDS, ...customCommands];
                 createDOM();
 
-                window.addEventListener('keydown', (e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-                        e.preventDefault();
-                        toggle();
-                    }
-                });
+                if (typeof window !== 'undefined' && window.addEventListener) {
+                    window.addEventListener('keydown', (e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                            e.preventDefault();
+                            toggle();
+                        }
+                    });
+                }
 
-                document.addEventListener('click', (e) => {
-                    const trigger = e.target.closest('[data-command-palette], [data-toggle="command-palette"]');
-                    if (trigger) {
-                        e.preventDefault();
-                        open();
-                    }
-                });
+                if (typeof document !== 'undefined' && document.addEventListener) {
+                    document.addEventListener('click', (e) => {
+                        const trigger = (e.target && e.target.closest) ? e.target.closest('[data-command-palette], [data-toggle="command-palette"]') : null;
+                        if (trigger) {
+                            e.preventDefault();
+                            open();
+                        }
+                    });
+                }
             }
 
             return {
@@ -2825,29 +2888,34 @@
                 }
 
                 _bindEvents() {
-                    this.input.addEventListener('focus', () => this.open());
-                    this.input.addEventListener('click', () => this.open());
+                    this._onFocus = () => this.open();
+                    this.input.addEventListener('focus', this._onFocus);
+                    this.input.addEventListener('click', this._onFocus);
 
-                    document.addEventListener('click', (e) => {
+                    this._onDocClick = (e) => {
                         if (!this.isOpen) return;
                         if (!this.popover.contains(e.target) && e.target !== this.input) {
                             this.close();
                         }
-                    });
+                    };
+                    document.addEventListener('click', this._onDocClick);
 
-                    window.addEventListener('resize', () => {
+                    this._onResize = () => {
                         if (this.isOpen) this._position();
-                    });
+                    };
+                    window.addEventListener('resize', this._onResize);
 
-                    window.addEventListener('scroll', () => {
+                    this._onScroll = () => {
                         if (this.isOpen) this._position();
-                    }, true);
+                    };
+                    window.addEventListener('scroll', this._onScroll, true);
 
-                    this.input.addEventListener('keydown', (e) => {
+                    this._onKeydown = (e) => {
                         if (e.key === 'Escape' && this.isOpen) {
                             this.close();
                         }
-                    });
+                    };
+                    this.input.addEventListener('keydown', this._onKeydown);
                 }
 
                 _position() {
@@ -3087,10 +3155,28 @@
                 }
 
                 destroy() {
+                    if (this.input) {
+                        if (this._onFocus) {
+                            this.input.removeEventListener('focus', this._onFocus);
+                            this.input.removeEventListener('click', this._onFocus);
+                        }
+                        if (this._onKeydown) {
+                            this.input.removeEventListener('keydown', this._onKeydown);
+                        }
+                        delete this.input._frameDatepicker;
+                    }
+                    if (this._onDocClick) {
+                        document.removeEventListener('click', this._onDocClick);
+                    }
+                    if (this._onResize) {
+                        window.removeEventListener('resize', this._onResize);
+                    }
+                    if (this._onScroll) {
+                        window.removeEventListener('scroll', this._onScroll, true);
+                    }
                     if (this.popover && this.popover.parentNode) {
                         this.popover.parentNode.removeChild(this.popover);
                     }
-                    delete this.input._frameDatepicker;
                 }
             }
 
@@ -3098,6 +3184,7 @@
                 create: (input, options) => new Instance(input, options),
                 init: () => {
                     document.querySelectorAll('input[data-datepicker]').forEach(input => {
+                        if (input._frameDatepicker) return;
                         new Instance(input);
                     });
                 }
@@ -4637,7 +4724,10 @@
                 });
             }
 
+            let _initialized = false;
             function init() {
+                if (_initialized) return;
+                _initialized = true;
                 document.addEventListener('contextmenu', (e) => {
                     const trigger = e.target.closest('[data-context-menu]');
                     if (trigger) {
@@ -4905,7 +4995,8 @@
             class Instance {
                 constructor(form, options = {}) {
                     this.form = typeof form === 'string' ? document.querySelector(form) : form;
-                    if (!this.form) return;
+                    if (!this.form || this.form._frameValidator) return;
+                    this.form._frameValidator = this;
                     this.options = Object.assign({
                         realtime: true,
                         showValid: false,
@@ -4916,7 +5007,6 @@
 
                     this.errors = new Map();
                     this._init();
-                    this.form._frameValidator = this;
                 }
 
                 _init() {
@@ -5009,14 +5099,24 @@
                     field.setAttribute('aria-invalid', 'true');
 
                     let feedback = this._getFeedbackEl(field);
+                    const feedbackId = field.id ? `${field.id}-feedback` : (field.name ? `${field.name}-feedback` : null);
+
                     if (!feedback) {
                         feedback = document.createElement('div');
                         feedback.className = 'form-feedback form-error';
                         feedback.setAttribute('role', 'alert');
+                        if (feedbackId) feedback.id = feedbackId;
                         this._insertFeedbackEl(field, feedback);
                     } else {
                         feedback.className = 'form-feedback form-error';
+                        if (feedbackId && !feedback.id) feedback.id = feedbackId;
                     }
+
+                    if (feedback.id) {
+                        field.setAttribute('aria-describedby', feedback.id);
+                    }
+
+                    const safeMessage = FramePER.Security ? FramePER.Security.escapeHTML(message) : message;
 
                     feedback.innerHTML = `
                         <span class="feedback-icon">
@@ -5024,13 +5124,19 @@
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
                         </span>
-                        <span>${message}</span>
+                        <span>${safeMessage}</span>
                     `;
                 }
 
                 _setFieldValid(field) {
                     field.classList.remove('is-invalid');
                     field.removeAttribute('aria-invalid');
+                    if (field.hasAttribute('aria-describedby')) {
+                        const describedBy = field.getAttribute('aria-describedby');
+                        if (describedBy && describedBy.endsWith('-feedback')) {
+                            field.removeAttribute('aria-describedby');
+                        }
+                    }
 
                     const feedback = this._getFeedbackEl(field);
                     if (feedback && feedback.classList.contains('form-error')) {
@@ -5140,6 +5246,9 @@
                         field._touched = false;
                         field.classList.remove('is-valid', 'is-invalid', 'is-invalid-shake');
                         field.removeAttribute('aria-invalid');
+                        if (field.hasAttribute('aria-describedby') && field.getAttribute('aria-describedby').endsWith('-feedback')) {
+                            field.removeAttribute('aria-describedby');
+                        }
                         const feedback = this._getFeedbackEl(field);
                         if (feedback && feedback.classList.contains('form-error')) {
                             feedback.remove();
@@ -5173,6 +5282,7 @@
                 create: (form, options) => new Instance(form, options),
                 init: () => {
                     document.querySelectorAll('form[data-form-validator], form.form-validate').forEach(form => {
+                        if (form._frameValidator) return;
                         new Instance(form);
                     });
                 }
@@ -5467,7 +5577,10 @@
                 updateBadges();
             }
 
+            let _initialized = false;
             function init() {
+                if (_initialized) return;
+                _initialized = true;
                 document.addEventListener('click', (e) => {
                     const trigger = e.target.closest('[data-activity-feed-toggle], [data-activity-drawer]');
                     if (trigger) {
@@ -8170,73 +8283,19 @@
         })()
     };
 
-    window.addEventListener('offline', () => {
-        FramePER.Notify.error('Sem conexão', 'Você perdeu a conexão com a internet.', 0);
-    });
-    
-    window.addEventListener('online', () => {
-        FramePER.Notify.success('Conectado', 'A conexão com a internet foi restaurada!', 5000);
-    });
-
-    // Auto-init UI when DOM is ready
-
-    document.addEventListener("DOMContentLoaded", () => {
-        FramePER.Theme.init();
-        FramePER.Backgrounds.init();
-        FramePER.UI.init();
-        FramePER.Clipboard.init();
-        FramePER.Form.init();
-        FramePER.Counter.init();
-        FramePER.Scroll.init();
-        if (FramePER.Chart && FramePER.Chart.autoInit) {
-            FramePER.Chart.autoInit();
-        }
-        if (FramePER.CommandPalette && FramePER.CommandPalette.init) {
-            FramePER.CommandPalette.init();
-        }
-        if (FramePER.Datepicker && FramePER.Datepicker.init) {
-            FramePER.Datepicker.init();
-        }
-        if (FramePER.Select && FramePER.Select.init) {
-            FramePER.Select.init();
-        }
-        if (FramePER.Upload && FramePER.Upload.init) {
-            FramePER.Upload.init();
-        }
-        if (FramePER.Tabs && FramePER.Tabs.init) {
-            FramePER.Tabs.init();
-        }
-        if (FramePER.Accordion && FramePER.Accordion.init) {
-            FramePER.Accordion.init();
-        }
-        if (FramePER.Popover && FramePER.Popover.init) {
-            FramePER.Popover.init();
-        }
-        if (FramePER.ContextMenu && FramePER.ContextMenu.init) {
-            FramePER.ContextMenu.init();
-        }
-        if (FramePER.FormValidator && FramePER.FormValidator.init) {
-            FramePER.FormValidator.init();
-        }
-        if (FramePER.ActivityFeed && FramePER.ActivityFeed.init) {
-            FramePER.ActivityFeed.init();
-        }
-        if (FramePER.SplitPane && FramePER.SplitPane.init) {
-            FramePER.SplitPane.init();
-        }
-        if (FramePER.TreeView && FramePER.TreeView.init) {
-            FramePER.TreeView.init();
-        }
-        if (FramePER.DataGrid && FramePER.DataGrid.init) {
-            FramePER.DataGrid.init();
-        }
-        if (FramePER.Kanban && FramePER.Kanban.init) {
-            FramePER.Kanban.init();
-        }
-        if (FramePER.Timeline && FramePER.Timeline.init) {
-            FramePER.Timeline.init();
-        }
-    });
+    if (typeof window !== 'undefined' && window.addEventListener) {
+        window.addEventListener('offline', () => {
+            if (FramePER.Notify && FramePER.Notify.error) {
+                FramePER.Notify.error('Sem conexão', 'Você perdeu a conexão com a internet.', 0);
+            }
+        });
+        
+        window.addEventListener('online', () => {
+            if (FramePER.Notify && FramePER.Notify.success) {
+                FramePER.Notify.success('Conectado', 'A conexão com a internet foi restaurada!', 5000);
+            }
+        });
+    }
 
     // ==========================================
     // SEGMENTED CONTROL COMPONENT
@@ -8352,7 +8411,10 @@
     // BOTTOM SHEET COMPONENT
     // ==========================================
     const BottomSheet = {
+        _initialized: false,
         init() {
+            if (this._initialized) return;
+            this._initialized = true;
             document.addEventListener('click', (e) => {
                 const trigger = e.target.closest('[data-bottom-sheet-target], [data-open-sheet]');
                 if (trigger) {
@@ -8411,7 +8473,10 @@
                 backdrop = document.createElement('div');
                 backdrop.className = 'bottom-sheet-backdrop';
                 document.body.appendChild(backdrop);
-                backdrop.addEventListener('click', () => BottomSheet.close(sheet));
+                backdrop.addEventListener('click', () => {
+                    const openSheet = document.querySelector('.bottom-sheet.is-open');
+                    if (openSheet) BottomSheet.close(openSheet);
+                });
             }
             backdrop.classList.add('is-open');
             sheet.classList.add('is-open');
@@ -8533,6 +8598,9 @@
         particles: [],
         animationId: null,
 
+        _resizeHandler: null,
+        _initialized: false,
+
         _getCanvas() {
             if (!this.canvas) {
                 this.canvas = document.createElement('canvas');
@@ -8540,13 +8608,13 @@
                 this.canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:999999;';
                 document.body.appendChild(this.canvas);
                 this.ctx = this.canvas.getContext('2d');
-                const resize = () => {
+                this._resizeHandler = () => {
                     if (!this.canvas) return;
                     this.canvas.width = window.innerWidth;
                     this.canvas.height = window.innerHeight;
                 };
-                resize();
-                window.addEventListener('resize', resize, { passive: true });
+                this._resizeHandler();
+                window.addEventListener('resize', this._resizeHandler, { passive: true });
             }
             return { canvas: this.canvas, ctx: this.ctx };
         },
@@ -8701,6 +8769,10 @@
                 cancelAnimationFrame(this.animationId);
                 this.animationId = null;
                 if (this.canvas) {
+                    if (this._resizeHandler) {
+                        window.removeEventListener('resize', this._resizeHandler);
+                        this._resizeHandler = null;
+                    }
                     this.canvas.remove();
                     this.canvas = null;
                     this.ctx = null;
@@ -8709,6 +8781,8 @@
         },
 
         init() {
+            if (this._initialized) return;
+            this._initialized = true;
             document.addEventListener('click', (e) => {
                 const target = e.target.closest('[data-confetti]');
                 if (!target) return;
@@ -11782,47 +11856,60 @@ ${worksheetsXML}
     };
     FramePER.Converter = Converter;
 
-    document.addEventListener("DOMContentLoaded", () => {
-        if (FramePER.Tour && FramePER.Tour.init) {
-            FramePER.Tour.init();
-        }
-        if (FramePER.Confetti && FramePER.Confetti.init) {
-            FramePER.Confetti.init();
-        }
-        if (FramePER.SegmentedControl && FramePER.SegmentedControl.init) {
-            FramePER.SegmentedControl.init();
-        }
-        if (FramePER.Rating && FramePER.Rating.init) {
-            FramePER.Rating.init();
-        }
-        if (FramePER.ScrollReveal && FramePER.ScrollReveal.init) {
-            FramePER.ScrollReveal.init();
-        }
-        if (FramePER.BottomSheet && FramePER.BottomSheet.init) {
-            FramePER.BottomSheet.init();
-        }
-        if (FramePER.OtpInput && FramePER.OtpInput.init) {
-            FramePER.OtpInput.init();
-        }
-        if (FramePER.Modal && FramePER.Modal.init) {
-            FramePER.Modal.init();
-        }
+    FramePER._isInitialized = false;
+    FramePER.init = function() {
+        if (FramePER._isInitialized) return;
+        FramePER._isInitialized = true;
+
+        if (FramePER.Theme && FramePER.Theme.init) FramePER.Theme.init();
+        if (FramePER.Backgrounds && FramePER.Backgrounds.init) FramePER.Backgrounds.init();
+        if (FramePER.UI && FramePER.UI.init) FramePER.UI.init();
+        if (FramePER.Clipboard && FramePER.Clipboard.init) FramePER.Clipboard.init();
+        if (FramePER.Form && FramePER.Form.init) FramePER.Form.init();
+        if (FramePER.Counter && FramePER.Counter.init) FramePER.Counter.init();
+        if (FramePER.Scroll && FramePER.Scroll.init) FramePER.Scroll.init();
+        if (FramePER.Chart && FramePER.Chart.autoInit) FramePER.Chart.autoInit();
+        if (FramePER.CommandPalette && FramePER.CommandPalette.init) FramePER.CommandPalette.init();
+        if (FramePER.Datepicker && FramePER.Datepicker.init) FramePER.Datepicker.init();
+        if (FramePER.Select && FramePER.Select.init) FramePER.Select.init();
+        if (FramePER.Upload && FramePER.Upload.init) FramePER.Upload.init();
+        if (FramePER.Popover && FramePER.Popover.init) FramePER.Popover.init();
+        if (FramePER.SegmentedControl && FramePER.SegmentedControl.init) FramePER.SegmentedControl.init();
+        if (FramePER.Rating && FramePER.Rating.init) FramePER.Rating.init();
+        if (FramePER.ScrollReveal && FramePER.ScrollReveal.init) FramePER.ScrollReveal.init();
+        if (FramePER.BottomSheet && FramePER.BottomSheet.init) FramePER.BottomSheet.init();
+        if (FramePER.OtpInput && FramePER.OtpInput.init) FramePER.OtpInput.init();
+        if (FramePER.Confetti && FramePER.Confetti.init) FramePER.Confetti.init();
         
         // Hide global page loader if exists
-        const staticLoader = document.querySelector('.page-loader-overlay');
-        if(staticLoader) {
+        const staticLoader = typeof document !== 'undefined' && document.querySelector ? document.querySelector('.page-loader-overlay') : null;
+        if (staticLoader) {
             staticLoader.classList.remove('show');
-            setTimeout(() => staticLoader.remove(), 300);
+            setTimeout(() => {
+                if (staticLoader.parentNode) staticLoader.remove();
+            }, 300);
         }
-    });
+    };
 
-    // Auto-init Modal immediately if document is available
-    if (typeof document !== 'undefined' && document.addEventListener && FramePER.Modal && FramePER.Modal.init) {
-        FramePER.Modal.init();
+    // Auto-init when DOM is ready in browser environment
+    if (typeof document !== 'undefined' && document.addEventListener && document.documentElement) {
+        if (document.readyState === 'loading') {
+            document.addEventListener("DOMContentLoaded", () => {
+                FramePER.init();
+            });
+        } else {
+            FramePER.init();
+        }
     }
 
     // Expose globally
     window.FramePER = FramePER;
+    window.FramePERTheme = FramePER.Theme;
+    window.FramePERNotify = FramePER.Notify;
+    window.FramePERDialog = FramePER.Dialog;
+    window.FramePERHttp = FramePER.Http;
+    window.FramePERLoader = FramePER.Loader;
+    window.FramePERSecurity = FramePER.Security;
     window.FramePERModal = FramePER.Modal;
     window.FramePERChart = FramePER.Chart;
     window.FramePERUpload = FramePER.Upload;
