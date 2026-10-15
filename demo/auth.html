@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autenticação | Frame Admin Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../dist/framePER.min.css?v=2.26.0">
+  <link rel="stylesheet" href="demo.css?v=2.26.0">
+</head>
+<body>
+
+  <div class="auth-split-wrapper">
+
+    <!-- Painel Esquerdo: Branding, Métricas & Destaques Visuais -->
+    <aside class="auth-brand-side theme-dark">
+      <div class="auth-brand-glow-1"></div>
+      <div class="auth-brand-glow-2"></div>
+      <div class="auth-brand-pattern"></div>
+
+      <!-- Topo Brand -->
+      <div class="p-relative z-10">
+        <a href="index.html" class="d-inline-flex align-items-center gap-2 text-white text-decoration-none">
+          <span class="icon-box bg-primary text-white"><i class="icon icon-star"></i></span>
+          <span class="h4 m-0 f-w-bold text-white">Frame Admin</span>
+          <span class="badge badge-pill badge-primary m-l-2">v2.26.0</span>
+        </a>
+      </div>
+
+      <!-- Centro do Painel: Pitch e Card Glassmorphism -->
+      <div class="p-relative z-10 m-y-5">
+        <h1 class="h2 text-white f-w-bold m-b-3" style="line-height: 1.25;">
+          Controle absoluto do seu ecossistema de dados.
+        </h1>
+        <p class="text-white-50 f-s-3 m-b-5" style="max-width: 440px;">
+          Acesse a suíte de gestão integrada com gráficos em tempo real, relatórios inteligentes e velocidade extrema desenvolvida com FramePER CSS.
+        </p>
+
+        <!-- Glassmorphism Preview Card -->
+        <div class="auth-glass-card stack gap-4">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <span class="status-dot status-dot-success"></span>
+              <span class="f-s-2 text-white f-w-semibold">Sistema Online &bull; Latência 18ms</span>
+            </div>
+            <span class="badge badge-sm badge-green"><i class="icon icon-arrow-up"></i> +14.8% hoje</span>
+          </div>
+
+          <div class="grid grid-2 gap-3">
+            <div class="p-3" style="background: rgba(255, 255, 255, 0.05); border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.08);">
+              <span class="f-s-1 text-white-50 d-block m-b-1">Usuários Ativos</span>
+              <span class="f-s-4 f-w-bold text-white tabular">24.592</span>
+              <span class="f-s-1 text-green d-block m-t-1"><i class="icon icon-arrow-up"></i> +12.5%</span>
+            </div>
+            <div class="p-3" style="background: rgba(255, 255, 255, 0.05); border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.08);">
+              <span class="f-s-1 text-white-50 d-block m-b-1">Receita Mensal</span>
+              <span class="f-s-4 f-w-bold text-white tabular">R$ 84.200</span>
+              <span class="f-s-1 text-green d-block m-t-1"><i class="icon icon-arrow-up"></i> +8.2%</span>
+            </div>
+          </div>
+
+          <div class="stack gap-2 border-top p-t-3" style="border-color: rgba(255, 255, 255, 0.1) !important;">
+            <div class="d-flex align-items-center gap-2 text-white-75 f-s-2">
+              <i class="icon icon-shield-check text-green"></i>
+              <span>Criptografia de ponta a ponta e auditoria 2FA</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 text-white-75 f-s-2">
+              <i class="icon icon-activity text-primary"></i>
+              <span>Gráficos nativos em SVG sem dependências externas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rodapé do Brand -->
+      <div class="d-flex align-items-center justify-content-between text-white-50 f-s-2 p-relative z-10">
+        <span>&copy; 2026 Frame PER CSS Framework.</span>
+        <span>Design System Modular</span>
+      </div>
+    </aside>
+
+    <!-- Painel Direito: Formulários Interativos -->
+    <main class="auth-form-side">
+
+      <!-- Barra de Ferramentas Superior -->
+      <div class="d-flex align-items-center justify-content-between w-100 m-b-4">
+        <a href="index.html" class="btn btn-ghost btn-sm text-muted d-inline-flex align-items-center gap-2">
+          <i class="icon icon-arrow-left"></i> Voltar ao Início
+        </a>
+        <div class="d-flex align-items-center gap-2">
+          <a href="dashboard.html" class="btn btn-ghost btn-sm text-muted d-none d-sm-inline-flex align-items-center gap-1">
+            <i class="icon icon-home"></i> Painel Direto
+          </a>
+          <button class="btn btn-ghost btn-icon theme-toggle" data-theme-toggle aria-label="Alternar Tema">
+            <i class="icon icon-moon"></i><i class="icon icon-sun"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Container Central de Formulários -->
+      <div class="auth-form-container">
+
+        <!-- ===================================================================
+             VIEW 1: LOGIN
+             =================================================================== -->
+        <section id="viewLogin" class="auth-view active">
+          <div class="m-b-4">
+            <span class="badge badge-primary badge-sm m-b-2">Acesso Seguro</span>
+            <h2 class="h3 f-w-bold m-b-1">Bem-vindo de volta</h2>
+            <p class="text-muted f-s-3">Informe suas credenciais para gerenciar seu dashboard.</p>
+          </div>
+
+          <!-- Dica Demo -->
+          <div class="alert alert-info p-2 m-b-4 f-s-2 d-flex align-items-center gap-2">
+            <i class="icon icon-sparkles text-info"></i>
+            <div><strong>Dica Demo:</strong> Já preenchemos para você. Basta clicar em <em>Entrar</em>.</div>
+          </div>
+
+          <form id="formLogin" novalidate>
+            <div class="form-group">
+              <label for="loginEmail" class="label">E-mail Corporativo</label>
+              <div class="input-icon">
+                <i class="icon icon-envelope"></i>
+                <input type="email" id="loginEmail" class="input" placeholder="admin@frameper.com" value="admin@frameper.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="d-flex justify-content-between align-items-center m-b-1">
+                <label for="loginPassword" class="label m-0">Senha</label>
+                <a href="#forgot" class="f-s-2 text-primary text-decoration-none switch-view" data-target="viewForgot">Esqueceu a senha?</a>
+              </div>
+              <div class="input-icon password-input-wrap">
+                <i class="icon icon-lock"></i>
+                <input type="password" id="loginPassword" class="input" placeholder="••••••••" value="admin123" required>
+                <button type="button" class="password-toggle-btn" aria-label="Mostrar ou ocultar senha" data-toggle-pass="loginPassword">
+                  <i class="icon icon-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between m-b-4">
+              <label class="check-label">
+                <input type="checkbox" class="check" id="loginRemember" checked>
+                <span class="f-s-2">Manter-me conectado por 30 dias</span>
+              </label>
+            </div>
+
+            <button type="submit" id="btnLoginSubmit" class="btn btn-primary w-100 btn-lg d-flex align-items-center justify-content-center gap-2">
+              <span class="btn-text">Entrar no Dashboard</span>
+              <i class="icon icon-arrow-right"></i>
+            </button>
+          </form>
+
+          <div class="auth-divider">ou acesse com</div>
+
+          <!-- Social Buttons -->
+          <div class="grid grid-2 gap-2">
+            <button type="button" class="btn btn-outline w-100 d-inline-flex align-items-center justify-content-center gap-2 f-s-2 btn-social-demo" data-provider="Google">
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+              </svg>
+              <span>Google</span>
+            </button>
+            <button type="button" class="btn btn-outline w-100 d-inline-flex align-items-center justify-content-center gap-2 f-s-2 btn-social-demo" data-provider="GitHub">
+              <i class="icon icon-github"></i>
+              <span>GitHub</span>
+            </button>
+          </div>
+
+          <div class="text-center m-t-4 f-s-3 text-muted">
+            Não tem uma conta corporativa? <a href="#register" class="text-primary f-w-semibold text-decoration-none switch-view" data-target="viewRegister">Cadastre-se</a>
+          </div>
+        </section>
+
+
+        <!-- ===================================================================
+             VIEW 2: CADASTRO / REGISTRO
+             =================================================================== -->
+        <section id="viewRegister" class="auth-view">
+          <div class="m-b-4">
+            <span class="badge badge-green badge-sm m-b-2">Novo Cadastro</span>
+            <h2 class="h3 f-w-bold m-b-1">Criar Nova Conta</h2>
+            <p class="text-muted f-s-3">Crie suas credenciais e acesse o painel imediatamente.</p>
+          </div>
+
+          <form id="formRegister" novalidate>
+            <div class="form-group">
+              <label for="regName" class="label">Nome Completo</label>
+              <div class="input-icon">
+                <i class="icon icon-user"></i>
+                <input type="text" id="regName" class="input" placeholder="Ex: Roberto Silva" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="regEmail" class="label">E-mail Profissional</label>
+              <div class="input-icon">
+                <i class="icon icon-envelope"></i>
+                <input type="email" id="regEmail" class="input" placeholder="roberto@empresa.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="regPassword" class="label">Senha de Acesso</label>
+              <div class="input-icon password-input-wrap">
+                <i class="icon icon-lock"></i>
+                <input type="password" id="regPassword" class="input" placeholder="Pelo menos 8 caracteres" required>
+                <button type="button" class="password-toggle-btn" aria-label="Mostrar ou ocultar senha" data-toggle-pass="regPassword">
+                  <i class="icon icon-eye"></i>
+                </button>
+              </div>
+
+              <!-- Medidor Dinâmico de Força de Senha -->
+              <div class="strength-meter" id="regStrengthMeter">
+                <div class="strength-bar" id="bar1"></div>
+                <div class="strength-bar" id="bar2"></div>
+                <div class="strength-bar" id="bar3"></div>
+                <div class="strength-bar" id="bar4"></div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center m-t-1">
+                <span class="f-s-1 text-muted" id="regStrengthText">Força da senha: aguardando...</span>
+                <span class="f-s-1 text-muted">Mínimo 8 dígitos</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="regPasswordConfirm" class="label">Confirmar Senha</label>
+              <div class="input-icon password-input-wrap">
+                <i class="icon icon-lock"></i>
+                <input type="password" id="regPasswordConfirm" class="input" placeholder="Repita a mesma senha" required>
+                <button type="button" class="password-toggle-btn" aria-label="Mostrar ou ocultar senha" data-toggle-pass="regPasswordConfirm">
+                  <i class="icon icon-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group m-b-4">
+              <label class="check-label">
+                <input type="checkbox" class="check" id="regTerms" required checked>
+                <span class="f-s-2 text-muted">
+                  Concordo com os <a href="#" class="text-primary text-decoration-none">Termos de Serviço</a> e a <a href="#" class="text-primary text-decoration-none">Política de Privacidade</a>.
+                </span>
+              </label>
+            </div>
+
+            <button type="submit" id="btnRegisterSubmit" class="btn btn-primary w-100 btn-lg d-flex align-items-center justify-content-center gap-2">
+              <span class="btn-text">Finalizar Cadastro</span>
+              <i class="icon icon-check"></i>
+            </button>
+          </form>
+
+          <div class="text-center m-t-4 f-s-3 text-muted">
+            Já possui uma conta ativa? <a href="#login" class="text-primary f-w-semibold text-decoration-none switch-view" data-target="viewLogin">Fazer Login</a>
+          </div>
+        </section>
+
+
+        <!-- ===================================================================
+             VIEW 3: RECUPERAÇÃO DE SENHA - SOLICITAR CÓDIGO
+             =================================================================== -->
+        <section id="viewForgot" class="auth-view">
+          <div class="m-b-4">
+            <span class="icon-box icon-box-primary m-b-2"><i class="icon icon-key"></i></span>
+            <h2 class="h3 f-w-bold m-b-1">Recuperar Senha</h2>
+            <p class="text-muted f-s-3">Informe seu e-mail para enviarmos o código de autenticação temporário.</p>
+          </div>
+
+          <form id="formForgot" novalidate>
+            <div class="form-group m-b-4">
+              <label for="forgotEmail" class="label">E-mail Cadastrado</label>
+              <div class="input-icon">
+                <i class="icon icon-envelope"></i>
+                <input type="email" id="forgotEmail" class="input" placeholder="admin@frameper.com" value="admin@frameper.com" required>
+              </div>
+            </div>
+
+            <button type="submit" id="btnForgotSubmit" class="btn btn-primary w-100 btn-lg d-flex align-items-center justify-content-center gap-2">
+              <span class="btn-text">Enviar Código de Recuperação</span>
+              <i class="icon icon-arrow-right"></i>
+            </button>
+          </form>
+
+          <div class="text-center m-t-4 f-s-3">
+            <a href="#login" class="text-muted text-decoration-none switch-view d-inline-flex align-items-center gap-1" data-target="viewLogin">
+              <i class="icon icon-arrow-left"></i> Voltar para o Login
+            </a>
+          </div>
+        </section>
+
+
+        <!-- ===================================================================
+             VIEW 4: DIGITAR CÓDIGO OTP (2FA / PIN)
+             =================================================================== -->
+        <section id="viewOtp" class="auth-view">
+          <div class="m-b-4 text-center">
+            <span class="icon-box icon-box-primary m-b-2" style="margin-inline: auto;"><i class="icon icon-shield-check"></i></span>
+            <h2 class="h3 f-w-bold m-b-1">Código de Verificação</h2>
+            <p class="text-muted f-s-3">
+              Enviamos um código de 6 dígitos para <strong id="otpDisplayEmail" class="text-main">admin@frameper.com</strong>
+            </p>
+          </div>
+
+          <div class="text-center m-b-4">
+            <div class="otp-input-group" id="authOtpGroup" data-otp-input>
+              <input type="text" class="otp-digit" maxlength="1" autofocus aria-label="Dígito 1">
+              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 2">
+              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 3">
+              <span class="otp-divider">&bull;</span>
+              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 4">
+              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 5">
+              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 6">
+            </div>
+            <p class="f-s-2 text-muted m-t-3">
+              Dica: digite ou cole qualquer código de 6 dígitos (ex: <span class="badge badge-secondary badge-sm cursor-pointer" id="btnFillOtp">123456</span>)
+            </p>
+          </div>
+
+          <button type="button" id="btnVerifyOtp" class="btn btn-primary w-100 btn-lg d-flex align-items-center justify-content-center gap-2">
+            <span class="btn-text">Confirmar Código</span>
+            <i class="icon icon-check"></i>
+          </button>
+
+          <div class="d-flex justify-content-between align-items-center m-t-4 f-s-2 text-muted">
+            <a href="#forgot" class="text-muted text-decoration-none switch-view" data-target="viewForgot">
+              <i class="icon icon-arrow-left"></i> Trocar e-mail
+            </a>
+            <button type="button" class="btn btn-ghost btn-sm text-primary p-0" id="btnResendOtp">Reenviar código</button>
+          </div>
+        </section>
+
+
+        <!-- ===================================================================
+             VIEW 5: DEFINIR NOVA SENHA
+             =================================================================== -->
+        <section id="viewReset" class="auth-view">
+          <div class="m-b-4">
+            <span class="icon-box icon-box-success m-b-2"><i class="icon icon-lock"></i></span>
+            <h2 class="h3 f-w-bold m-b-1">Redefinir Nova Senha</h2>
+            <p class="text-muted f-s-3">Código validado com sucesso! Agora defina sua nova senha.</p>
+          </div>
+
+          <form id="formReset" novalidate>
+            <div class="form-group">
+              <label for="newPassword" class="label">Nova Senha</label>
+              <div class="input-icon password-input-wrap">
+                <i class="icon icon-lock"></i>
+                <input type="password" id="newPassword" class="input" placeholder="Digite a nova senha segura" required>
+                <button type="button" class="password-toggle-btn" aria-label="Mostrar ou ocultar senha" data-toggle-pass="newPassword">
+                  <i class="icon icon-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group m-b-4">
+              <label for="newPasswordConfirm" class="label">Confirmar Nova Senha</label>
+              <div class="input-icon password-input-wrap">
+                <i class="icon icon-lock"></i>
+                <input type="password" id="newPasswordConfirm" class="input" placeholder="Confirme a nova senha" required>
+                <button type="button" class="password-toggle-btn" aria-label="Mostrar ou ocultar senha" data-toggle-pass="newPasswordConfirm">
+                  <i class="icon icon-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" id="btnResetSubmit" class="btn btn-success w-100 btn-lg d-flex align-items-center justify-content-center gap-2">
+              <span class="btn-text">Salvar Nova Senha</span>
+              <i class="icon icon-check"></i>
+            </button>
+          </form>
+
+          <div class="text-center m-t-4 f-s-3">
+            <a href="#login" class="text-muted text-decoration-none switch-view" data-target="viewLogin">
+              Cancelar e voltar ao Login
+            </a>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Rodapé Lado Direito -->
+      <footer class="m-t-auto p-t-4 text-center text-muted f-s-1">
+        FramePER CSS &bull; Suíte Integrada do Dashboard &bull; Demonstração
+      </footer>
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../dist/framePER.min.js"></script>
+  <script src="demo.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const F = window.FramePER || {};
+
+      // 1. Alternador de Visibilidade de Senha
+      document.querySelectorAll('[data-toggle-pass]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-toggle-pass');
+          const input = document.getElementById(targetId);
+          if (!input) return;
+
+          const icon = btn.querySelector('.icon');
+          if (input.type === 'password') {
+            input.type = 'text';
+            if (icon) {
+              icon.classList.remove('icon-eye');
+              icon.classList.add('icon-eye-off');
+            }
+          } else {
+            input.type = 'password';
+            if (icon) {
+              icon.classList.remove('icon-eye-off');
+              icon.classList.add('icon-eye');
+            }
+          }
+        });
+      });
+
+      // 2. Sistema de Abas / Alternância de Views com Suporte a Hash
+      const views = {
+        viewLogin: document.getElementById('viewLogin'),
+        viewRegister: document.getElementById('viewRegister'),
+        viewForgot: document.getElementById('viewForgot'),
+        viewOtp: document.getElementById('viewOtp'),
+        viewReset: document.getElementById('viewReset')
+      };
+
+      function switchView(targetViewId) {
+        Object.keys(views).forEach(key => {
+          const el = views[key];
+          if (!el) return;
+          if (key === targetViewId) {
+            el.classList.add('active');
+            // Auto-focus no primeiro input
+            const firstInput = el.querySelector('input:not([type="checkbox"])');
+            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+          } else {
+            el.classList.remove('active');
+          }
+        });
+
+        // Atualiza URL hash de forma limpa
+        const hashMapping = {
+          viewLogin: '#login',
+          viewRegister: '#register',
+          viewForgot: '#forgot',
+          viewOtp: '#verify-code',
+          viewReset: '#new-password'
+        };
+        if (hashMapping[targetViewId] && window.location.hash !== hashMapping[targetViewId]) {
+          history.replaceState(null, null, hashMapping[targetViewId]);
+        }
+      }
+
+      document.querySelectorAll('.switch-view').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = btn.getAttribute('data-target');
+          if (target && views[target]) {
+            switchView(target);
+          }
+        });
+      });
+
+      // Sincronizar pelo Hash inicial
+      function checkInitialHash() {
+        const hash = window.location.hash;
+        if (hash === '#register') switchView('viewRegister');
+        else if (hash === '#forgot') switchView('viewForgot');
+        else if (hash === '#verify-code') switchView('viewOtp');
+        else if (hash === '#new-password') switchView('viewReset');
+        else switchView('viewLogin');
+      }
+      checkInitialHash();
+
+      // 3. Checagem de Logout via Query Params (?logout=true)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('logout') === 'true') {
+        setTimeout(() => {
+          if (F.Notify) {
+            F.Notify.info('Sessão Finalizada', 'Você saiu da sua conta com segurança. Faça login novamente quando desejar.');
+          }
+        }, 300);
+        // Limpa parâmetro da URL sem recarregar a página
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      }
+
+      // 4. Medidor de Força da Senha em Tempo Real
+      const regPassInput = document.getElementById('regPassword');
+      const regStrengthText = document.getElementById('regStrengthText');
+      const bars = [
+        document.getElementById('bar1'),
+        document.getElementById('bar2'),
+        document.getElementById('bar3'),
+        document.getElementById('bar4')
+      ];
+
+      function updatePasswordStrength(val) {
+        let score = 0;
+        if (val.length >= 8) score++;
+        if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+        if (/[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+
+        bars.forEach(b => {
+          b.className = 'strength-bar';
+        });
+
+        if (!val) {
+          regStrengthText.textContent = 'Força da senha: aguardando...';
+          regStrengthText.className = 'f-s-1 text-muted';
+          return;
+        }
+
+        const labels = ['Muito fraca', 'Razoável', 'Boa', 'Excelente'];
+        const classes = ['weak', 'medium', 'good', 'strong'];
+
+        for (let i = 0; i < score; i++) {
+          bars[i].classList.add(classes[score - 1]);
+        }
+
+        regStrengthText.textContent = `Força da senha: ${labels[score - 1] || 'Muito fraca'}`;
+        if (score <= 1) regStrengthText.className = 'f-s-1 text-danger';
+        else if (score === 2) regStrengthText.className = 'f-s-1 text-warning';
+        else regStrengthText.className = 'f-s-1 text-success';
+      }
+
+      if (regPassInput) {
+        regPassInput.addEventListener('input', (e) => {
+          updatePasswordStrength(e.target.value);
+        });
+      }
+
+      // 5. Simulação de Login
+      const formLogin = document.getElementById('formLogin');
+      const btnLoginSubmit = document.getElementById('btnLoginSubmit');
+
+      if (formLogin) {
+        formLogin.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const email = document.getElementById('loginEmail').value.trim();
+          const pass = document.getElementById('loginPassword').value.trim();
+
+          if (!email || !pass) {
+            if (F.Notify) F.Notify.error('Campos obrigatórios', 'Por favor preencha seu e-mail e senha.');
+            return;
+          }
+
+          // Ativa loading state no botão
+          btnLoginSubmit.disabled = true;
+          const origHtml = btnLoginSubmit.innerHTML;
+          btnLoginSubmit.innerHTML = `<span class="spinner spinner-sm m-r-2"></span> Autenticando...`;
+
+          setTimeout(() => {
+            if (F.Notify) {
+              F.Notify.success('Acesso Concedido', 'Bem-vindo de volta! Carregando seu dashboard...');
+            }
+
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 800);
+          }, 900);
+        });
+      }
+
+      // 6. Simulação de Cadastro
+      const formRegister = document.getElementById('formRegister');
+      const btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
+
+      if (formRegister) {
+        formRegister.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = document.getElementById('regName').value.trim();
+          const email = document.getElementById('regEmail').value.trim();
+          const pass = document.getElementById('regPassword').value;
+          const passConfirm = document.getElementById('regPasswordConfirm').value;
+
+          if (!name || !email || !pass) {
+            if (F.Notify) F.Notify.error('Campos obrigatórios', 'Preencha todos os campos para continuar.');
+            return;
+          }
+
+          if (pass !== passConfirm) {
+            if (F.Notify) F.Notify.error('Senhas não coincidem', 'A confirmação de senha precisa ser igual à senha digitada.');
+            return;
+          }
+
+          btnRegisterSubmit.disabled = true;
+          btnRegisterSubmit.innerHTML = `<span class="spinner spinner-sm m-r-2"></span> Criando sua conta...`;
+
+          setTimeout(() => {
+            btnRegisterSubmit.disabled = false;
+            btnRegisterSubmit.innerHTML = `<span class="btn-text">Finalizar Cadastro</span> <i class="icon icon-check"></i>`;
+            if (F.Notify) {
+              F.Notify.success('Conta Criada!', 'Sua conta corporativa foi configurada com sucesso. Você já pode fazer login.');
+            }
+            // Preenche o login com o novo email
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = pass;
+            switchView('viewLogin');
+          }, 1100);
+        });
+      }
+
+      // 7. Simulação de Envio de Código (Forgot Password)
+      const formForgot = document.getElementById('formForgot');
+      const btnForgotSubmit = document.getElementById('btnForgotSubmit');
+
+      if (formForgot) {
+        formForgot.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const email = document.getElementById('forgotEmail').value.trim();
+          if (!email) {
+            if (F.Notify) F.Notify.error('E-mail necessário', 'Por favor insira seu e-mail cadastrado.');
+            return;
+          }
+
+          btnForgotSubmit.disabled = true;
+          btnForgotSubmit.innerHTML = `<span class="spinner spinner-sm m-r-2"></span> Enviando código...`;
+
+          setTimeout(() => {
+            btnForgotSubmit.disabled = false;
+            btnForgotSubmit.innerHTML = `<span class="btn-text">Enviar Código de Recuperação</span> <i class="icon icon-arrow-right"></i>`;
+            document.getElementById('otpDisplayEmail').textContent = email;
+            if (F.Notify) {
+              F.Notify.info('Código Enviado', `Enviamos o código de 6 dígitos para ${email}`);
+            }
+            switchView('viewOtp');
+            // Auto preenche o primeiro dígito com foco
+            const firstOtp = document.querySelector('#authOtpGroup .otp-digit');
+            if (firstOtp) firstOtp.focus();
+          }, 900);
+        });
+      }
+
+      // 8. Botão de auto-preenchimento demo do OTP
+      const btnFillOtp = document.getElementById('btnFillOtp');
+      if (btnFillOtp) {
+        btnFillOtp.addEventListener('click', () => {
+          const digits = ['1', '2', '3', '4', '5', '6'];
+          const inputs = document.querySelectorAll('#authOtpGroup .otp-digit');
+          inputs.forEach((inp, idx) => {
+            inp.value = digits[idx];
+            inp.classList.add('is-filled');
+          });
+          if (inputs[5]) inputs[5].focus();
+        });
+      }
+
+      // 9. Validação do Código OTP
+      const btnVerifyOtp = document.getElementById('btnVerifyOtp');
+      if (btnVerifyOtp) {
+        btnVerifyOtp.addEventListener('click', () => {
+          const inputs = Array.from(document.querySelectorAll('#authOtpGroup .otp-digit'));
+          const code = inputs.map(i => i.value).join('');
+
+          if (code.length < 6) {
+            if (F.Notify) F.Notify.error('Código incompleto', 'Por favor digite todos os 6 dígitos do código recebido.');
+            return;
+          }
+
+          btnVerifyOtp.disabled = true;
+          btnVerifyOtp.innerHTML = `<span class="spinner spinner-sm m-r-2"></span> Validando...`;
+
+          setTimeout(() => {
+            btnVerifyOtp.disabled = false;
+            btnVerifyOtp.innerHTML = `<span class="btn-text">Confirmar Código</span> <i class="icon icon-check"></i>`;
+            if (F.Notify) {
+              F.Notify.success('Código Validado', 'Identidade confirmada! Defina sua nova senha agora.');
+            }
+            switchView('viewReset');
+          }, 800);
+        });
+      }
+
+      // 10. Reenviar Código OTP
+      const btnResendOtp = document.getElementById('btnResendOtp');
+      if (btnResendOtp) {
+        btnResendOtp.addEventListener('click', () => {
+          btnResendOtp.disabled = true;
+          btnResendOtp.textContent = 'Enviando...';
+          setTimeout(() => {
+            btnResendOtp.disabled = false;
+            btnResendOtp.textContent = 'Reenviar código';
+            if (F.Notify) {
+              F.Notify.info('Código Reenviado', 'Novo código de verificação enviado para o seu e-mail.');
+            }
+          }, 800);
+        });
+      }
+
+      // 11. Redefinição de Nova Senha
+      const formReset = document.getElementById('formReset');
+      const btnResetSubmit = document.getElementById('btnResetSubmit');
+
+      if (formReset) {
+        formReset.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const newPass = document.getElementById('newPassword').value;
+          const newPassConfirm = document.getElementById('newPasswordConfirm').value;
+
+          if (!newPass || !newPassConfirm) {
+            if (F.Notify) F.Notify.error('Campos obrigatórios', 'Por favor preencha e confirme a nova senha.');
+            return;
+          }
+
+          if (newPass !== newPassConfirm) {
+            if (F.Notify) F.Notify.error('Senhas não conferem', 'A confirmação precisa ser idêntica à nova senha.');
+            return;
+          }
+
+          btnResetSubmit.disabled = true;
+          btnResetSubmit.innerHTML = `<span class="spinner spinner-sm m-r-2"></span> Atualizando senha...`;
+
+          setTimeout(() => {
+            btnResetSubmit.disabled = false;
+            btnResetSubmit.innerHTML = `<span class="btn-text">Salvar Nova Senha</span> <i class="icon icon-check"></i>`;
+            if (F.Notify) {
+              F.Notify.success('Senha Atualizada', 'Sua senha foi redefinida com sucesso. Acesse sua conta agora.');
+            }
+            document.getElementById('loginPassword').value = newPass;
+            switchView('viewLogin');
+          }, 1000);
+        });
+      }
+
+      // 12. Botões Sociais Demo
+      document.querySelectorAll('.btn-social-demo').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const provider = btn.getAttribute('data-provider');
+          if (F.Notify) {
+            F.Notify.info('Autenticação Social', `Iniciando conexão segura com ${provider}...`);
+          }
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 900);
+        });
+      });
+
+    });
+  </script>
+</body>
+</html>
