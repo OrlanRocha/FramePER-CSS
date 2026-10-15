@@ -118,7 +118,10 @@ class MockElement {
 function matchesSelector(el, sel) {
   if (!el || !el.tagName) return false;
   if (sel.startsWith('#')) return el.id === sel.slice(1);
-  if (sel.startsWith('.')) return el.classList.contains(sel.slice(1));
+  if (sel.startsWith('.')) {
+    const classes = sel.split('.').filter(Boolean);
+    return classes.every(c => el.classList.contains(c));
+  }
   if (sel.startsWith('[') && sel.endsWith(']')) {
     const inner = sel.slice(1, -1);
     if (inner.includes('=')) {
