@@ -57,5 +57,12 @@ otherPages.forEach(page => {
 });
 console.log('✔ Todas as demais páginas do dashboard (users, messages, reports, settings) integradas.');
 
+// 9. Verificar Correções Críticas (Status Pip, Form OTP, Hash Navigation)
+assert(authHtml.includes('status-pip'), 'auth.html deve conter .status-pip dentro de .status-dot');
+assert(authHtml.includes('id="formOtp"'), 'auth.html deve conter form#formOtp para envio com Enter');
+assert(authHtml.includes('hashchange'), 'auth.html deve ouvir evento hashchange para navegação segura no histórico');
+console.log('✔ Correções visuais e de navegação (status-pip, formOtp, hashchange) validadas.');
+
 console.log('----------------------------------------------------');
 console.log('🎉 TODOS OS TESTES DE INTEGRAÇÃO PASSARAM COM SUCESSO!');
+

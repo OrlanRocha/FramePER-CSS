@@ -14,7 +14,7 @@
 
   <div class="auth-split-wrapper">
 
-    <!-- Painel Esquerdo: Branding, Métricas & Destaques Visuais -->
+    <!-- Painel Esquerdo: Branding, Métricas & Destaques Visuais (Desktop) -->
     <aside class="auth-brand-side theme-dark">
       <div class="auth-brand-glow-1"></div>
       <div class="auth-brand-glow-2"></div>
@@ -34,7 +34,7 @@
         <h1 class="h2 text-white f-w-bold m-b-3" style="line-height: 1.25;">
           Controle absoluto do seu ecossistema de dados.
         </h1>
-        <p class="text-white-50 f-s-3 m-b-5" style="max-width: 440px;">
+        <p class="text-white-75 f-s-3 m-b-5" style="max-width: 440px;">
           Acesse a suíte de gestão integrada com gráficos em tempo real, relatórios inteligentes e velocidade extrema desenvolvida com FramePER CSS.
         </p>
 
@@ -42,8 +42,10 @@
         <div class="auth-glass-card stack gap-4">
           <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2">
-              <span class="status-dot status-dot-success"></span>
-              <span class="f-s-2 text-white f-w-semibold">Sistema Online &bull; Latência 18ms</span>
+              <span class="status-dot status-online status-ping">
+                <span class="status-pip"></span>
+                <span class="f-s-2 text-white f-w-semibold">Sistema Online &bull; Latência 18ms</span>
+              </span>
             </div>
             <span class="badge badge-sm badge-green"><i class="icon icon-arrow-up"></i> +14.8% hoje</span>
           </div>
@@ -85,7 +87,7 @@
     <main class="auth-form-side">
 
       <!-- Barra de Ferramentas Superior -->
-      <div class="d-flex align-items-center justify-content-between w-100 m-b-4">
+      <div class="d-flex align-items-center justify-content-between w-100 m-b-3">
         <a href="index.html" class="btn btn-ghost btn-sm text-muted d-inline-flex align-items-center gap-2">
           <i class="icon icon-arrow-left"></i> Voltar ao Início
         </a>
@@ -97,6 +99,13 @@
             <i class="icon icon-moon"></i><i class="icon icon-sun"></i>
           </button>
         </div>
+      </div>
+
+      <!-- Mobile Brand Header (visível em telas < 992px) -->
+      <div class="d-lg-none d-flex align-items-center justify-content-center gap-2 m-b-4 p-y-2 border-bottom">
+        <span class="icon-box bg-primary text-white"><i class="icon icon-star"></i></span>
+        <span class="h4 m-0 f-w-bold">Frame Admin</span>
+        <span class="badge badge-pill badge-primary m-l-1">v2.26.0</span>
       </div>
 
       <!-- Container Central de Formulários -->
@@ -115,7 +124,7 @@
           <!-- Dica Demo -->
           <div class="alert alert-info p-2 m-b-4 f-s-2 d-flex align-items-center gap-2">
             <i class="icon icon-sparkles text-info"></i>
-            <div><strong>Dica Demo:</strong> Já preenchemos para você. Basta clicar em <em>Entrar</em>.</div>
+            <div><strong>Dica Demo:</strong> Já preenchemos para você. Basta clicar em <em>Entrar no Dashboard</em>.</div>
           </div>
 
           <form id="formLogin" novalidate>
@@ -225,7 +234,7 @@
               </div>
               <div class="d-flex justify-content-between align-items-center m-t-1">
                 <span class="f-s-1 text-muted" id="regStrengthText">Força da senha: aguardando...</span>
-                <span class="f-s-1 text-muted">Mínimo 8 dígitos</span>
+                <span class="f-s-1 text-muted">Mínimo 8 caracteres</span>
               </div>
             </div>
 
@@ -244,7 +253,7 @@
               <label class="check-label">
                 <input type="checkbox" class="check" id="regTerms" required checked>
                 <span class="f-s-2 text-muted">
-                  Concordo com os <a href="#" class="text-primary text-decoration-none">Termos de Serviço</a> e a <a href="#" class="text-primary text-decoration-none">Política de Privacidade</a>.
+                  Concordo com os <a href="#" class="text-primary text-decoration-none" onclick="event.preventDefault(); FramePER.Notify && FramePER.Notify.info('Termos', 'Demonstração de termos de uso do FramePER.');">Termos de Serviço</a> e a <a href="#" class="text-primary text-decoration-none" onclick="event.preventDefault(); FramePER.Notify && FramePER.Notify.info('Privacidade', 'Demonstração da política de privacidade.');">Política de Privacidade</a>.
                 </span>
               </label>
             </div>
@@ -268,7 +277,7 @@
           <div class="m-b-4">
             <span class="icon-box icon-box-primary m-b-2"><i class="icon icon-key"></i></span>
             <h2 class="h3 f-w-bold m-b-1">Recuperar Senha</h2>
-            <p class="text-muted f-s-3">Informe seu e-mail para enviarmos o código de autenticação temporário.</p>
+            <p class="text-muted f-s-3">Informe seu e-mail cadastrado para enviarmos o código de autenticação temporário.</p>
           </div>
 
           <form id="formForgot" novalidate>
@@ -306,28 +315,30 @@
             </p>
           </div>
 
-          <div class="text-center m-b-4">
-            <div class="otp-input-group" id="authOtpGroup" data-otp-input>
-              <input type="text" class="otp-digit" maxlength="1" autofocus aria-label="Dígito 1">
-              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 2">
-              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 3">
-              <span class="otp-divider">&bull;</span>
-              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 4">
-              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 5">
-              <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 6">
+          <form id="formOtp" novalidate>
+            <div class="text-center m-b-4">
+              <div class="otp-input-group" id="authOtpGroup" data-otp-input>
+                <input type="text" class="otp-digit" maxlength="1" autofocus aria-label="Dígito 1">
+                <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 2">
+                <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 3">
+                <span class="otp-divider">&bull;</span>
+                <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 4">
+                <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 5">
+                <input type="text" class="otp-digit" maxlength="1" aria-label="Dígito 6">
+              </div>
+              <p class="f-s-2 text-muted m-t-3">
+                Dica: digite ou clique para auto-preencher: <span class="badge badge-secondary badge-sm cursor-pointer" id="btnFillOtp" title="Clique para preencher 123456">123456</span>
+              </p>
             </div>
-            <p class="f-s-2 text-muted m-t-3">
-              Dica: digite ou cole qualquer código de 6 dígitos (ex: <span class="badge badge-secondary badge-sm cursor-pointer" id="btnFillOtp">123456</span>)
-            </p>
-          </div>
 
-          <button type="button" id="btnVerifyOtp" class="btn btn-primary w-100 btn-lg d-flex align-items-center justify-content-center gap-2">
-            <span class="btn-text">Confirmar Código</span>
-            <i class="icon icon-check"></i>
-          </button>
+            <button type="submit" id="btnVerifyOtp" class="btn btn-primary w-100 btn-lg d-flex align-items-center justify-content-center gap-2">
+              <span class="btn-text">Confirmar Código</span>
+              <i class="icon icon-check"></i>
+            </button>
+          </form>
 
           <div class="d-flex justify-content-between align-items-center m-t-4 f-s-2 text-muted">
-            <a href="#forgot" class="text-muted text-decoration-none switch-view" data-target="viewForgot">
+            <a href="#forgot" class="text-muted text-decoration-none switch-view d-inline-flex align-items-center gap-1" data-target="viewForgot">
               <i class="icon icon-arrow-left"></i> Trocar e-mail
             </a>
             <button type="button" class="btn btn-ghost btn-sm text-primary p-0" id="btnResendOtp">Reenviar código</button>
@@ -350,7 +361,7 @@
               <label for="newPassword" class="label">Nova Senha</label>
               <div class="input-icon password-input-wrap">
                 <i class="icon icon-lock"></i>
-                <input type="password" id="newPassword" class="input" placeholder="Digite a nova senha segura" required>
+                <input type="password" id="newPassword" class="input" placeholder="Digite a nova senha segura (mín. 8 caracteres)" required>
                 <button type="button" class="password-toggle-btn" aria-label="Mostrar ou ocultar senha" data-toggle-pass="newPassword">
                   <i class="icon icon-eye"></i>
                 </button>
@@ -398,9 +409,15 @@
     document.addEventListener('DOMContentLoaded', () => {
       const F = window.FramePER || {};
 
+      // Helper de validação de e-mail
+      function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+
       // 1. Alternador de Visibilidade de Senha
       document.querySelectorAll('[data-toggle-pass]').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
           const targetId = btn.getAttribute('data-toggle-pass');
           const input = document.getElementById(targetId);
           if (!input) return;
@@ -422,7 +439,7 @@
         });
       });
 
-      // 2. Sistema de Abas / Alternância de Views com Suporte a Hash
+      // 2. Sistema de Abas / Alternância de Views com Suporte a Hash e Histórico
       const views = {
         viewLogin: document.getElementById('viewLogin'),
         viewRegister: document.getElementById('viewRegister'),
@@ -431,30 +448,32 @@
         viewReset: document.getElementById('viewReset')
       };
 
-      function switchView(targetViewId) {
+      const hashMapping = {
+        viewLogin: '#login',
+        viewRegister: '#register',
+        viewForgot: '#forgot',
+        viewOtp: '#verify-code',
+        viewReset: '#new-password'
+      };
+
+      function switchView(targetViewId, updateHash = true) {
         Object.keys(views).forEach(key => {
           const el = views[key];
           if (!el) return;
           if (key === targetViewId) {
             el.classList.add('active');
-            // Auto-focus no primeiro input
-            const firstInput = el.querySelector('input:not([type="checkbox"])');
-            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+            // Auto-focus no primeiro campo relevante
+            setTimeout(() => {
+              const firstInput = el.querySelector('input:not([type="checkbox"])');
+              if (firstInput) firstInput.focus();
+            }, 60);
           } else {
             el.classList.remove('active');
           }
         });
 
-        // Atualiza URL hash de forma limpa
-        const hashMapping = {
-          viewLogin: '#login',
-          viewRegister: '#register',
-          viewForgot: '#forgot',
-          viewOtp: '#verify-code',
-          viewReset: '#new-password'
-        };
-        if (hashMapping[targetViewId] && window.location.hash !== hashMapping[targetViewId]) {
-          history.replaceState(null, null, hashMapping[targetViewId]);
+        if (updateHash && hashMapping[targetViewId] && window.location.hash !== hashMapping[targetViewId]) {
+          window.location.hash = hashMapping[targetViewId];
         }
       }
 
@@ -468,16 +487,18 @@
         });
       });
 
-      // Sincronizar pelo Hash inicial
-      function checkInitialHash() {
+      // Sincronizar com base no Hash atual
+      function syncFromHash() {
         const hash = window.location.hash;
-        if (hash === '#register') switchView('viewRegister');
-        else if (hash === '#forgot') switchView('viewForgot');
-        else if (hash === '#verify-code') switchView('viewOtp');
-        else if (hash === '#new-password') switchView('viewReset');
-        else switchView('viewLogin');
+        if (hash === '#register') switchView('viewRegister', false);
+        else if (hash === '#forgot') switchView('viewForgot', false);
+        else if (hash === '#verify-code') switchView('viewOtp', false);
+        else if (hash === '#new-password') switchView('viewReset', false);
+        else switchView('viewLogin', false);
       }
-      checkInitialHash();
+
+      window.addEventListener('hashchange', syncFromHash);
+      syncFromHash();
 
       // 3. Checagem de Logout via Query Params (?logout=true)
       const urlParams = new URLSearchParams(window.location.search);
@@ -487,11 +508,10 @@
             F.Notify.info('Sessão Finalizada', 'Você saiu da sua conta com segurança. Faça login novamente quando desejar.');
           }
         }, 300);
-        // Limpa parâmetro da URL sem recarregar a página
         window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
       }
 
-      // 4. Medidor de Força da Senha em Tempo Real
+      // 4. Medidor Dinâmico de Força da Senha
       const regPassInput = document.getElementById('regPassword');
       const regStrengthText = document.getElementById('regStrengthText');
       const bars = [
@@ -502,14 +522,8 @@
       ];
 
       function updatePasswordStrength(val) {
-        let score = 0;
-        if (val.length >= 8) score++;
-        if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
-        if (/[0-9]/.test(val)) score++;
-        if (/[^A-Za-z0-9]/.test(val)) score++;
-
         bars.forEach(b => {
-          b.className = 'strength-bar';
+          if (b) b.className = 'strength-bar';
         });
 
         if (!val) {
@@ -518,15 +532,20 @@
           return;
         }
 
+        let score = 1; // Ao menos 1 para qualquer digitação
+        if (val.length >= 8) score++;
+        if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+        if (/[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val)) score++;
+
         const labels = ['Muito fraca', 'Razoável', 'Boa', 'Excelente'];
         const classes = ['weak', 'medium', 'good', 'strong'];
 
         for (let i = 0; i < score; i++) {
-          bars[i].classList.add(classes[score - 1]);
+          if (bars[i]) bars[i].classList.add(classes[score - 1]);
         }
 
-        regStrengthText.textContent = `Força da senha: ${labels[score - 1] || 'Muito fraca'}`;
-        if (score <= 1) regStrengthText.className = 'f-s-1 text-danger';
+        regStrengthText.textContent = `Força da senha: ${labels[score - 1]}`;
+        if (score === 1) regStrengthText.className = 'f-s-1 text-danger';
         else if (score === 2) regStrengthText.className = 'f-s-1 text-warning';
         else regStrengthText.className = 'f-s-1 text-success';
       }
@@ -537,7 +556,7 @@
         });
       }
 
-      // 5. Simulação de Login
+      // 5. Fluxo de Login
       const formLogin = document.getElementById('formLogin');
       const btnLoginSubmit = document.getElementById('btnLoginSubmit');
 
@@ -552,9 +571,12 @@
             return;
           }
 
-          // Ativa loading state no botão
+          if (!isValidEmail(email)) {
+            if (F.Notify) F.Notify.warning('E-mail inválido', 'Insira um formato válido de e-mail corporativo.');
+            return;
+          }
+
           btnLoginSubmit.disabled = true;
-          const origHtml = btnLoginSubmit.innerHTML;
           btnLoginSubmit.innerHTML = `<span class="spinner spinner-sm m-r-2"></span> Autenticando...`;
 
           setTimeout(() => {
@@ -565,11 +587,11 @@
             setTimeout(() => {
               window.location.href = 'dashboard.html';
             }, 800);
-          }, 900);
+          }, 850);
         });
       }
 
-      // 6. Simulação de Cadastro
+      // 6. Fluxo de Cadastro
       const formRegister = document.getElementById('formRegister');
       const btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
 
@@ -580,14 +602,30 @@
           const email = document.getElementById('regEmail').value.trim();
           const pass = document.getElementById('regPassword').value;
           const passConfirm = document.getElementById('regPasswordConfirm').value;
+          const regTerms = document.getElementById('regTerms');
 
           if (!name || !email || !pass) {
             if (F.Notify) F.Notify.error('Campos obrigatórios', 'Preencha todos os campos para continuar.');
             return;
           }
 
+          if (!isValidEmail(email)) {
+            if (F.Notify) F.Notify.warning('E-mail inválido', 'Por favor informe um e-mail com formato válido.');
+            return;
+          }
+
+          if (pass.length < 8) {
+            if (F.Notify) F.Notify.warning('Senha curta', 'A senha precisa conter no mínimo 8 caracteres.');
+            return;
+          }
+
           if (pass !== passConfirm) {
             if (F.Notify) F.Notify.error('Senhas não coincidem', 'A confirmação de senha precisa ser igual à senha digitada.');
+            return;
+          }
+
+          if (regTerms && !regTerms.checked) {
+            if (F.Notify) F.Notify.warning('Termos Obrigatórios', 'Você deve aceitar os Termos de Serviço para criar a conta.');
             return;
           }
 
@@ -598,17 +636,16 @@
             btnRegisterSubmit.disabled = false;
             btnRegisterSubmit.innerHTML = `<span class="btn-text">Finalizar Cadastro</span> <i class="icon icon-check"></i>`;
             if (F.Notify) {
-              F.Notify.success('Conta Criada!', 'Sua conta corporativa foi configurada com sucesso. Você já pode fazer login.');
+              F.Notify.success('Conta Criada!', 'Sua conta corporativa foi configurada com sucesso. Faça seu primeiro login.');
             }
-            // Preenche o login com o novo email
             document.getElementById('loginEmail').value = email;
             document.getElementById('loginPassword').value = pass;
             switchView('viewLogin');
-          }, 1100);
+          }, 950);
         });
       }
 
-      // 7. Simulação de Envio de Código (Forgot Password)
+      // 7. Fluxo de Recuperação (Forgot)
       const formForgot = document.getElementById('formForgot');
       const btnForgotSubmit = document.getElementById('btnForgotSubmit');
 
@@ -618,6 +655,11 @@
           const email = document.getElementById('forgotEmail').value.trim();
           if (!email) {
             if (F.Notify) F.Notify.error('E-mail necessário', 'Por favor insira seu e-mail cadastrado.');
+            return;
+          }
+
+          if (!isValidEmail(email)) {
+            if (F.Notify) F.Notify.warning('E-mail inválido', 'Insira um e-mail válido para receber o código.');
             return;
           }
 
@@ -632,50 +674,63 @@
               F.Notify.info('Código Enviado', `Enviamos o código de 6 dígitos para ${email}`);
             }
             switchView('viewOtp');
-            // Auto preenche o primeiro dígito com foco
-            const firstOtp = document.querySelector('#authOtpGroup .otp-digit');
-            if (firstOtp) firstOtp.focus();
-          }, 900);
+          }, 800);
         });
       }
 
       // 8. Botão de auto-preenchimento demo do OTP
       const btnFillOtp = document.getElementById('btnFillOtp');
-      if (btnFillOtp) {
+      const authOtpGroup = document.getElementById('authOtpGroup');
+
+      if (btnFillOtp && authOtpGroup) {
         btnFillOtp.addEventListener('click', () => {
           const digits = ['1', '2', '3', '4', '5', '6'];
-          const inputs = document.querySelectorAll('#authOtpGroup .otp-digit');
+          const inputs = authOtpGroup.querySelectorAll('.otp-digit');
           inputs.forEach((inp, idx) => {
             inp.value = digits[idx];
             inp.classList.add('is-filled');
+            inp.dispatchEvent(new Event('input', { bubbles: true }));
           });
-          if (inputs[5]) inputs[5].focus();
         });
       }
 
-      // 9. Validação do Código OTP
+      // 9. Validação do Código OTP (form submit + evento complete nativo)
+      const formOtp = document.getElementById('formOtp');
       const btnVerifyOtp = document.getElementById('btnVerifyOtp');
-      if (btnVerifyOtp) {
-        btnVerifyOtp.addEventListener('click', () => {
-          const inputs = Array.from(document.querySelectorAll('#authOtpGroup .otp-digit'));
-          const code = inputs.map(i => i.value).join('');
 
-          if (code.length < 6) {
-            if (F.Notify) F.Notify.error('Código incompleto', 'Por favor digite todos os 6 dígitos do código recebido.');
-            return;
+      function verifyOtpCode() {
+        const inputs = Array.from(document.querySelectorAll('#authOtpGroup .otp-digit'));
+        const code = inputs.map(i => i.value).join('');
+
+        if (code.length < 6) {
+          if (F.Notify) F.Notify.error('Código incompleto', 'Por favor digite todos os 6 dígitos do código recebido.');
+          return;
+        }
+
+        btnVerifyOtp.disabled = true;
+        btnVerifyOtp.innerHTML = `<span class="spinner spinner-sm m-r-2"></span> Validando...`;
+
+        setTimeout(() => {
+          btnVerifyOtp.disabled = false;
+          btnVerifyOtp.innerHTML = `<span class="btn-text">Confirmar Código</span> <i class="icon icon-check"></i>`;
+          if (F.Notify) {
+            F.Notify.success('Código Validado', 'Identidade confirmada! Defina sua nova senha agora.');
           }
+          switchView('viewReset');
+        }, 700);
+      }
 
-          btnVerifyOtp.disabled = true;
-          btnVerifyOtp.innerHTML = `<span class="spinner spinner-sm m-r-2"></span> Validando...`;
+      if (formOtp) {
+        formOtp.addEventListener('submit', (e) => {
+          e.preventDefault();
+          verifyOtpCode();
+        });
+      }
 
-          setTimeout(() => {
-            btnVerifyOtp.disabled = false;
-            btnVerifyOtp.innerHTML = `<span class="btn-text">Confirmar Código</span> <i class="icon icon-check"></i>`;
-            if (F.Notify) {
-              F.Notify.success('Código Validado', 'Identidade confirmada! Defina sua nova senha agora.');
-            }
-            switchView('viewReset');
-          }, 800);
+      if (authOtpGroup) {
+        // Disparado automaticamente pelo OtpInput nativo do FramePER quando todos os dígitos são preenchidos
+        authOtpGroup.addEventListener('complete', () => {
+          verifyOtpCode();
         });
       }
 
@@ -689,9 +744,9 @@
             btnResendOtp.disabled = false;
             btnResendOtp.textContent = 'Reenviar código';
             if (F.Notify) {
-              F.Notify.info('Código Reenviado', 'Novo código de verificação enviado para o seu e-mail.');
+              F.Notify.info('Código Reenviado', 'Um novo código de 6 dígitos foi enviado para o seu e-mail.');
             }
-          }, 800);
+          }, 700);
         });
       }
 
@@ -710,8 +765,13 @@
             return;
           }
 
+          if (newPass.length < 8) {
+            if (F.Notify) F.Notify.warning('Senha curta', 'A nova senha deve ter pelo menos 8 caracteres.');
+            return;
+          }
+
           if (newPass !== newPassConfirm) {
-            if (F.Notify) F.Notify.error('Senhas não conferem', 'A confirmação precisa ser idêntica à nova senha.');
+            if (F.Notify) F.Notify.error('Senhas não conferem', 'A confirmação precisa ser idêntica à nova senha digitada.');
             return;
           }
 
@@ -725,8 +785,10 @@
               F.Notify.success('Senha Atualizada', 'Sua senha foi redefinida com sucesso. Acesse sua conta agora.');
             }
             document.getElementById('loginPassword').value = newPass;
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newPasswordConfirm').value = '';
             switchView('viewLogin');
-          }, 1000);
+          }, 850);
         });
       }
 
@@ -734,12 +796,14 @@
       document.querySelectorAll('.btn-social-demo').forEach(btn => {
         btn.addEventListener('click', () => {
           const provider = btn.getAttribute('data-provider');
+          btn.disabled = true;
+          btn.innerHTML = `<span class="spinner spinner-sm m-r-1"></span> Conectando...`;
           if (F.Notify) {
             F.Notify.info('Autenticação Social', `Iniciando conexão segura com ${provider}...`);
           }
           setTimeout(() => {
             window.location.href = 'dashboard.html';
-          }, 900);
+          }, 800);
         });
       });
 

@@ -378,6 +378,7 @@ html {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
+  z-index: 5;
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -404,6 +405,24 @@ html {
 .strength-bar.medium { background-color: var(--warning); }
 .strength-bar.good { background-color: var(--primary); }
 .strength-bar.strong { background-color: var(--success); }
+
+/* Text opacities for dark backgrounds */
+.text-white-50 { color: rgba(255, 255, 255, 0.5) !important; }
+.text-white-70 { color: rgba(255, 255, 255, 0.7) !important; }
+.text-white-75 { color: rgba(255, 255, 255, 0.75) !important; }
+.text-white-90 { color: rgba(255, 255, 255, 0.9) !important; }
+
+/* Responsive OTP Input sizing */
+@media (max-width: 480px) {
+  .otp-input-group {
+    gap: 0.35rem;
+  }
+  .otp-input-group .otp-digit {
+    width: 2.25rem;
+    height: 2.875rem;
+    font-size: 1.25rem;
+  }
+}
 
 
 
